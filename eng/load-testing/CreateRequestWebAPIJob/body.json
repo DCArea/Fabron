@@ -1,0 +1,9 @@
+{
+  "requestId": "3fa85f64-5717-4562-b3fc-2c963f66afb3",
+  "command": {
+      "url": "http://localhost:5000/Stub",
+      "httpMethod": "GET",
+      "headers": null,
+      "payloadJson": null
+  }
+}
