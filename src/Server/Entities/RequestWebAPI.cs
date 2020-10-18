@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -30,6 +31,13 @@ namespace TGH.Server.Entities
         {
             var res = await _client.GetAsync(command.Url, token);
             return (int)res.StatusCode;
+        }
+
+        public async Task<string> Handle(string data, CancellationToken token)
+        {
+            var typedCommand = JsonSerializer.Deserialize<RequestWebAPICommand>(data);
+            var result = await Handle(typedCommand!, token);
+            return JsonSerializer.Serialize<int>(result);
         }
     }
 }

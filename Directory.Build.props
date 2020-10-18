@@ -22,7 +22,7 @@
 
   <!-- library versions -->
   <PropertyGroup>
-    <ApplicationInsightsVersion>2.13.1</ApplicationInsightsVersion>
+    <ApplicationInsightsVersion>2.15.0</ApplicationInsightsVersion>
     <SwashbuckleAspNetCoreVersion>5.5.1</SwashbuckleAspNetCoreVersion>
     <StyleCopAnalyzersVersion>1.0.0</StyleCopAnalyzersVersion>
   </PropertyGroup>

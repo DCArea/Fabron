@@ -1,11 +1,14 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>$(DefaultNetCoreTargetFramework)</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Orleans.OrleansTelemetryConsumers.AI" Version="3.3.0" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="2.0.1" />
+    <PackageReference Include="Microsoft.Orleans.OrleansTelemetryConsumers.AI" Version="$(OrleansVersion)" />
+    <PackageReference Include="Microsoft.Orleans.Persistence.AdoNet" Version="$(OrleansVersion)" />
+    <PackageReference Include="Microsoft.Orleans.Reminders.AdoNet" Version="$(OrleansVersion)" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="$(SwashbuckleAspNetCoreVersion)" />
     <PackageReference Include="Microsoft.Orleans.CodeGenerator.MSBuild" Version="$(OrleansVersion)">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

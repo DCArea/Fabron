@@ -1,3 +1,4 @@
+using Microsoft.ApplicationInsights.DependencyCollector;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -6,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using TGH.Server.Entities;
+using TGH.Server.Services;
 
 namespace TGH.Server
 {
@@ -27,13 +29,14 @@ namespace TGH.Server
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Server", Version = "v1" });
             });
             services.AddHttpClient();
-            services.AddApplicationInsightsTelemetry(opt=>
+            services.AddApplicationInsightsTelemetry(opt =>
             {
                 opt.EnableDebugLogger = true;
                 opt.DeveloperMode = true;
             });
 
-            services.AddTransient<ICommandHandler<RequestWebAPICommand, int>, RequestWebAPICommandHandler>();
+            services.RegisterJobCommandHandlers(typeof(RequestWebAPICommandHandler).Assembly);
+            //services.AddTransient<ICommandHandler<RequestWebAPICommand, int>, RequestWebAPICommandHandler>();
 
         }
 

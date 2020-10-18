@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Orleans;
 using TGH.Server.Entities;
 using TGH.Server.Grains;
+using TGH.Server.Services;
 
 namespace TGH.Server.Controllers
 {
@@ -14,31 +15,29 @@ namespace TGH.Server.Controllers
     public class RequestWebAPIController : ControllerBase
     {
         private readonly ILogger _logger;
+        private readonly IJobManager _jobManager;
         private readonly IClusterClient _client;
 
         public RequestWebAPIController(ILogger<RequestWebAPIController> logger,
+            IJobManager jobManager,
             IClusterClient client)
         {
             _logger = logger;
+            _jobManager = jobManager;
             _client = client;
         }
 
         [HttpPost("Transient")]
         public async Task<IActionResult> CreateTransientJob(CreateRequestWebAPIJobRequest req)
         {
-            _logger.LogInformation($"Creating {req.RequestId}");
-            var grain = _client.GetGrain<IJobGrain<RequestWebAPICommand, int>>(req.RequestId);
-            await grain.Create(req.Command);
-            _logger.LogInformation($"Job {req.RequestId} Created");
-            var job = await grain.GetState();
+            var job = await _jobManager.Enqueue<RequestWebAPICommand, int>(req.RequestId, req.Command);
             return CreatedAtAction(nameof(GetTransientJobState), new { Id = req.RequestId }, job);
         }
 
         [HttpGet("Transient/{id}")]
         public async Task<IActionResult> GetTransientJobState(Guid id)
         {
-            var grain = _client.GetGrain<IJobGrain<RequestWebAPICommand, int>>(id);
-            var job = await grain.GetState();
+            var job = await _jobManager.GetJobById<RequestWebAPICommand, int>(id);
             return Ok(job);
         }
     }

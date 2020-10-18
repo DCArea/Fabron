@@ -7,98 +7,52 @@ using Orleans;
 using Orleans.Concurrency;
 using Orleans.Runtime;
 using TGH.Server.Entities;
+using TGH.Server.Services;
 
 namespace TGH.Server.Grains
 {
-    public class JobState<TCommand, TResult> where TCommand : ICommand<TResult>
-    {
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-        public JobState() { }
-#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
-        public JobState(TCommand command)
-        {
-            Command = command;
-            Status = JobStatus.Created;
-        }
-
-        public TCommand Command { get; }
-        public TResult? Result { get; private set; }
-        public JobStatus Status { get; private set; }
-        public string? Reason { get; private set; }
-
-        public void Start()
-        {
-            Status = JobStatus.Running;
-        }
-
-        public void Complete(TResult result)
-        {
-            Status = JobStatus.RanToCompletion;
-            Result = result;
-        }
-
-        public void Cancel(string reason)
-        {
-            Status = JobStatus.Canceled;
-            Reason = reason;
-        }
-
-        public void Fault(Exception exception)
-        {
-            Status = JobStatus.Canceled;
-            Reason = exception.ToString();
-        }
-    }
-
-    public enum JobStatus
-    {
-        Created,
-        Running,
-        RanToCompletion,
-        Canceled,
-        Faulted
-    }
-
-    public interface IJobGrain<TCommand, TResult> : IGrainWithGuidKey
-        where TCommand : ICommand<TResult>
+    public interface IJobGrain : IGrainWithGuidKey
     {
         [AlwaysInterleave]
         Task Cancel(string reason);
         [ReadOnly]
-        Task<JobState<TCommand, TResult>> GetState();
-        Task Create(TCommand command);
+        Task<JobState> GetState();
+        Task Create(string commandName, string commandRawData);
     }
 
-    public class JobGrain<TCommand, TResult> : Grain, IJobGrain<TCommand, TResult>, IRemindable
-        where TCommand : ICommand<TResult>
+    public class JobGrain : Grain, IJobGrain, IRemindable
     {
-        private readonly ILogger<JobGrain<TCommand, TResult>> _logger;
-        private readonly IPersistentState<JobState<TCommand, TResult>> _job;
+        private readonly ILogger _logger;
+        private readonly IPersistentState<JobState> _job;
+        private readonly IMediator _mediator;
         private IGrainReminder? reminder;
         private CancellationTokenSource? cancellationTokenSource;
 
         public JobGrain(
-          ILogger<JobGrain<TCommand, TResult>> logger,
-          [PersistentState("Job", "JobStore")] IPersistentState<JobState<TCommand, TResult>> job)
+            ILogger<JobGrain> logger,
+            [PersistentState("Job", "JobStore")] IPersistentState<JobState> job,
+            IMediator mediator)
         {
             _logger = logger;
             _job = job;
+            _mediator = mediator;
         }
 
-        public Task<JobState<TCommand, TResult>> GetState()
+        public Task<JobState> GetState()
         {
             return Task.FromResult(_job.State);
         }
 
-        public async Task Create(TCommand command)
+        public async Task Create(string commandName, string commandData)
         {
-            if (_job.RecordExists)
-                return;
+            if (!_job.RecordExists)
+            {
+                _job.State = new JobState(commandName, commandData);
+                await _job.WriteStateAsync();
+                _logger.LogInformation($"Created Job");
+            }
 
-            _job.State = new JobState<TCommand, TResult>(command);
-            await _job.WriteStateAsync();
-            _logger.LogInformation($"Created Job");
             reminder = await RegisterOrUpdateReminder("Check", TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(20));
             _logger.LogInformation($"Job Reminder Registered");
             _ = Go();
@@ -132,8 +86,8 @@ namespace TGH.Server.Grains
             cancellationTokenSource ??= new CancellationTokenSource(TimeSpan.FromMinutes(10));
             try
             {
-                var handler = ServiceProvider.GetRequiredService<ICommandHandler<TCommand, TResult>>();
-                var result = await handler.Handle(_job.State.Command, cancellationTokenSource.Token);
+
+                var result = await _mediator.Handle(_job.State.Command.Name, _job.State.Command.Data, cancellationTokenSource.Token);
                 _job.State.Complete(result);
             }
             catch (Exception e)

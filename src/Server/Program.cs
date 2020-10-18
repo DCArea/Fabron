@@ -34,14 +34,26 @@ namespace TGH.Server
                         })
                         .Configure<StatisticsOptions>(opts =>
                         {
-                            opts.LogWriteInterval = TimeSpan.FromSeconds(10);
-                            opts.CollectionLevel = Orleans.Runtime.Configuration.StatisticsLevel.Verbose;
+                            //opts.LogWriteInterval = TimeSpan.FromMinutes(5);
+                            //opts.CollectionLevel = Orleans.Runtime.Configuration.StatisticsLevel.Verbose;
                         })
-                        .UseInMemoryReminderService()
-                        .AddMemoryGrainStorage("JobStore")
+                        //.UseInMemoryReminderService()
+                        //.AddMemoryGrainStorage("JobStore")
+                        .AddAdoNetGrainStorage("JobStore", (AdoNetGrainStorageOptions opt)=>
+                        {
+                            opt.Invariant = "Microsoft.Data.SqlClient";
+                            opt.ConnectionString = @"Data Source=(localdb)\MSSQLLocalDB;Database=TGH;Integrated Security=True; 
+                                Max Pool Size=200; MultipleActiveResultSets=True";
+                        })
+                        .UseAdoNetReminderService((AdoNetReminderTableOptions opt)=>
+                        {
+                            opt.Invariant = "Microsoft.Data.SqlClient";
+                            opt.ConnectionString = @"Data Source=(localdb)\MSSQLLocalDB;Database=TGH;Integrated Security=True; 
+                                Max Pool Size=200; MultipleActiveResultSets=True";
+                        })
                         .ConfigureApplicationParts(manager =>
                         {
-                            manager.AddApplicationPart(typeof(JobGrain<,>).Assembly).WithReferences();
+                            //manager.AddApplicationPart(typeof(JobGrain<,>).Assembly).WithReferences();
                         });
                 })
                 .ConfigureWebHostDefaults(webBuilder =>

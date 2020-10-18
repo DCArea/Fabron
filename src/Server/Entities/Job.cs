@@ -1,40 +1,21 @@
 using System;
 using System.Text.Json;
+using TGH.Server.Grains;
 
 namespace TGH.Server.Entities
 {
-    //public interface IJob
-    //{ }
+    public record JobInfo
+    (
+        JobStatus Status,
+        string? Reason
+    );
 
-    //public interface IJob<TCommand> where TCommand : ICommand
-    //{
-    //    TCommand Command { get; }
-    //}
-
-    //public abstract class Job<TCommand> where TCommand : ICommand
-    //{
-    //    protected Job(TCommand command)
-    //    {
-    //        Command = command;
-    //    }
-    //    public TCommand Command { get; init; }
-    //    public byte[] RawCommand => JsonSerializer.SerializeToUtf8Bytes(Command);
-    //    public Job NormalizedJob => new Job(RawCommand);
-    //}
-
-    //public class Job
-    //{
-    //    private readonly byte[] rawCommand;
-    //    public Job(byte[] command)
-    //    {
-    //        rawCommand = command;
-    //    }
-
-    //    public TCommand GetTypedCommand<TCommand>() where TCommand : ICommand
-    //    {
-    //        var typedCommand = JsonSerializer.Deserialize<TCommand>(rawCommand);
-    //        return typedCommand!;
-    //    }
-    //}
-
+    public record Job<TCommand, TResult>
+    (
+        string CommandName,
+        TCommand CommandData,
+        TResult? Result,
+        JobStatus Status,
+        string? Reason
+    ) : JobInfo(Status, Reason) where TCommand : ICommand<TResult>;
 }
