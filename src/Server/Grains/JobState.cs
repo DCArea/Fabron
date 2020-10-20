@@ -5,6 +5,7 @@ namespace TGH.Server.Grains
 {
     public enum JobStatus
     {
+        NotCreated,
         Created,
         Running,
         RanToCompletion,
@@ -79,7 +80,7 @@ namespace TGH.Server.Grains
 
         public void Fault(Exception exception)
         {
-            Status = JobStatus.Canceled;
+            Status = JobStatus.Faulted;
             Reason = exception.ToString();
         }
     }

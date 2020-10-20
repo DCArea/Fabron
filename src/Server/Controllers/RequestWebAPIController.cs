@@ -1,5 +1,6 @@
 using System;
 using System.Data.Common;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -38,6 +39,19 @@ namespace TGH.Server.Controllers
         public async Task<IActionResult> GetTransientJobState(Guid id)
         {
             var job = await _jobManager.GetJobById<RequestWebAPICommand, int>(id);
+            return Ok(job);
+        }
+
+        [HttpPost("Batch")]
+        public async Task<IActionResult> CreateBatchJob(BatchCreateRequestWebAPIJobRequest req)
+        {
+            var job = await _jobManager.Enqueue(req.RequestId, req.Commands);
+            return Ok(job);
+        }
+        [HttpGet("Batch/{id}")]
+        public async Task<IActionResult> GetBatchJobState(Guid id)
+        {
+            var job = await _jobManager.GetBatchJobById(id);
             return Ok(job);
         }
     }

@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Text.Json;
 using TGH.Server.Grains;
+using TGH.Server.Grains.BatchJob;
 
 namespace TGH.Server.Entities
 {
@@ -18,4 +20,36 @@ namespace TGH.Server.Entities
         JobStatus Status,
         string? Reason
     ) : JobInfo(Status, Reason) where TCommand : ICommand<TResult>;
+
+    public record JobCommand(
+        string CommandName,
+        ICommand CommandData,
+        object? Result
+    );
+    public record JobCommand<TCommand, TResult>(
+        string CommandName,
+        object CommandData,
+        TResult? Result
+    ) where TCommand : ICommand<TResult>;
+    public record BatchJob
+    (
+        // List<JobCommand> Commands,
+        // string CommandName,
+        // TCommand CommandData,
+        // TResult? Result,
+        JobStatus Status,
+        string? Reason
+    ) : JobInfo(Status, Reason);
+
+    public static class JobExtensions
+    {
+        // public static BatchJob From(this BatchJobState jobState)
+        // {
+        //     var commands = jobState.RunningJobs()
+        //     JsonSerializer.Deserialize(jobState.)
+        //     return new BatchJob()
+
+        // }
+    }
+
 }

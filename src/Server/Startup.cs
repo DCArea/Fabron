@@ -35,6 +35,8 @@ namespace TGH.Server
                 opt.DeveloperMode = true;
             });
 
+            services.AddScoped<IMediator, Mediator>();
+            services.AddSingleton<IJobManager, JobManager>();
             services.RegisterJobCommandHandlers(typeof(RequestWebAPICommandHandler).Assembly);
             //services.AddTransient<ICommandHandler<RequestWebAPICommand, int>, RequestWebAPICommandHandler>();
 
