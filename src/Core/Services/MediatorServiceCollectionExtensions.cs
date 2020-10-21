@@ -1,7 +1,7 @@
 using System.Linq;
 using System.Reflection;
-using TGH.Server.Entities;
-using TGH.Server.Services;
+using TGH.Contracts;
+using TGH.Services;
 
 namespace Microsoft.Extensions.DependencyInjection
 {

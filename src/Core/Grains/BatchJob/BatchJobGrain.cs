@@ -6,9 +6,10 @@ using Microsoft.Extensions.Logging;
 using Orleans;
 using Orleans.Concurrency;
 using Orleans.Runtime;
-using TGH.Server.Services;
+using TGH.Grains.TransientJob;
+using TGH.Services;
 
-namespace TGH.Server.Grains.BatchJob
+namespace TGH.Grains.BatchJob
 {
     public interface IBatchJobGrain : IGrainWithGuidKey
     {
@@ -27,7 +28,7 @@ namespace TGH.Server.Grains.BatchJob
         private CancellationTokenSource? cancellationTokenSource;
 
         public BatchJobGrain(
-            ILogger<JobGrain> logger,
+            ILogger<TransientJobGrain> logger,
             [PersistentState("BatchJob", "JobStore")] IPersistentState<BatchJobState> job,
             IMediator mediator)
         {
@@ -106,12 +107,12 @@ namespace TGH.Server.Grains.BatchJob
 
             async Task CreateChildJob(ChildJobState job)
             {
-                var grain = GrainFactory.GetGrain<IJobGrain>(job.Id);
+                var grain = GrainFactory.GetGrain<ITransientJobGrain>(job.Id);
                 await grain.Create(job.Command.Name, job.Command.Data);
             }
             async Task CheckChildJobStatus(ChildJobState job)
             {
-                var grain = GrainFactory.GetGrain<IJobGrain>(job.Id);
+                var grain = GrainFactory.GetGrain<ITransientJobGrain>(job.Id);
                 job.Status = await grain.GetStatus();
             }
         }

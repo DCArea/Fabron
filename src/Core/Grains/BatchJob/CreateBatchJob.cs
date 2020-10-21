@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace TGH.Server.Grains.BatchJob
+namespace TGH.Grains.BatchJob
 {
     public class CreateChildJob
     {

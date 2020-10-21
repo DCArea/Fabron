@@ -1,10 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Text.Json;
-using TGH.Server.Grains;
-using TGH.Server.Grains.BatchJob;
+using TGH.Grains.TransientJob;
 
-namespace TGH.Server.Entities
+namespace TGH.Contracts
 {
     public record JobInfo
     (

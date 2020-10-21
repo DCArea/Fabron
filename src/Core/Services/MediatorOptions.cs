@@ -4,9 +4,9 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
-using TGH.Server.Entities;
+using TGH.Contracts;
 
-namespace TGH.Server.Services
+namespace TGH.Services
 {
     public delegate Task<string?> HandleDelegate(IServiceProvider serviceProvider, string commandData, CancellationToken token);
 

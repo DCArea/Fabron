@@ -5,33 +5,33 @@ using Microsoft.Extensions.Logging;
 using Orleans;
 using Orleans.Concurrency;
 using Orleans.Runtime;
-using TGH.Server.Services;
+using TGH.Services;
 
-namespace TGH.Server.Grains
+namespace TGH.Grains.TransientJob
 {
 
-    public interface IJobGrain : IGrainWithGuidKey
+    public interface ITransientJobGrain : IGrainWithGuidKey
     {
         [AlwaysInterleave]
         Task Cancel(string reason);
         [ReadOnly]
-        Task<JobState> GetState();
+        Task<TransientJobState> GetState();
         [ReadOnly]
         Task<JobStatus> GetStatus();
         Task Create(string commandName, string commandRawData);
     }
 
-    public class JobGrain : Grain, IJobGrain, IRemindable
+    public class TransientJobGrain : Grain, ITransientJobGrain, IRemindable
     {
         private readonly ILogger _logger;
-        private readonly IPersistentState<JobState> _job;
+        private readonly IPersistentState<TransientJobState> _job;
         private readonly IMediator _mediator;
         private IGrainReminder? reminder;
         private CancellationTokenSource? cancellationTokenSource;
 
-        public JobGrain(
-            ILogger<JobGrain> logger,
-            [PersistentState("Job", "JobStore")] IPersistentState<JobState> job,
+        public TransientJobGrain(
+            ILogger<TransientJobGrain> logger,
+            [PersistentState("Job", "JobStore")] IPersistentState<TransientJobState> job,
             IMediator mediator)
         {
             _logger = logger;
@@ -39,20 +39,14 @@ namespace TGH.Server.Grains
             _mediator = mediator;
         }
 
-        public Task<JobState> GetState()
-        {
-            return Task.FromResult(_job.State);
-        }
-        public Task<JobStatus> GetStatus()
-        {
-            return Task.FromResult(_job.State.Status);
-        }
+        public Task<TransientJobState> GetState() => Task.FromResult(_job.State);
+        public Task<JobStatus> GetStatus() => Task.FromResult(_job.State.Status);
 
         public async Task Create(string commandName, string commandData)
         {
             if (!_job.RecordExists)
             {
-                _job.State = new JobState(commandName, commandData);
+                _job.State = new TransientJobState(commandName, commandData);
                 await _job.WriteStateAsync();
                 _logger.LogInformation($"Created Job");
             }

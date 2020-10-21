@@ -6,11 +6,12 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
-using TGH.Server.Entities;
-using TGH.Server.Grains;
-using TGH.Server.Grains.BatchJob;
+using TGH.Contracts;
+using TGH.Grains.BatchJob;
+using TGH.Grains.TransientJob;
+using TGH.Services;
 
-namespace TGH.Server.Services
+namespace TGH
 {
     public interface IJobManager
     {
@@ -45,7 +46,7 @@ namespace TGH.Server.Services
             var job = new Job<TJobCommand, TResult>(
                 commandName,
                 command,
-                default(TResult),
+                default,
                 JobStatus.Created,
                 null
             );
@@ -55,7 +56,7 @@ namespace TGH.Server.Services
         private async Task Enqueue(Guid jobId, string commandName, string commandData)
         {
             _logger.LogInformation($"Creating Job[{jobId}]");
-            var grain = _client.GetGrain<IJobGrain>(jobId);
+            var grain = _client.GetGrain<ITransientJobGrain>(jobId);
             await grain.Create(commandName, commandData);
             _logger.LogInformation($"Job[{jobId}] Created");
         }
@@ -91,7 +92,7 @@ namespace TGH.Server.Services
         public async Task<Job<TJobCommand, TResult>> GetJobById<TJobCommand, TResult>(Guid jobId)
             where TJobCommand : ICommand<TResult>
         {
-            var grain = _client.GetGrain<IJobGrain>(jobId);
+            var grain = _client.GetGrain<ITransientJobGrain>(jobId);
             var jobState = await grain.GetState();
 
             var job = new Job<TJobCommand, TResult>(

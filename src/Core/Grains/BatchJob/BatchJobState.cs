@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TGH.Grains.TransientJob;
 
-namespace TGH.Server.Grains.BatchJob
+namespace TGH.Grains.BatchJob
 {
     public class ChildJobCommand
     {
@@ -36,7 +37,7 @@ namespace TGH.Server.Grains.BatchJob
         public JobStatus Status { get; set; }
         public bool IsFinished => Status switch
         {
-            (JobStatus.RanToCompletion or JobStatus.Faulted or JobStatus.Canceled) => true,
+            JobStatus.RanToCompletion or JobStatus.Faulted or JobStatus.Canceled => true,
             _ => false
         };
     }

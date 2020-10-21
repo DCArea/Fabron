@@ -1,13 +1,10 @@
-using Microsoft.ApplicationInsights.DependencyCollector;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using TGH.Server.Entities;
-using TGH.Server.Services;
 
 namespace TGH.Server
 {
@@ -35,11 +32,7 @@ namespace TGH.Server
                 opt.DeveloperMode = true;
             });
 
-            services.AddScoped<IMediator, Mediator>();
-            services.AddSingleton<IJobManager, JobManager>();
             services.RegisterJobCommandHandlers(typeof(RequestWebAPICommandHandler).Assembly);
-            //services.AddTransient<ICommandHandler<RequestWebAPICommand, int>, RequestWebAPICommandHandler>();
-
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

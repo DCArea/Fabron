@@ -1,9 +1,8 @@
-using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace TGH.Server.Entities
+namespace TGH.Contracts
 {
     public interface ICommand
     { }
@@ -19,14 +18,14 @@ namespace TGH.Server.Entities
         Task<TResult> Handle(TCommand command, CancellationToken token);
     }
 
-    public abstract class CommandHandler<TCommand, TResult>: ICommandHandler<TCommand, TResult>
+    public abstract class CommandHandler<TCommand, TResult> : ICommandHandler<TCommand, TResult>
         where TCommand : ICommand<TResult>
     {
         public async Task<string> Handle(string data, CancellationToken token)
         {
             var typedcommand = JsonSerializer.Deserialize<TCommand>(data);
             var result = await Handle(typedcommand!, token);
-            return JsonSerializer.Serialize<TResult>(result);
+            return JsonSerializer.Serialize(result);
         }
 
         public abstract Task<TResult> Handle(TCommand command, CancellationToken token);

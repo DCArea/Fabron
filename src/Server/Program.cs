@@ -5,7 +5,6 @@ using Microsoft.Extensions.Hosting;
 using Orleans;
 using Orleans.Configuration;
 using Orleans.Hosting;
-using TGH.Server.Grains;
 
 namespace TGH.Server
 {
