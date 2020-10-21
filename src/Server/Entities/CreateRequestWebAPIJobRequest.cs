@@ -6,7 +6,7 @@ namespace TGH.Server.Entities
 {
     public record CreateRequestWebAPIJobRequest(
         Guid RequestId,
-        RequestWebAPICommand Command);
+        RequestWebAPI Command);
 
     public record GenericCommand(string name, string data);
 
@@ -17,6 +17,6 @@ namespace TGH.Server.Entities
 
     public record BatchCreateRequestWebAPIJobRequest(
         Guid RequestId,
-        List<RequestWebAPICommand> Commands);
+        List<RequestWebAPI> Commands);
 
 }

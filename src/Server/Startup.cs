@@ -32,7 +32,7 @@ namespace TGH.Server
                 opt.DeveloperMode = true;
             });
 
-            services.RegisterJobCommandHandlers(typeof(RequestWebAPICommandHandler).Assembly);
+            services.RegisterJobCommandHandlers(typeof(RequestWebAPI).Assembly);
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

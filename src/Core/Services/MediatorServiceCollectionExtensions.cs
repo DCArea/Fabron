@@ -39,7 +39,7 @@ namespace Microsoft.Extensions.DependencyInjection
             var handlerType = typeof(THandler);
 
             services.AddTransient<ICommandHandler<TCommand, TResult>, THandler>();
-            services.Configure<JobOptions>(opt =>
+            services.Configure<CommandRegistry>(opt =>
             {
                 opt.RegisterCommand<TCommand, TResult>();
             });

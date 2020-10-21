@@ -17,11 +17,11 @@ namespace TGH.Server
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
-                .UseOrleans(siloBuilder =>
+                .UseTGH(siloBuilder =>
                 {
                     siloBuilder
                         .UseLocalhostClustering()
-                        .Configure<HostOptions>(options => options.ShutdownTimeout = TimeSpan.FromMinutes(1))
+                        .Configure<HostOptions>(options => options.ShutdownTimeout = TimeSpan.FromSeconds(3))
                         .Configure<ClusterOptions>(opts =>
                         {
                             opts.ClusterId = "dev";
@@ -50,10 +50,7 @@ namespace TGH.Server
                         //     opt.ConnectionString = @"Data Source=(localdb)\MSSQLLocalDB;Database=TGH;Integrated Security=True;
                         //         Max Pool Size=200; MultipleActiveResultSets=True";
                         // })
-                        .ConfigureApplicationParts(manager =>
-                        {
-                            //manager.AddApplicationPart(typeof(JobGrain<,>).Assembly).WithReferences();
-                        });
+                        ;
                 })
                 .ConfigureWebHostDefaults(webBuilder =>
                 {

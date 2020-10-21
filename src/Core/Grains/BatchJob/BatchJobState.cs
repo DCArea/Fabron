@@ -1,39 +1,22 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TGH.Grains.TransientJob;
 
 namespace TGH.Grains.BatchJob
 {
-    public class ChildJobCommand
-    {
-#nullable disable
-        public ChildJobCommand() { }
-#nullable enable
-
-        public ChildJobCommand(string name, string data)
-        {
-            Name = name;
-            Data = data;
-        }
-
-        public string Name { get; }
-        public string Data { get; }
-    }
-
     public class ChildJobState
     {
 #nullable disable
         public ChildJobState() { }
 #nullable enable
-        public ChildJobState(ChildJobCommand command)
+        public ChildJobState(JobCommandInfo command)
         {
             Command = command;
             Id = Guid.NewGuid();
         }
 
         public Guid Id { get; }
-        public ChildJobCommand Command { get; }
+        public JobCommandInfo Command { get; }
         public JobStatus Status { get; set; }
         public bool IsFinished => Status switch
         {
@@ -47,9 +30,11 @@ namespace TGH.Grains.BatchJob
 #nullable disable
         public BatchJobState() { }
 #nullable enable
-        public BatchJobState(List<ChildJobState> childJobs)
+        public BatchJobState(List<JobCommandInfo> commands)
         {
-            _childJobs = childJobs;
+            _childJobs = commands
+                .Select(cmd => new ChildJobState(cmd))
+                .ToList();
         }
 
         private readonly List<ChildJobState> _childJobs = null!;

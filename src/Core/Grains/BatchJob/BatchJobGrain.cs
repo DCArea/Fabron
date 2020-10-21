@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,15 +18,15 @@ namespace TGH.Grains.BatchJob
         Task Cancel(string reason);
         [ReadOnly]
         Task<BatchJobState> GetState();
-        Task Create(CreateBatchJob job);
+        Task Create(List<JobCommandInfo> commands);
     }
 
     public class BatchJobGrain : Grain, IBatchJobGrain, IRemindable
     {
         private readonly ILogger _logger;
         private readonly IPersistentState<BatchJobState> _job;
-        private IGrainReminder? reminder;
-        private CancellationTokenSource? cancellationTokenSource;
+        private IGrainReminder? _reminder;
+        private CancellationTokenSource? _cancellationTokenSource;
 
         public BatchJobGrain(
             ILogger<TransientJobGrain> logger,
@@ -41,27 +42,27 @@ namespace TGH.Grains.BatchJob
             return Task.FromResult(_job.State);
         }
 
-        public async Task Create(CreateBatchJob job)
+        public async Task Create(List<JobCommandInfo> commands)
         {
             if (!_job.RecordExists)
             {
-                _job.State = job.Create();
+                _job.State = new(commands);
                 await _job.WriteStateAsync();
                 _logger.LogInformation($"Created Job");
             }
 
-            reminder = await RegisterOrUpdateReminder("Check", TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(10));
+            _reminder = await RegisterOrUpdateReminder("Check", TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(10));
             _logger.LogInformation($"Job Reminder Registered");
             _ = Go();
         }
 
         public async Task Cancel(string reason)
         {
-            if (cancellationTokenSource is null)
+            if (_cancellationTokenSource is null)
                 throw new InvalidOperationException();
 
-            if (!cancellationTokenSource.IsCancellationRequested)
-                cancellationTokenSource.Cancel();
+            if (!_cancellationTokenSource.IsCancellationRequested)
+                _cancellationTokenSource.Cancel();
 
             _job.State.Cancel(reason);
             await _job.WriteStateAsync();
@@ -80,7 +81,7 @@ namespace TGH.Grains.BatchJob
         private async Task Run()
         {
             _logger.LogInformation($"Run Job");
-            cancellationTokenSource ??= new CancellationTokenSource(TimeSpan.FromMinutes(30));
+            _cancellationTokenSource ??= new CancellationTokenSource(TimeSpan.FromMinutes(30));
 
             while (true)
             {
@@ -108,7 +109,7 @@ namespace TGH.Grains.BatchJob
             async Task CreateChildJob(ChildJobState job)
             {
                 var grain = GrainFactory.GetGrain<ITransientJobGrain>(job.Id);
-                await grain.Create(job.Command.Name, job.Command.Data);
+                await grain.Create(job.Command);
             }
             async Task CheckChildJobStatus(ChildJobState job)
             {
@@ -120,11 +121,11 @@ namespace TGH.Grains.BatchJob
         private async Task Cleanup()
         {
             _logger.LogInformation($"Cleanup Job");
-            if (reminder is null)
-                reminder = await GetReminder("Check");
-            if (reminder is not null)
+            if (_reminder is null)
+                _reminder = await GetReminder("Check");
+            if (_reminder is not null)
             {
-                await UnregisterReminder(reminder);
+                await UnregisterReminder(_reminder);
                 _logger.LogInformation($"Job Reminder Unregistered");
             }
             DeactivateOnIdle();

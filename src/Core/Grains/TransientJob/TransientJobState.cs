@@ -1,7 +1,8 @@
-using System;
+﻿using System;
 
 namespace TGH.Grains.TransientJob
 {
+
     public class JobCommand
     {
         public JobCommand(string name, string data)
@@ -17,9 +18,9 @@ namespace TGH.Grains.TransientJob
 
     public class TransientJobState
     {
-#pragma warning disable CS8618 // need this for serialization
+#nullable disable
         public TransientJobState() { }
-#pragma warning restore CS8618
+#nullable enable
 
         public TransientJobState(string commandName, string commandRawData)
         {

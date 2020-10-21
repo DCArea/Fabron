@@ -1,4 +1,4 @@
-namespace TGH.Grains.TransientJob
+namespace TGH.Grains
 {
     public enum JobStatus
     {

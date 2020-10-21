@@ -1,5 +1,4 @@
 using System;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
@@ -14,9 +13,9 @@ namespace TGH.Services
     public class Mediator : IMediator
     {
         private readonly IServiceProvider _serviceProvider;
-        private readonly JobOptions _options;
+        private readonly CommandRegistry _options;
 
-        public Mediator(IServiceProvider serviceProvider, IOptions<JobOptions> options)
+        public Mediator(IServiceProvider serviceProvider, IOptions<CommandRegistry> options)
         {
             _serviceProvider = serviceProvider;
             _options = options.Value;
@@ -24,8 +23,8 @@ namespace TGH.Services
 
         public async Task<string?> Handle(string commandName, string commandData, CancellationToken token)
         {
-            var handle = _options.HandlerRegistrations[commandName];
-            var result = await handle.Invoke(_serviceProvider, commandData, token);
+            HandleDelegate handle = _options.HandlerRegistrations[commandName];
+            string? result = await handle.Invoke(_serviceProvider, commandData, token);
             return result;
         }
     }

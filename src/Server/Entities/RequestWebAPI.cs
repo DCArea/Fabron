@@ -8,7 +8,7 @@ using TGH.Contracts;
 
 namespace TGH.Server.Entities
 {
-    public record RequestWebAPICommand
+    public record RequestWebAPI
     (
         string Url,
         string HttpMethod,
@@ -16,29 +16,22 @@ namespace TGH.Server.Entities
         string? PayloadJson
     ) : ICommand<int>;
 
-    public class RequestWebAPICommandHandler : ICommandHandler<RequestWebAPICommand, int>
+    public class RequestWebAPIHandler : ICommandHandler<RequestWebAPI, int>
     {
         private readonly HttpClient _client;
         private readonly ILogger _logger;
 
-        public RequestWebAPICommandHandler(ILogger<RequestWebAPICommandHandler> logger,
+        public RequestWebAPIHandler(ILogger<RequestWebAPIHandler> logger,
             IHttpClientFactory httpClientFactory)
         {
             _client = httpClientFactory.CreateClient();
             _logger = logger;
         }
 
-        public async Task<int> Handle(RequestWebAPICommand command, CancellationToken token)
+        public async Task<int> Handle(RequestWebAPI command, CancellationToken token)
         {
-            var res = await _client.GetAsync(command.Url, token);
+            HttpResponseMessage res = await _client.GetAsync(command.Url, token);
             return (int)res.StatusCode;
-        }
-
-        public async Task<string> Handle(string data, CancellationToken token)
-        {
-            var typedCommand = JsonSerializer.Deserialize<RequestWebAPICommand>(data);
-            var result = await Handle(typedCommand!, token);
-            return JsonSerializer.Serialize<int>(result);
         }
     }
 }

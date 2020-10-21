@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -18,7 +18,7 @@ namespace TGH.Grains.TransientJob
         Task<TransientJobState> GetState();
         [ReadOnly]
         Task<JobStatus> GetStatus();
-        Task Create(string commandName, string commandRawData);
+        Task Create(JobCommandInfo command);
     }
 
     public class TransientJobGrain : Grain, ITransientJobGrain, IRemindable
@@ -26,8 +26,8 @@ namespace TGH.Grains.TransientJob
         private readonly ILogger _logger;
         private readonly IPersistentState<TransientJobState> _job;
         private readonly IMediator _mediator;
-        private IGrainReminder? reminder;
-        private CancellationTokenSource? cancellationTokenSource;
+        private IGrainReminder? _reminder;
+        private CancellationTokenSource? _cancellationTokenSource;
 
         public TransientJobGrain(
             ILogger<TransientJobGrain> logger,
@@ -42,27 +42,27 @@ namespace TGH.Grains.TransientJob
         public Task<TransientJobState> GetState() => Task.FromResult(_job.State);
         public Task<JobStatus> GetStatus() => Task.FromResult(_job.State.Status);
 
-        public async Task Create(string commandName, string commandData)
+        public async Task Create(JobCommandInfo command)
         {
             if (!_job.RecordExists)
             {
-                _job.State = new TransientJobState(commandName, commandData);
+                _job.State = new TransientJobState(command.Name, command.Data);
                 await _job.WriteStateAsync();
                 _logger.LogInformation($"Created Job");
             }
 
-            reminder = await RegisterOrUpdateReminder("Check", TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(20));
+            _reminder = await RegisterOrUpdateReminder("Check", TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(20));
             _logger.LogInformation($"Job Reminder Registered");
             _ = Go();
         }
 
         public async Task Cancel(string reason)
         {
-            if (cancellationTokenSource is null)
+            if (_cancellationTokenSource is null)
                 throw new InvalidOperationException();
 
-            if (!cancellationTokenSource.IsCancellationRequested)
-                cancellationTokenSource.Cancel();
+            if (!_cancellationTokenSource.IsCancellationRequested)
+                _cancellationTokenSource.Cancel();
 
             _job.State.Cancel(reason);
             await _job.WriteStateAsync();
@@ -81,11 +81,10 @@ namespace TGH.Grains.TransientJob
         private async Task Run()
         {
             _logger.LogInformation($"Run Job");
-            cancellationTokenSource ??= new CancellationTokenSource(TimeSpan.FromMinutes(10));
+            _cancellationTokenSource ??= new CancellationTokenSource(TimeSpan.FromMinutes(10));
             try
             {
-
-                var result = await _mediator.Handle(_job.State.Command.Name, _job.State.Command.Data, cancellationTokenSource.Token);
+                string? result = await _mediator.Handle(_job.State.Command.Name, _job.State.Command.Data, _cancellationTokenSource.Token);
                 _job.State.Complete(result);
             }
             catch (Exception e)
@@ -103,11 +102,12 @@ namespace TGH.Grains.TransientJob
         private async Task Cleanup()
         {
             _logger.LogInformation($"Cleanup Job");
-            if (reminder is null)
-                reminder = await GetReminder("Check");
-            if (reminder is not null)
+            if (_reminder is null)
+                _reminder = await GetReminder("Check");
+            if (_reminder is not null)
             {
-                await UnregisterReminder(reminder);
+                await UnregisterReminder(_reminder);
+                _reminder = null;
                 _logger.LogInformation($"Job Reminder Unregistered");
             }
             DeactivateOnIdle();

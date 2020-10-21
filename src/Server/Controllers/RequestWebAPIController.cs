@@ -27,22 +27,22 @@ namespace TGH.Server.Controllers
         [HttpPost("Transient")]
         public async Task<IActionResult> CreateTransientJob(CreateRequestWebAPIJobRequest req)
         {
-            var job = await _jobManager.Enqueue<RequestWebAPICommand, int>(req.RequestId, req.Command);
+            var job = await _jobManager.Enqueue<RequestWebAPI, int>(req.RequestId, req.Command);
             return CreatedAtAction(nameof(GetTransientJobState), new { Id = req.RequestId }, job);
         }
 
         [HttpGet("Transient/{id}")]
         public async Task<IActionResult> GetTransientJobState(Guid id)
         {
-            var job = await _jobManager.GetJobById<RequestWebAPICommand, int>(id);
+            var job = await _jobManager.GetJobById<RequestWebAPI, int>(id);
             return Ok(job);
         }
 
         [HttpPost("Batch")]
         public async Task<IActionResult> CreateBatchJob(BatchCreateRequestWebAPIJobRequest req)
         {
-            var job = await _jobManager.Enqueue(req.RequestId, req.Commands);
-            return Ok(job);
+            await _jobManager.Enqueue(req.RequestId, req.Commands);
+            return CreatedAtAction(nameof(GetBatchJobState), new { Id = req.RequestId }, new { Id = req.RequestId });
         }
         [HttpGet("Batch/{id}")]
         public async Task<IActionResult> GetBatchJobState(Guid id)

@@ -15,19 +15,23 @@ namespace TGH
 {
     public interface IJobManager
     {
-        Task<Job<TJobCommand, TResult>> Enqueue<TJobCommand, TResult>(Guid jobId, TJobCommand command) where TJobCommand : ICommand<TResult>;
-        Task<BatchJob> Enqueue(Guid jobId, IEnumerable<ICommand> commands);
-        Task<BatchJobState> GetBatchJobById(Guid jobId);
-        Task<Job<TJobCommand, TResult>> GetJobById<TJobCommand, TResult>(Guid jobId) where TJobCommand : ICommand<TResult>;
+        Task<TransientJob<TCommand, TResult>> Enqueue<TCommand, TResult>(Guid jobId, TCommand command)
+            where TCommand : ICommand<TResult>;
+        Task<TransientJob<TCommand, TResult>?> GetJobById<TCommand, TResult>(Guid jobId)
+            where TCommand : ICommand<TResult>;
+
+        Task Enqueue(Guid jobId, IEnumerable<ICommand> commands);
+        Task<BatchJob?> GetBatchJobById(Guid jobId);
+
     }
 
     public class JobManager : IJobManager
     {
         private readonly ILogger _logger;
-        private readonly JobOptions _options;
+        private readonly CommandRegistry _options;
         private readonly IClusterClient _client;
         public JobManager(ILogger<JobManager> logger,
-            IOptions<JobOptions> options,
+            IOptions<CommandRegistry> options,
             IClusterClient client)
         {
             _logger = logger;
@@ -35,19 +39,17 @@ namespace TGH
             _client = client;
         }
 
-        public async Task<Job<TJobCommand, TResult>> Enqueue<TJobCommand, TResult>(Guid jobId, TJobCommand command)
-            where TJobCommand : ICommand<TResult>
+        public async Task<TransientJob<TCommand, TResult>> Enqueue<TCommand, TResult>(Guid jobId, TCommand command)
+            where TCommand : ICommand<TResult>
         {
-            var commandName = _options.CommandRegistrations[typeof(TJobCommand)];
-            var commandData = JsonSerializer.Serialize(command);
+            string commandName = _options.CommandNameRegistrations[typeof(TCommand)];
+            string commandData = JsonSerializer.Serialize(command);
 
             await Enqueue(jobId, commandName, commandData);
 
-            var job = new Job<TJobCommand, TResult>(
-                commandName,
-                command,
-                default,
-                JobStatus.Created,
+            var job = new TransientJob<TCommand, TResult>(
+                new(command, default),
+                Contracts.JobStatus.Created,
                 null
             );
             return job;
@@ -57,72 +59,44 @@ namespace TGH
         {
             _logger.LogInformation($"Creating Job[{jobId}]");
             var grain = _client.GetGrain<ITransientJobGrain>(jobId);
-            await grain.Create(commandName, commandData);
+            await grain.Create(new(commandName, commandData));
             _logger.LogInformation($"Job[{jobId}] Created");
         }
 
-        public async Task<BatchJob> Enqueue(Guid jobId, IEnumerable<ICommand> commands)
+        public async Task Enqueue(Guid jobId, IEnumerable<ICommand> commands)
         {
-            var createChildren = commands.Select(cmd =>
+            var cmds = commands.Select(cmd =>
             {
-                var cmdType = cmd.GetType();
-                var cmdName = _options.CommandRegistrations[cmdType];
-                return new CreateChildJob
-                {
-                    CommandName = cmdName,
-                    CommandData = JsonSerializer.Serialize(cmd, cmdType)
-                };
+                Type cmdType = cmd.GetType();
+                string cmdName = _options.CommandNameRegistrations[cmdType];
+                string cmdData = JsonSerializer.Serialize(cmd, cmdType);
+                return new Grains.JobCommandInfo(cmdName, cmdData);
             }).ToList();
 
             _logger.LogInformation($"Creating Job[{jobId}]");
-            var grain = _client.GetGrain<IBatchJobGrain>(jobId);
-            await grain.Create(new CreateBatchJob
-            {
-                ChildJobs = createChildren
-            });
+            IBatchJobGrain grain = _client.GetGrain<IBatchJobGrain>(jobId);
+            await grain.Create(cmds);
             _logger.LogInformation($"Job[{jobId}] Created");
-
-            var job = new BatchJob(
-                JobStatus.Created,
-                null
-            );
-            return job;
         }
 
-        public async Task<Job<TJobCommand, TResult>> GetJobById<TJobCommand, TResult>(Guid jobId)
+        public async Task<TransientJob<TJobCommand, TResult>?> GetJobById<TJobCommand, TResult>(Guid jobId)
             where TJobCommand : ICommand<TResult>
         {
-            var grain = _client.GetGrain<ITransientJobGrain>(jobId);
-            var jobState = await grain.GetState();
-
-            var job = new Job<TJobCommand, TResult>(
-                jobState.Command.Name,
-                JsonSerializer.Deserialize<TJobCommand>(jobState.Command.Data)!,
-                jobState.Command.Result is null
-                    ? default
-                    : JsonSerializer.Deserialize<TResult>(jobState.Command.Result),
-                JobStatus.Created,
-                null
-            );
+            ITransientJobGrain grain = _client.GetGrain<ITransientJobGrain>(jobId);
+            TransientJobState? jobState = await grain.GetState();
+            if (jobState is null)
+                return null;
+            TransientJob<TJobCommand, TResult>? job = jobState.To<TJobCommand, TResult>();
             return job;
         }
 
-        public async Task<BatchJobState> GetBatchJobById(Guid jobId)
+        public async Task<BatchJob?> GetBatchJobById(Guid jobId)
         {
-            var grain = _client.GetGrain<IBatchJobGrain>(jobId);
-            var jobState = await grain.GetState();
-            return jobState;
-
-            // var job = new BatchJob(
-            //     jobState.Command.Name,
-            //     JsonSerializer.Deserialize<TJobCommand>(jobState.Command.Data)!,
-            //     jobState.Command.Result is null
-            //         ? default
-            //         : JsonSerializer.Deserialize<TResult>(jobState.Command.Result),
-            //     JobStatus.Created,
-            //     null
-            // );
-            // return job;
+            IBatchJobGrain grain = _client.GetGrain<IBatchJobGrain>(jobId);
+            BatchJobState? jobState = await grain.GetState();
+            if (jobState is null)
+                return null;
+            return jobState.To(_options);
         }
     }
 }
