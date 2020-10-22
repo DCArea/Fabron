@@ -30,7 +30,7 @@
   <!-- test pkgs -->
   <PropertyGroup>
     <NBomberVersion>1.0.0</NBomberVersion>
-    <MicrosoftTestSdkVersion>16.8.0-preview-20200812-03</MicrosoftTestSdkVersion>
+    <MicrosoftTestSdkVersion>16.7.1</MicrosoftTestSdkVersion>
     <xUnitVersion>2.4.1</xUnitVersion>
     <xUnitRunnerVisualStudio>2.4.3</xUnitRunnerVisualStudio>
     <FluentAssertionsVersion>6.0.0-alpha0001</FluentAssertionsVersion>

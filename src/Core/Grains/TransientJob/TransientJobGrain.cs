@@ -18,7 +18,7 @@ namespace TGH.Grains.TransientJob
         Task<TransientJobState> GetState();
         [ReadOnly]
         Task<JobStatus> GetStatus();
-        Task Create(JobCommandInfo command);
+        Task Create(JobCommandInfo command, DateTime? scheduledAt = null);
     }
 
     public class TransientJobGrain : Grain, ITransientJobGrain, IRemindable
@@ -26,6 +26,7 @@ namespace TGH.Grains.TransientJob
         private readonly ILogger _logger;
         private readonly IPersistentState<TransientJobState> _job;
         private readonly IMediator _mediator;
+        private IDisposable? _timer;
         private IGrainReminder? _reminder;
         private CancellationTokenSource? _cancellationTokenSource;
 
@@ -42,18 +43,36 @@ namespace TGH.Grains.TransientJob
         public Task<TransientJobState> GetState() => Task.FromResult(_job.State);
         public Task<JobStatus> GetStatus() => Task.FromResult(_job.State.Status);
 
-        public async Task Create(JobCommandInfo command)
+        public async Task Create(JobCommandInfo command, DateTime? scheduledAt = null)
         {
             if (!_job.RecordExists)
             {
-                _job.State = new TransientJobState(command.Name, command.Data);
+                _job.State = new TransientJobState(command, scheduledAt);
                 await _job.WriteStateAsync();
                 _logger.LogInformation($"Created Job");
             }
 
-            _reminder = await RegisterOrUpdateReminder("Check", TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(20));
+            await Schedule();
+        }
+
+        private async Task Schedule()
+        {
+            var dueTime = _job.State.DueTime;
+            switch (dueTime)
+            {
+                case TimeSpan when dueTime == TimeSpan.Zero:
+                    await SetCheckReminder(TimeSpan.FromMinutes(2));
+                    _ = Start();
+                    break;
+                case TimeSpan when dueTime < TimeSpan.FromMinutes(1):
+                    _timer = RegisterTimer(_ => Start(), null, dueTime, TimeSpan.MaxValue);
+                    await SetCheckReminder(TimeSpan.FromMinutes(2));
+                    break;
+                default:
+                    await SetCheckReminder(dueTime);
+                    break;
+            }
             _logger.LogInformation($"Job Reminder Registered");
-            _ = Go();
         }
 
         public async Task Cancel(string reason)
@@ -70,6 +89,7 @@ namespace TGH.Grains.TransientJob
 
         private async Task Start()
         {
+            _timer?.Dispose();
             _logger.LogInformation($"Start Job");
             _job.State.Start();
             await _job.WriteStateAsync();
@@ -120,6 +140,10 @@ namespace TGH.Grains.TransientJob
             _ => Cleanup()
         };
 
+        private async Task SetCheckReminder(TimeSpan dueTime)
+        {
+            _reminder = await RegisterOrUpdateReminder("Check", dueTime, TimeSpan.FromMinutes(2));
+        }
         Task IRemindable.ReceiveReminder(string reminderName, TickStatus status) => Go();
     }
 }

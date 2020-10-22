@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -10,43 +10,43 @@ using Orleans.Runtime;
 using TGH.Grains.TransientJob;
 using TGH.Services;
 
-namespace TGH.Grains.BatchJob
+namespace TGH.Grains.CronJob
 {
-    public interface IBatchJobGrain : IGrainWithGuidKey
+    public interface ICronJobGrain : IGrainWithGuidKey
     {
         [AlwaysInterleave]
         Task Cancel(string reason);
         [ReadOnly]
-        Task<BatchJobState> GetState();
-        Task Create(List<JobCommandInfo> commands);
+        Task<CronJobState> GetState();
+        Task Create(string cronExp, JobCommandInfo commands);
     }
 
-    public class BatchJobGrain : Grain, IBatchJobGrain, IRemindable
+    public class CronJobGrain : Grain, ICronJobGrain, IRemindable
     {
         private readonly ILogger _logger;
-        private readonly IPersistentState<BatchJobState> _job;
+        private readonly IPersistentState<CronJobState> _job;
         private IGrainReminder? _reminder;
         private CancellationTokenSource? _cancellationTokenSource;
 
-        public BatchJobGrain(
+        public CronJobGrain(
             ILogger<TransientJobGrain> logger,
-            [PersistentState("BatchJob", "JobStore")] IPersistentState<BatchJobState> job,
+            [PersistentState("CronJob", "JobStore")] IPersistentState<CronJobState> job,
             IMediator mediator)
         {
             _logger = logger;
             _job = job;
         }
 
-        public Task<BatchJobState> GetState()
+        public Task<CronJobState> GetState()
         {
             return Task.FromResult(_job.State);
         }
 
-        public async Task Create(List<JobCommandInfo> commands)
+        public async Task Create(string cronExp, JobCommandInfo commands)
         {
             if (!_job.RecordExists)
             {
-                _job.State = new(commands);
+                _job.State = new(cronExp, commands);
                 await _job.WriteStateAsync();
                 _logger.LogInformation($"Created Job");
             }
@@ -80,13 +80,13 @@ namespace TGH.Grains.BatchJob
 
         private async Task Run()
         {
-            _logger.LogInformation($"Run BatchJob");
-            _cancellationTokenSource ??= new CancellationTokenSource(TimeSpan.FromMinutes(30));
+            _logger.LogInformation($"Run CronJob");
+            _cancellationTokenSource ??= new CancellationTokenSource();
 
             await Task.WhenAll(EnqueueChildJobs(), CheckChildJobs());
 
             _job.State.Complete();
-            _logger.LogInformation($"BatchJob Finished: {_job.State.Status}");
+            _logger.LogInformation($"CronJob Finished: {_job.State.Status}");
             await Cleanup();
         }
 
@@ -94,15 +94,19 @@ namespace TGH.Grains.BatchJob
         {
             while (true)
             {
-                var pendingJobs = _job.State.PendingJobs.Take(10).ToList();
-                if (pendingJobs.Count == 0)
+                DateTime utcNow = DateTime.UtcNow;
+                DateTime maxScheduleTime = utcNow.AddMinutes(5);
+                _job.State.Schedule(maxScheduleTime);
+                DateTime maxEnqueueTime = utcNow.AddSeconds(3);
+                var jobsToBeEnqueued = _job.State.PendingJobs.Where(job => job.ScheduledAt < maxEnqueueTime).ToList();
+                if (jobsToBeEnqueued.Count == 0)
                 {
                     return;
                 }
 
-                IEnumerable<Task> enqueueChildJobTasks = pendingJobs
+                IEnumerable<Task> enqueueChildJobTasks = jobsToBeEnqueued
                     .Select(job => CreateChildJob(job));
-                IEnumerable<Task> checkJobStatusTasks = pendingJobs
+                IEnumerable<Task> checkJobStatusTasks = jobsToBeEnqueued
                     .Select(job => CheckChildJobStatus(job));
 
                 await Task.WhenAll(enqueueChildJobTasks);
@@ -129,12 +133,10 @@ namespace TGH.Grains.BatchJob
             }
         }
 
-
         private async Task CreateChildJob(ChildJobState job)
         {
             ITransientJobGrain grain = GrainFactory.GetGrain<ITransientJobGrain>(job.Id);
-            await grain.Create(job.Command);
-            job.Status = JobStatus.Created;
+            await grain.Create(_job.State.Command);
         }
 
         private async Task CheckChildJobStatus(ChildJobState job)

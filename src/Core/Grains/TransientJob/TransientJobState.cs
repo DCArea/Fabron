@@ -22,15 +22,31 @@ namespace TGH.Grains.TransientJob
         public TransientJobState() { }
 #nullable enable
 
-        public TransientJobState(string commandName, string commandRawData)
+        public TransientJobState(JobCommandInfo command, DateTime? scheduledAt)
         {
-            Command = new JobCommand(commandName, commandRawData);
+            Command = new JobCommand(command.Name, command.Data);
+            ScheduledAt = scheduledAt;
             Status = JobStatus.Created;
         }
 
         public JobCommand Command { get; }
+        public DateTime? ScheduledAt { get; }
         public JobStatus Status { get; private set; }
         public string? Reason { get; private set; }
+
+        public TimeSpan DueTime
+        {
+            get
+            {
+                if (ScheduledAt is null)
+                    return TimeSpan.Zero;
+                var scheduledAt = ScheduledAt.Value;
+                TimeSpan dueTime = scheduledAt - DateTime.UtcNow;
+                if (dueTime < TimeSpan.FromSeconds(10))
+                    dueTime = TimeSpan.Zero;
+                return dueTime;
+            }
+        }
 
         public void Start() => Status = JobStatus.Running;
 

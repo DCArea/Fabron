@@ -1,29 +1,8 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace TGH.Grains.BatchJob
 {
-    public class ChildJobState
-    {
-#nullable disable
-        public ChildJobState() { }
-#nullable enable
-        public ChildJobState(JobCommandInfo command)
-        {
-            Command = command;
-            Id = Guid.NewGuid();
-        }
-
-        public Guid Id { get; }
-        public JobCommandInfo Command { get; }
-        public JobStatus Status { get; set; }
-        public bool IsFinished => Status switch
-        {
-            JobStatus.RanToCompletion or JobStatus.Faulted or JobStatus.Canceled => true,
-            _ => false
-        };
-    }
 
     public class BatchJobState
     {
@@ -38,10 +17,9 @@ namespace TGH.Grains.BatchJob
         }
 
         private readonly List<ChildJobState> _childJobs = null!;
-        public IEnumerable<ChildJobState> NotStartedJobs => _childJobs.Where(job => job.Status == JobStatus.NotCreated || job.Status == JobStatus.Created);
-        public IEnumerable<ChildJobState> RunningJobs => _childJobs.Where(job => job.Status == JobStatus.Running);
+        public IEnumerable<ChildJobState> PendingJobs => _childJobs.Where(job => job.Status == JobStatus.NotCreated);
+        public IEnumerable<ChildJobState> EnqueuedJobs => _childJobs.Where(job => !job.IsFinished && job.Status != JobStatus.NotCreated);
         public IEnumerable<ChildJobState> FinishedJobs => _childJobs.Where(job => job.IsFinished);
-        public IEnumerable<ChildJobState> PendingJobs => _childJobs.Where(job => !job.IsFinished);
 
         public string? Reason { get; private set; }
 
