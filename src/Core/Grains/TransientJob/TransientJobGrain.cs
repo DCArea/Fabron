@@ -58,21 +58,21 @@ namespace TGH.Grains.TransientJob
         private async Task Schedule()
         {
             var dueTime = _job.State.DueTime;
+            _logger.LogInformation($"Schedule Job, dueTime={dueTime}");
             switch (dueTime)
             {
                 case TimeSpan when dueTime == TimeSpan.Zero:
-                    await SetCheckReminder(TimeSpan.FromMinutes(2));
+                    await SetJobReminder(TimeSpan.FromMinutes(2));
                     _ = Start();
                     break;
                 case TimeSpan when dueTime < TimeSpan.FromMinutes(1):
-                    _timer = RegisterTimer(_ => Start(), null, dueTime, TimeSpan.MaxValue);
-                    await SetCheckReminder(TimeSpan.FromMinutes(2));
+                    SetJobTimer(dueTime);
+                    await SetJobReminder(TimeSpan.FromMinutes(2));
                     break;
                 default:
-                    await SetCheckReminder(dueTime);
+                    await SetJobReminder(dueTime);
                     break;
             }
-            _logger.LogInformation($"Job Reminder Registered");
         }
 
         public async Task Cancel(string reason)
@@ -140,9 +140,15 @@ namespace TGH.Grains.TransientJob
             _ => Cleanup()
         };
 
-        private async Task SetCheckReminder(TimeSpan dueTime)
+        private void SetJobTimer(TimeSpan dueTime)
+        {
+            _timer = RegisterTimer(_ => Start(), null, dueTime, TimeSpan.MaxValue);
+            _logger.LogInformation($"Set Job Timer with, dueTime={dueTime}");
+        }
+        private async Task SetJobReminder(TimeSpan dueTime)
         {
             _reminder = await RegisterOrUpdateReminder("Check", dueTime, TimeSpan.FromMinutes(2));
+            _logger.LogInformation($"Job Reminder Registered, dueTime={dueTime}");
         }
         Task IRemindable.ReceiveReminder(string reminderName, TickStatus status) => Go();
     }

@@ -33,8 +33,8 @@ namespace TGH.Server
                         })
                         .Configure<StatisticsOptions>(opts =>
                         {
-                            //opts.LogWriteInterval = TimeSpan.FromMinutes(5);
-                            //opts.CollectionLevel = Orleans.Runtime.Configuration.StatisticsLevel.Verbose;
+                            opts.LogWriteInterval = TimeSpan.FromMinutes(1000);
+                            // opts.CollectionLevel = Orleans.Runtime.Configuration.StatisticsLevel.Verbose;
                         })
                         .UseInMemoryReminderService()
                         .AddMemoryGrainStorage("JobStore")

@@ -18,9 +18,10 @@ namespace TGH.Grains.CronJob
         public string CronExp { get; }
         public JobCommandInfo Command { get; }
         private readonly List<ChildJobState> _childJobs = new List<ChildJobState>();
-        public ChildJobState LatestJob => _childJobs.Last();
-        public IEnumerable<ChildJobState> PendingJobs => _childJobs.Where(job => job.Status == JobStatus.NotCreated);
+        public ChildJobState? LatestJob => _childJobs.LastOrDefault();
+        public IEnumerable<ChildJobState> NotScheduledJobs => _childJobs.Where(job => job.Status == JobStatus.NotCreated);
         public IEnumerable<ChildJobState> EnqueuedJobs => _childJobs.Where(job => !job.IsFinished && job.Status != JobStatus.NotCreated);
+        public IEnumerable<ChildJobState> UnFinishedJobs => _childJobs.Where(job => !job.IsFinished);
         public IEnumerable<ChildJobState> FinishedJobs => _childJobs.Where(job => job.IsFinished);
         public string? Reason { get; private set; }
         public JobStatus Status { get; private set; }
@@ -49,10 +50,21 @@ namespace TGH.Grains.CronJob
         public void Schedule(DateTime toTime)
         {
             var cron = Cronos.CronExpression.Parse(CronExp);
-            IEnumerable<DateTime> occurrences = cron.GetOccurrences(LatestJob.ScheduledAt, toTime);
-            IEnumerable<ChildJobState> jobsToSchedule = occurrences
-                .Select(occ => new ChildJobState(occ));
-            _childJobs.AddRange(jobsToSchedule);
+            var lastedJob = LatestJob;
+            DateTime lastestScheduledAt = lastedJob is null ? DateTime.MinValue : lastedJob.ScheduledAt;
+            var nextSchedule = cron.GetNextOccurrence(lastestScheduledAt);
+            if (nextSchedule is null) return;
+
+            var nextJob = new ChildJobState(nextSchedule.Value);
+            _childJobs.Add(nextJob);
+
+            if (nextSchedule < toTime)
+            {
+                IEnumerable<DateTime> occurrences = cron.GetOccurrences(nextSchedule.Value, toTime);
+                IEnumerable<ChildJobState> jobsToSchedule = occurrences
+                    .Select(occ => new ChildJobState(occ));
+                _childJobs.AddRange(jobsToSchedule);
+            }
         }
 
     }

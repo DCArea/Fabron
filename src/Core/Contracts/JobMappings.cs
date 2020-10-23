@@ -22,6 +22,10 @@ namespace TGH.Contracts
 
             var job = new TransientJob<TCommand, TResult>(
                 new(cmdData, cmdResult),
+                jobState.CreatedAt,
+                jobState.ScheduledAt,
+                jobState.StartedAt,
+                jobState.FinishedAt,
                 JobStatus.Created,
                 null
             );

@@ -15,7 +15,7 @@ namespace TGH
 {
     public interface IJobManager
     {
-        Task<TransientJob<TCommand, TResult>> Enqueue<TCommand, TResult>(Guid jobId, TCommand command)
+        Task<TransientJob<TCommand, TResult>> Schedule<TCommand, TResult>(Guid jobId, TCommand command, DateTime? scheduledAt = null)
             where TCommand : ICommand<TResult>;
         Task<TransientJob<TCommand, TResult>?> GetJobById<TCommand, TResult>(Guid jobId)
             where TCommand : ICommand<TResult>;
@@ -39,28 +39,24 @@ namespace TGH
             _client = client;
         }
 
-        public async Task<TransientJob<TCommand, TResult>> Enqueue<TCommand, TResult>(Guid jobId, TCommand command)
+        public async Task<TransientJob<TCommand, TResult>> Schedule<TCommand, TResult>(Guid jobId, TCommand command, DateTime? scheduledAt = null)
             where TCommand : ICommand<TResult>
         {
             string commandName = _options.CommandNameRegistrations[typeof(TCommand)];
             string commandData = JsonSerializer.Serialize(command);
 
-            await Enqueue(jobId, commandName, commandData);
-
-            var job = new TransientJob<TCommand, TResult>(
-                new(command, default),
-                Contracts.JobStatus.Created,
-                null
-            );
-            return job;
+            var state = await Schedule(jobId, new(commandName, commandData), scheduledAt);
+            return state.To<TCommand, TResult>();
         }
 
-        private async Task Enqueue(Guid jobId, string commandName, string commandData)
+        private async Task<TransientJobState> Schedule(Guid jobId, Grains.JobCommandInfo command, DateTime? scheduledAt)
         {
             _logger.LogInformation($"Creating Job[{jobId}]");
             var grain = _client.GetGrain<ITransientJobGrain>(jobId);
-            await grain.Create(new(commandName, commandData));
+            await grain.Create(command, scheduledAt);
             _logger.LogInformation($"Job[{jobId}] Created");
+
+            return new TransientJobState(command, scheduledAt);
         }
 
         public async Task Enqueue(Guid jobId, IEnumerable<ICommand> commands)

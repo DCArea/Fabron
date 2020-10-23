@@ -83,54 +83,64 @@ namespace TGH.Grains.CronJob
             _logger.LogInformation($"Run CronJob");
             _cancellationTokenSource ??= new CancellationTokenSource();
 
-            await Task.WhenAll(EnqueueChildJobs(), CheckChildJobs());
+            await Task.WhenAll(ScheduleChildJobs(), CheckPendingJobs());
 
-            _job.State.Complete();
-            _logger.LogInformation($"CronJob Finished: {_job.State.Status}");
-            await Cleanup();
-        }
 
-        private async Task EnqueueChildJobs()
-        {
-            while (true)
+            var firstUnfinishedJob = _job.State.UnFinishedJobs.FirstOrDefault();
+            if (firstUnfinishedJob is null)
             {
-                DateTime utcNow = DateTime.UtcNow;
-                DateTime maxScheduleTime = utcNow.AddMinutes(5);
-                _job.State.Schedule(maxScheduleTime);
-                DateTime maxEnqueueTime = utcNow.AddSeconds(3);
-                var jobsToBeEnqueued = _job.State.PendingJobs.Where(job => job.ScheduledAt < maxEnqueueTime).ToList();
-                if (jobsToBeEnqueued.Count == 0)
-                {
-                    return;
-                }
-
-                IEnumerable<Task> enqueueChildJobTasks = jobsToBeEnqueued
-                    .Select(job => CreateChildJob(job));
-                IEnumerable<Task> checkJobStatusTasks = jobsToBeEnqueued
-                    .Select(job => CheckChildJobStatus(job));
-
-                await Task.WhenAll(enqueueChildJobTasks);
-                await Task.WhenAll(checkJobStatusTasks);
-                await _job.WriteStateAsync();
+                _job.State.Complete();
+                _logger.LogInformation($"CronJob Finished: {_job.State.Status}");
+                await Cleanup();
+            }
+            else
+            {
+                var now = DateTime.UtcNow;
+                var after5Min = DateTime.UtcNow.AddMinutes(5);
+                var nextSchedule = firstUnfinishedJob.ScheduledAt;
+                if (firstUnfinishedJob.ScheduledAt < after5Min)
+                    await SetJobReminder(TimeSpan.FromMinutes(5));
+                else
+                    await SetJobReminder(nextSchedule - now);
             }
         }
 
-        private async Task CheckChildJobs()
+        private async Task ScheduleChildJobs()
         {
-            while (true)
+            DateTime utcNow = DateTime.UtcNow;
+            DateTime toTime = utcNow.AddMinutes(20);
+            _job.State.Schedule(toTime);
+            var jobsToBeScheduled = _job.State.NotScheduledJobs.ToList();
+
+            if (jobsToBeScheduled.Count == 0)
+                return;
+
+            IEnumerable<Task> enqueueChildJobTasks = jobsToBeScheduled
+                .Select(job => CreateChildJob(job));
+            IEnumerable<Task> checkJobStatusTasks = jobsToBeScheduled
+                .Select(job => CheckChildJobStatus(job));
+
+            await Task.WhenAll(enqueueChildJobTasks);
+            await Task.WhenAll(checkJobStatusTasks);
+            await _job.WriteStateAsync();
+        }
+
+        // private async Task Check
+
+        private async Task CheckPendingJobs()
+        {
+            var utcNow = DateTime.UtcNow;
+            var jobsToBeChecked = _job.State.EnqueuedJobs.Where(job => job.ScheduledAt < utcNow).ToList();
+            if (jobsToBeChecked.Count == 0)
             {
-                var jobsToCheck = _job.State.EnqueuedJobs.ToList();
-                if (jobsToCheck.Count == 0)
-                {
-                    return;
-                }
-
-                IEnumerable<Task> checkJobStatusTasks = jobsToCheck
-                    .Select(job => CheckChildJobStatus(job));
-
-                await Task.WhenAll(checkJobStatusTasks);
-                await _job.WriteStateAsync();
+                return;
             }
+
+            IEnumerable<Task> checkJobStatusTasks = jobsToBeChecked
+                .Select(job => CheckChildJobStatus(job));
+
+            await Task.WhenAll(checkJobStatusTasks);
+            await _job.WriteStateAsync();
         }
 
         private async Task CreateChildJob(ChildJobState job)
@@ -166,5 +176,10 @@ namespace TGH.Grains.CronJob
         };
 
         Task IRemindable.ReceiveReminder(string reminderName, TickStatus status) => Go();
+        private async Task SetJobReminder(TimeSpan dueTime)
+        {
+            _reminder = await RegisterOrUpdateReminder("Check", dueTime, TimeSpan.FromMinutes(2));
+            _logger.LogInformation($"Job Reminder Registered, dueTime={dueTime}");
+        }
     }
 }

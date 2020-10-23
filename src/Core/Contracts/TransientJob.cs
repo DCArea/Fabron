@@ -1,4 +1,6 @@
-﻿namespace TGH.Contracts
+﻿using System;
+
+namespace TGH.Contracts
 {
     public record JobCommand<TCommand, TResult>(
         TCommand Data,
@@ -19,9 +21,12 @@
     public record TransientJob<TCommand, TResult>
     (
         JobCommand<TCommand, TResult> Command,
+        DateTime CreatedAt,
+        DateTime? ScheduledAt,
+        DateTime? StartedAt,
+        DateTime? FinishedAt,
         JobStatus Status,
         string? Reason
-    ) : JobInfo(Status, Reason)
-        where TCommand : ICommand<TResult>;
+    ) where TCommand : ICommand<TResult>;
 
 }

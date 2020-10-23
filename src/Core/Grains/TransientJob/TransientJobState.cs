@@ -25,12 +25,16 @@ namespace TGH.Grains.TransientJob
         public TransientJobState(JobCommandInfo command, DateTime? scheduledAt)
         {
             Command = new JobCommand(command.Name, command.Data);
+            CreatedAt = DateTime.UtcNow;
             ScheduledAt = scheduledAt;
             Status = JobStatus.Created;
         }
 
         public JobCommand Command { get; }
-        public DateTime? ScheduledAt { get; }
+        public DateTime CreatedAt { get; private set; }
+        public DateTime? ScheduledAt { get; private set; }
+        public DateTime? StartedAt { get; private set; }
+        public DateTime? FinishedAt { get; private set; }
         public JobStatus Status { get; private set; }
         public string? Reason { get; private set; }
 
@@ -38,7 +42,8 @@ namespace TGH.Grains.TransientJob
         {
             get
             {
-                if (ScheduledAt is null)
+                DateTime utcNow = DateTime.UtcNow;
+                if (ScheduledAt is null || ScheduledAt.Value < utcNow)
                     return TimeSpan.Zero;
                 var scheduledAt = ScheduledAt.Value;
                 TimeSpan dueTime = scheduledAt - DateTime.UtcNow;
@@ -48,23 +53,30 @@ namespace TGH.Grains.TransientJob
             }
         }
 
-        public void Start() => Status = JobStatus.Running;
+        public void Start()
+        {
+            StartedAt = DateTime.UtcNow;
+            Status = JobStatus.Running;
+        }
 
         public void Complete(string? result)
         {
             Status = JobStatus.RanToCompletion;
+            FinishedAt = DateTime.UtcNow;
             Command.Result = result;
         }
 
         public void Cancel(string reason)
         {
             Status = JobStatus.Canceled;
+            FinishedAt = DateTime.UtcNow;
             Reason = reason;
         }
 
         public void Fault(Exception exception)
         {
             Status = JobStatus.Faulted;
+            FinishedAt = DateTime.UtcNow;
             Reason = exception.ToString();
         }
     }

@@ -27,7 +27,7 @@ namespace TGH.Server.Controllers
         [HttpPost("Transient")]
         public async Task<IActionResult> CreateTransientJob(CreateRequestWebAPIJobRequest req)
         {
-            var job = await _jobManager.Enqueue<RequestWebAPI, int>(req.RequestId, req.Command);
+            var job = await _jobManager.Schedule<RequestWebAPI, int>(req.RequestId, req.Command, req.ScheduledAt);
             return CreatedAtAction(nameof(GetTransientJobState), new { Id = req.RequestId }, job);
         }
 
