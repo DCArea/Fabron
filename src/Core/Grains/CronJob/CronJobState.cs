@@ -17,12 +17,14 @@ namespace TGH.Grains.CronJob
 
         public string CronExp { get; }
         public JobCommandInfo Command { get; }
-        private readonly List<ChildJobState> _childJobs = new List<ChildJobState>();
-        public ChildJobState? LatestJob => _childJobs.LastOrDefault();
-        public IEnumerable<ChildJobState> NotScheduledJobs => _childJobs.Where(job => job.Status == JobStatus.NotCreated);
-        public IEnumerable<ChildJobState> EnqueuedJobs => _childJobs.Where(job => !job.IsFinished && job.Status != JobStatus.NotCreated);
-        public IEnumerable<ChildJobState> UnFinishedJobs => _childJobs.Where(job => !job.IsFinished);
-        public IEnumerable<ChildJobState> FinishedJobs => _childJobs.Where(job => job.IsFinished);
+        private readonly List<CronJobStateChild> _childJobs = new List<CronJobStateChild>();
+        public CronJobStateChild? LatestJob => _childJobs.LastOrDefault();
+        public IReadOnlyCollection<CronJobStateChild> ChildJobs => _childJobs.AsReadOnly();
+        public IEnumerable<CronJobStateChild> NotCreatedJobs => _childJobs.Where(job => job.Status == JobStatus.NotCreated);
+        public IEnumerable<CronJobStateChild> CreatedJobs => _childJobs.Where(job => job.Status != JobStatus.NotCreated);
+        public IEnumerable<CronJobStateChild> PendingJobs => _childJobs.Where(job => !job.IsFinished && job.Status != JobStatus.NotCreated);
+        public IEnumerable<CronJobStateChild> UnFinishedJobs => _childJobs.Where(job => !job.IsFinished);
+        public IEnumerable<CronJobStateChild> FinishedJobs => _childJobs.Where(job => job.IsFinished);
         public string? Reason { get; private set; }
         public JobStatus Status { get; private set; }
 
@@ -51,18 +53,18 @@ namespace TGH.Grains.CronJob
         {
             var cron = Cronos.CronExpression.Parse(CronExp);
             var lastedJob = LatestJob;
-            DateTime lastestScheduledAt = lastedJob is null ? DateTime.MinValue : lastedJob.ScheduledAt;
+            DateTime lastestScheduledAt = lastedJob is null ? DateTime.UtcNow : lastedJob.ScheduledAt;
             var nextSchedule = cron.GetNextOccurrence(lastestScheduledAt);
             if (nextSchedule is null) return;
 
-            var nextJob = new ChildJobState(nextSchedule.Value);
+            var nextJob = new CronJobStateChild(nextSchedule.Value);
             _childJobs.Add(nextJob);
 
             if (nextSchedule < toTime)
             {
-                IEnumerable<DateTime> occurrences = cron.GetOccurrences(nextSchedule.Value, toTime);
-                IEnumerable<ChildJobState> jobsToSchedule = occurrences
-                    .Select(occ => new ChildJobState(occ));
+                IEnumerable<DateTime> occurrences = cron.GetOccurrences(nextSchedule.Value, toTime, false);
+                IEnumerable<CronJobStateChild> jobsToSchedule = occurrences
+                    .Select(occ => new CronJobStateChild(occ));
                 _childJobs.AddRange(jobsToSchedule);
             }
         }

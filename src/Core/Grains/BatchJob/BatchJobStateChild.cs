@@ -1,19 +1,21 @@
 using System;
 
-namespace TGH.Grains.CronJob
+namespace TGH.Grains.BatchJob
 {
-    public class ChildJobState
+    public class BatchJobStateChild
     {
-        public ChildJobState(DateTime scheduledAt)
+#nullable disable
+        public BatchJobStateChild() { }
+#nullable enable
+        public BatchJobStateChild(JobCommandInfo command)
         {
+            Command = command;
             Id = Guid.NewGuid();
-            ScheduledAt = scheduledAt;
-            Status = JobStatus.NotCreated;
         }
 
         public Guid Id { get; }
+        public JobCommandInfo Command { get; }
         public JobStatus Status { get; set; }
-        public DateTime ScheduledAt { get; set; }
         public bool IsFinished => Status switch
         {
             JobStatus.RanToCompletion or JobStatus.Faulted or JobStatus.Canceled => true,

@@ -130,14 +130,14 @@ namespace TGH.Grains.BatchJob
         }
 
 
-        private async Task CreateChildJob(ChildJobState job)
+        private async Task CreateChildJob(BatchJobStateChild job)
         {
             ITransientJobGrain grain = GrainFactory.GetGrain<ITransientJobGrain>(job.Id);
             await grain.Create(job.Command);
             job.Status = JobStatus.Created;
         }
 
-        private async Task CheckChildJobStatus(ChildJobState job)
+        private async Task CheckChildJobStatus(BatchJobStateChild job)
         {
             ITransientJobGrain grain = GrainFactory.GetGrain<ITransientJobGrain>(job.Id);
             job.Status = await grain.GetStatus();

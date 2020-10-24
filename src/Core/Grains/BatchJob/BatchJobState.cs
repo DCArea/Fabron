@@ -12,14 +12,14 @@ namespace TGH.Grains.BatchJob
         public BatchJobState(List<JobCommandInfo> commands)
         {
             _childJobs = commands
-                .Select(cmd => new ChildJobState(cmd))
+                .Select(cmd => new BatchJobStateChild(cmd))
                 .ToList();
         }
 
-        private readonly List<ChildJobState> _childJobs = null!;
-        public IEnumerable<ChildJobState> PendingJobs => _childJobs.Where(job => job.Status == JobStatus.NotCreated);
-        public IEnumerable<ChildJobState> EnqueuedJobs => _childJobs.Where(job => !job.IsFinished && job.Status != JobStatus.NotCreated);
-        public IEnumerable<ChildJobState> FinishedJobs => _childJobs.Where(job => job.IsFinished);
+        private readonly List<BatchJobStateChild> _childJobs = null!;
+        public IEnumerable<BatchJobStateChild> PendingJobs => _childJobs.Where(job => job.Status == JobStatus.NotCreated);
+        public IEnumerable<BatchJobStateChild> EnqueuedJobs => _childJobs.Where(job => !job.IsFinished && job.Status != JobStatus.NotCreated);
+        public IEnumerable<BatchJobStateChild> FinishedJobs => _childJobs.Where(job => job.IsFinished);
 
         public string? Reason { get; private set; }
 

@@ -110,18 +110,17 @@ namespace TGH.Grains.CronJob
             DateTime utcNow = DateTime.UtcNow;
             DateTime toTime = utcNow.AddMinutes(20);
             _job.State.Schedule(toTime);
-            var jobsToBeScheduled = _job.State.NotScheduledJobs.ToList();
+            var jobsToBeScheduled = _job.State.NotCreatedJobs.ToList();
 
             if (jobsToBeScheduled.Count == 0)
                 return;
 
             IEnumerable<Task> enqueueChildJobTasks = jobsToBeScheduled
                 .Select(job => CreateChildJob(job));
-            IEnumerable<Task> checkJobStatusTasks = jobsToBeScheduled
-                .Select(job => CheckChildJobStatus(job));
-
             await Task.WhenAll(enqueueChildJobTasks);
-            await Task.WhenAll(checkJobStatusTasks);
+            //IEnumerable<Task> checkJobStatusTasks = jobsToBeScheduled
+            //    .Select(job => CheckChildJobStatus(job));
+            //await Task.WhenAll(checkJobStatusTasks);
             await _job.WriteStateAsync();
         }
 
@@ -130,7 +129,7 @@ namespace TGH.Grains.CronJob
         private async Task CheckPendingJobs()
         {
             var utcNow = DateTime.UtcNow;
-            var jobsToBeChecked = _job.State.EnqueuedJobs.Where(job => job.ScheduledAt < utcNow).ToList();
+            var jobsToBeChecked = _job.State.PendingJobs.Where(job => job.ScheduledAt < utcNow).ToList();
             if (jobsToBeChecked.Count == 0)
             {
                 return;
@@ -143,13 +142,14 @@ namespace TGH.Grains.CronJob
             await _job.WriteStateAsync();
         }
 
-        private async Task CreateChildJob(ChildJobState job)
+        private async Task CreateChildJob(CronJobStateChild job)
         {
             ITransientJobGrain grain = GrainFactory.GetGrain<ITransientJobGrain>(job.Id);
-            await grain.Create(_job.State.Command);
+            await grain.Create(_job.State.Command, job.ScheduledAt);
+            job.Status = JobStatus.Created;
         }
 
-        private async Task CheckChildJobStatus(ChildJobState job)
+        private async Task CheckChildJobStatus(CronJobStateChild job)
         {
             ITransientJobGrain grain = GrainFactory.GetGrain<ITransientJobGrain>(job.Id);
             job.Status = await grain.GetStatus();

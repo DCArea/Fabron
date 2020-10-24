@@ -1,8 +1,8 @@
 namespace TGH.Contracts
 {
-    public record JobCommandInfo<TCommand, TResult>(
+    public record JobCommandInfo<TCommand>(
         TCommand CommandData
-    ) where TCommand : ICommand<TResult>;
+    ) where TCommand : ICommand;
 
     public record JobCommandInfo(
         object Data

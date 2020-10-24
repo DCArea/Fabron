@@ -7,7 +7,6 @@ namespace TGH.Server.Entities
 {
     public record CreateRequestWebAPIJobRequest(
         Guid RequestId,
-        [Required]
         DateTime? ScheduledAt,
         RequestWebAPI Command);
 
@@ -21,5 +20,11 @@ namespace TGH.Server.Entities
     public record BatchCreateRequestWebAPIJobRequest(
         Guid RequestId,
         List<RequestWebAPI> Commands);
+
+    public record CreateRequestWebAPICronJobRequest(
+        Guid RequestId,
+        [Required]
+        string CronExp,
+        RequestWebAPI Command);
 
 }

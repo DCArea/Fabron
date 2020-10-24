@@ -41,13 +41,35 @@ namespace TGH.Server.Controllers
         [HttpPost("Batch")]
         public async Task<IActionResult> CreateBatchJob(BatchCreateRequestWebAPIJobRequest req)
         {
-            await _jobManager.Enqueue(req.RequestId, req.Commands);
+            await _jobManager.Schedule(req.RequestId, req.Commands);
             return CreatedAtAction(nameof(GetBatchJobState), new { Id = req.RequestId }, new { Id = req.RequestId });
         }
+
         [HttpGet("Batch/{id}")]
         public async Task<IActionResult> GetBatchJobState(Guid id)
         {
             var job = await _jobManager.GetBatchJobById(id);
+            return Ok(job);
+        }
+
+        [HttpPost("Cron")]
+        public async Task<IActionResult> CreateCronJob(CreateRequestWebAPICronJobRequest req)
+        {
+            var job = await _jobManager.Schedule(req.RequestId, req.CronExp, req.Command);
+            return CreatedAtAction(nameof(GetCronJob), new { Id = req.RequestId }, job);
+        }
+
+        [HttpGet("Cron/{id}")]
+        public async Task<IActionResult> GetCronJob(Guid id)
+        {
+            var job = await _jobManager.GetCronJob(id);
+            return Ok(job);
+        }
+
+        [HttpGet("Cron/{id}/Detail")]
+        public async Task<IActionResult> GetCronJobDetail(Guid id)
+        {
+            var job = await _jobManager.GetCronJobDetail(id);
             return Ok(job);
         }
     }

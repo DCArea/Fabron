@@ -1,5 +1,8 @@
+using Orleans.Concurrency;
+
 namespace TGH.Grains
 {
+    [Immutable]
     public class JobCommandInfo
     {
         public JobCommandInfo(string name, string data)

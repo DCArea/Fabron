@@ -15,7 +15,7 @@ namespace TGH.Grains.TransientJob
         [AlwaysInterleave]
         Task Cancel(string reason);
         [ReadOnly]
-        Task<TransientJobState> GetState();
+        Task<TransientJobState?> GetState();
         [ReadOnly]
         Task<JobStatus> GetStatus();
         Task Create(JobCommandInfo command, DateTime? scheduledAt = null);
@@ -40,7 +40,12 @@ namespace TGH.Grains.TransientJob
             _mediator = mediator;
         }
 
-        public Task<TransientJobState> GetState() => Task.FromResult(_job.State);
+        public Task<TransientJobState?> GetState()
+        {
+            var state = _job.RecordExists ? _job.State : null;
+            return Task.FromResult(state);
+        }
+
         public Task<JobStatus> GetStatus() => Task.FromResult(_job.State.Status);
 
         public async Task Create(JobCommandInfo command, DateTime? scheduledAt = null)
