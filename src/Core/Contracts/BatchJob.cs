@@ -5,7 +5,7 @@ namespace TGH.Contracts
 {
     public record BatchChildJob
     (
-        Guid JobId,
+        string JobId,
         object Command
     );
     public record BatchJob

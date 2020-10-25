@@ -10,7 +10,7 @@ using TGH.Services;
 namespace TGH.Grains.TransientJob
 {
 
-    public interface ITransientJobGrain : IGrainWithGuidKey
+    public interface ITransientJobGrain : IGrainWithStringKey
     {
         [AlwaysInterleave]
         Task Cancel(string reason);

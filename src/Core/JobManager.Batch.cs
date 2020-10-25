@@ -14,7 +14,7 @@ namespace TGH
 {
     public partial class JobManager
     {
-        public async Task Schedule(Guid jobId, IEnumerable<ICommand> commands)
+        public async Task Schedule(string jobId, IEnumerable<ICommand> commands)
         {
             var cmds = commands.Select(cmd =>
             {
@@ -33,7 +33,7 @@ namespace TGH
             //return state.Map(_registry);
         }
 
-        public async Task<BatchJob?> GetBatchJobById(Guid jobId)
+        public async Task<BatchJob?> GetBatchJobById(string jobId)
         {
             var grain = _client.GetGrain<IBatchJobGrain>(jobId);
             var jobState = await grain.GetState();

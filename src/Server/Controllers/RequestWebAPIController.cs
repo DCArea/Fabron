@@ -32,7 +32,7 @@ namespace TGH.Server.Controllers
         }
 
         [HttpGet("Transient/{id}")]
-        public async Task<IActionResult> GetTransientJobState(Guid id)
+        public async Task<IActionResult> GetTransientJobState(string id)
         {
             var job = await _jobManager.GetJobById<RequestWebAPI, int>(id);
             return Ok(job);
@@ -46,7 +46,7 @@ namespace TGH.Server.Controllers
         }
 
         [HttpGet("Batch/{id}")]
-        public async Task<IActionResult> GetBatchJobState(Guid id)
+        public async Task<IActionResult> GetBatchJobState(string id)
         {
             var job = await _jobManager.GetBatchJobById(id);
             return Ok(job);
@@ -60,14 +60,14 @@ namespace TGH.Server.Controllers
         }
 
         [HttpGet("Cron/{id}")]
-        public async Task<IActionResult> GetCronJob(Guid id)
+        public async Task<IActionResult> GetCronJob(string id)
         {
             var job = await _jobManager.GetCronJob(id);
             return Ok(job);
         }
 
         [HttpGet("Cron/{id}/Detail")]
-        public async Task<IActionResult> GetCronJobDetail(Guid id)
+        public async Task<IActionResult> GetCronJobDetail(string id)
         {
             var job = await _jobManager.GetCronJobDetail(id);
             return Ok(job);

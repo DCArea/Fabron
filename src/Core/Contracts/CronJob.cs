@@ -36,14 +36,14 @@ namespace TGH.Contracts
 
     public record CronChildJob
     (
-        Guid JobId,
+        string JobId,
         JobStatus Status,
         DateTime ScheduledAt
     );
 
     public record CronChildJobDetail
     (
-        Guid JobId,
+        string JobId,
         object? Result,
         JobStatus Status,
         DateTime? CreatedAt,

@@ -16,7 +16,7 @@ namespace TGH
 {
     public partial class JobManager
     {
-        public async Task<CronJob> Schedule<TCommand>(Guid jobId, string cronExp, TCommand command)
+        public async Task<CronJob> Schedule<TCommand>(string jobId, string cronExp, TCommand command)
             where TCommand : ICommand
         {
             string commandName = _registry.CommandNameRegistrations[typeof(TCommand)];
@@ -26,7 +26,7 @@ namespace TGH
             return state.Map<TCommand>();
         }
 
-        private async Task<CronJobState> Schedule(Guid jobId, string cronExp, Grains.JobCommandInfo command)
+        private async Task<CronJobState> Schedule(string jobId, string cronExp, Grains.JobCommandInfo command)
         {
             _logger.LogInformation($"Creating Job[{jobId}]");
             var grain = _client.GetGrain<ICronJobGrain>(jobId);
@@ -37,7 +37,7 @@ namespace TGH
         }
 
 
-        public async Task<CronJob?> GetCronJob(Guid jobId)
+        public async Task<CronJob?> GetCronJob(string jobId)
         {
             var grain = _client.GetGrain<ICronJobGrain>(jobId);
             var jobState = await grain.GetState();
@@ -46,7 +46,7 @@ namespace TGH
             return jobState.Map(_registry);
         }
 
-        public async Task<CronJobDetail?> GetCronJobDetail(Guid jobId)
+        public async Task<CronJobDetail?> GetCronJobDetail(string jobId)
         {
             var grain = _client.GetGrain<ICronJobGrain>(jobId);
             var jobState = await grain.GetState();

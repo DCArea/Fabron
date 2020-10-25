@@ -10,16 +10,15 @@ namespace TGH.Grains.BatchJob
         public BatchJobStateChild(JobCommandInfo command)
         {
             Command = command;
-            Id = Guid.NewGuid();
+            Id = Guid.NewGuid().ToString();
         }
 
-        public Guid Id { get; }
+        public string Id { get; }
         public JobCommandInfo Command { get; }
         public JobStatus Status { get; set; }
-        public bool IsFinished => Status switch
-        {
-            JobStatus.RanToCompletion or JobStatus.Faulted or JobStatus.Canceled => true,
-            _ => false
-        };
+        public bool IsPending
+            => Status is (JobStatus.Created or JobStatus.Running);
+        public bool IsFinished
+            => Status is (JobStatus.RanToCompletion or JobStatus.Canceled or JobStatus.Faulted);
     }
 }

@@ -6,7 +6,7 @@ using System.Text.Json;
 namespace TGH.Server.Entities
 {
     public record CreateRequestWebAPIJobRequest(
-        Guid RequestId,
+        string RequestId,
         DateTime? ScheduledAt,
         RequestWebAPI Command);
 
@@ -18,11 +18,11 @@ namespace TGH.Server.Entities
     );
 
     public record BatchCreateRequestWebAPIJobRequest(
-        Guid RequestId,
+        string RequestId,
         List<RequestWebAPI> Commands);
 
     public record CreateRequestWebAPICronJobRequest(
-        Guid RequestId,
+        string RequestId,
         [Required]
         string CronExp,
         RequestWebAPI Command);

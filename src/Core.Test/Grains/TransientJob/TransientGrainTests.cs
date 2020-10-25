@@ -124,11 +124,11 @@ namespace TGH.Test.Grains.TransientJob
         public TGH.Grains.JobCommandInfo Command { get; private set; } = new TestCommand(Guid.NewGuid().ToString()).ToRaw();
         public TransientJobGrain TestGrain { get; private set; } = null!;
 
-        private Task<(Guid jobId, DateTime? scheduledAt)> CreateGrain(TimeSpan? scheduledAfter = null)
-            => CreateGrain(Guid.NewGuid(), scheduledAfter);
+        private Task<(string jobId, DateTime? scheduledAt)> CreateGrain(TimeSpan? scheduledAfter = null)
+            => CreateGrain(Guid.NewGuid().ToString(), scheduledAfter);
 
         [MemberNotNull(nameof(TestGrain))]
-        private async Task<(Guid jobId, DateTime? scheduledAt)> CreateGrain(Guid jobId, TimeSpan? scheduledAfter = null)
+        private async Task<(string jobId, DateTime? scheduledAt)> CreateGrain(string jobId, TimeSpan? scheduledAfter = null)
         {
             TestGrain = null!;
             TestGrain = await Silo.CreateGrainAsync<TransientJobGrain>(jobId)!;

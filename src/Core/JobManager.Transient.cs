@@ -12,7 +12,7 @@ namespace TGH
 {
     public partial class JobManager
     {
-        public async Task<TransientJob<TCommand, TResult>> Schedule<TCommand, TResult>(Guid jobId, TCommand command, DateTime? scheduledAt = null)
+        public async Task<TransientJob<TCommand, TResult>> Schedule<TCommand, TResult>(string jobId, TCommand command, DateTime? scheduledAt = null)
             where TCommand : ICommand<TResult>
         {
             string commandName = _registry.CommandNameRegistrations[typeof(TCommand)];
@@ -22,7 +22,7 @@ namespace TGH
             return state.Map<TCommand, TResult>();
         }
 
-        private async Task<TransientJobState> Schedule(Guid jobId, Grains.JobCommandInfo command, DateTime? scheduledAt)
+        private async Task<TransientJobState> Schedule(string jobId, Grains.JobCommandInfo command, DateTime? scheduledAt)
         {
             _logger.LogInformation($"Creating Job[{jobId}]");
             var grain = _client.GetGrain<ITransientJobGrain>(jobId);
@@ -32,7 +32,7 @@ namespace TGH
             return new TransientJobState(command, scheduledAt);
         }
 
-        public async Task<TransientJob<TJobCommand, TResult>?> GetJobById<TJobCommand, TResult>(Guid jobId)
+        public async Task<TransientJob<TJobCommand, TResult>?> GetJobById<TJobCommand, TResult>(string jobId)
             where TJobCommand : ICommand<TResult>
         {
             TransientJobState? jobState = await GetTransientJobState(jobId);
@@ -41,7 +41,7 @@ namespace TGH
             return jobState.Map<TJobCommand, TResult>();
         }
 
-        private async Task<TransientJobState?> GetTransientJobState(Guid jobId)
+        private async Task<TransientJobState?> GetTransientJobState(string jobId)
         {
             var grain = _client.GetGrain<ITransientJobGrain>(jobId);
             return await grain.GetState();

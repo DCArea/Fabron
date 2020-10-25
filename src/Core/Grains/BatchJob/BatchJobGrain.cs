@@ -12,7 +12,7 @@ using TGH.Services;
 
 namespace TGH.Grains.BatchJob
 {
-    public interface IBatchJobGrain : IGrainWithGuidKey
+    public interface IBatchJobGrain : IGrainWithStringKey
     {
         [AlwaysInterleave]
         Task Cancel(string reason);

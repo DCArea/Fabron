@@ -12,7 +12,7 @@ using TGH.Services;
 
 namespace TGH.Grains.CronJob
 {
-    public interface ICronJobGrain : IGrainWithGuidKey
+    public interface ICronJobGrain : IGrainWithStringKey
     {
         [AlwaysInterleave]
         Task Cancel(string reason);

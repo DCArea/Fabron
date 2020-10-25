@@ -6,12 +6,12 @@ namespace TGH.Grains.CronJob
     {
         public CronJobStateChild(DateTime scheduledAt)
         {
-            Id = Guid.NewGuid();
+            Id = Guid.NewGuid().ToString();
             ScheduledAt = scheduledAt;
             Status = JobStatus.NotCreated;
         }
 
-        public Guid Id { get; }
+        public string Id { get; }
         public JobStatus Status { get; set; }
         public DateTime ScheduledAt { get; set; }
 

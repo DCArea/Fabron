@@ -100,11 +100,11 @@ namespace TGH.Test.Grains.CronJob
 
         }
 
-        private Task<Guid> CreateGrain(string cronExp)
-            => CreateGrain(Guid.NewGuid(), cronExp);
+        private Task<string> CreateGrain(string cronExp)
+            => CreateGrain(Guid.NewGuid().ToString(), cronExp);
 
         [MemberNotNull(nameof(TestGrain))]
-        private async Task<Guid> CreateGrain(Guid jobId, string cronExp)
+        private async Task<string> CreateGrain(string jobId, string cronExp)
         {
             TestGrain = null!;
             TestGrain = await Silo.CreateGrainAsync<CronJobGrain>(jobId)!;
