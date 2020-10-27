@@ -28,10 +28,8 @@ namespace Fabron.Test.Grains.TransientJob
             Assert.Equal(Command.Data, state.Command.Data);
             Assert.Null(state.ScheduledAt);
 
-            var reminder = (TestReminder)await Silo.ReminderRegistry.GetReminder("Check");
-            Assert.NotNull(reminder);
-            Assert.Equal(TimeSpan.FromMinutes(2), reminder.DueTime);
-            Assert.Equal(TimeSpan.FromMinutes(2), reminder.Period);
+            Silo.ReminderRegistry.Mock
+                .Verify(m => m.RegisterOrUpdateReminder("Check", TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(2)));
         }
 
 
@@ -46,11 +44,8 @@ namespace Fabron.Test.Grains.TransientJob
             Assert.Equal(scheduledAt, state.ScheduledAt);
 
             Silo.TimerRegistry.Mock.VerifyNoOtherCalls();
-
-            var reminder = (TestReminder)await Silo.ReminderRegistry.GetReminder("Check");
-            Assert.NotNull(reminder);
-            Assert.Equal(TimeSpan.FromMinutes(2), reminder.DueTime);
-            Assert.Equal(TimeSpan.FromMinutes(2), reminder.Period);
+            Silo.ReminderRegistry.Mock
+                .Verify(m => m.RegisterOrUpdateReminder("Check", TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(2)));
         }
 
         [Fact]

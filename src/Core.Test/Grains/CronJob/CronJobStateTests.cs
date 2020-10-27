@@ -43,8 +43,7 @@ namespace Core.Test.Grains.CronJob
             DateTime toTime = DateTime.UtcNow.AddMinutes(20);
             state.Schedule(toTime);
 
-            var nextSchedule = CronExpression.Parse(cronExp).GetNextOccurrence(now);
-            state.NotCreatedJobs.Should().HaveCount(21);
+            state.NotCreatedJobs.Should().HaveCount(20);
         }
 
         public JobCommandInfo Command { get; private set; } = new TestCommand(Guid.NewGuid().ToString()).ToRaw();
