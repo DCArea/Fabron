@@ -1,6 +1,6 @@
 using System;
 
-namespace TGH.Grains.CronJob
+namespace Fabron.Grains.CronJob
 {
     public class CronJobStateChild
     {

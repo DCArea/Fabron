@@ -4,9 +4,9 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using TGH.Contracts;
+using Fabron.Contracts;
 
-namespace TGH.Server.Entities
+namespace Fabron.Server.Entities
 {
     public record RequestWebAPI
     (

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace TGH.Contracts
+namespace Fabron.Contracts
 {
     public record JobCommand<TCommand, TResult>(
         TCommand Data,

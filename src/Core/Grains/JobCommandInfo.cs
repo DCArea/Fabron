@@ -1,6 +1,6 @@
 using Orleans.Concurrency;
 
-namespace TGH.Grains
+namespace Fabron.Grains
 {
     [Immutable]
     public class JobCommandInfo

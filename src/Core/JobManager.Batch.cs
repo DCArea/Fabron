@@ -7,10 +7,10 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using TGH.Contracts;
-using TGH.Grains.BatchJob;
+using Fabron.Contracts;
+using Fabron.Grains.BatchJob;
 
-namespace TGH
+namespace Fabron
 {
     public partial class JobManager
     {

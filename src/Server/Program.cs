@@ -6,7 +6,7 @@ using Orleans;
 using Orleans.Configuration;
 using Orleans.Hosting;
 
-namespace TGH.Server
+namespace Fabron.Server
 {
     public class Program
     {
@@ -17,7 +17,7 @@ namespace TGH.Server
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
-                .UseTGH(siloBuilder =>
+                .UseFabron(siloBuilder =>
                 {
                     siloBuilder
                         .UseLocalhostClustering()
@@ -25,7 +25,7 @@ namespace TGH.Server
                         .Configure<ClusterOptions>(opts =>
                         {
                             opts.ClusterId = "dev";
-                            opts.ServiceId = "TGH";
+                            opts.ServiceId = "Fabron";
                         })
                         .Configure<EndpointOptions>(opts =>
                         {
@@ -41,13 +41,13 @@ namespace TGH.Server
                         // .AddAdoNetGrainStorage("JobStore", (AdoNetGrainStorageOptions opt)=>
                         // {
                         //     opt.Invariant = "Microsoft.Data.SqlClient";
-                        //     opt.ConnectionString = @"Data Source=(localdb)\MSSQLLocalDB;Database=TGH;Integrated Security=True;
+                        //     opt.ConnectionString = @"Data Source=(localdb)\MSSQLLocalDB;Database=Fabron;Integrated Security=True;
                         //         Max Pool Size=200; MultipleActiveResultSets=True";
                         // })
                         // .UseAdoNetReminderService((AdoNetReminderTableOptions opt)=>
                         // {
                         //     opt.Invariant = "Microsoft.Data.SqlClient";
-                        //     opt.ConnectionString = @"Data Source=(localdb)\MSSQLLocalDB;Database=TGH;Integrated Security=True;
+                        //     opt.ConnectionString = @"Data Source=(localdb)\MSSQLLocalDB;Database=Fabron;Integrated Security=True;
                         //         Max Pool Size=200; MultipleActiveResultSets=True";
                         // })
                         ;

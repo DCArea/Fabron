@@ -9,7 +9,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/src/Server/bin/Debug/net5.0/TGH.Server.dll",
+            "program": "${workspaceFolder}/src/Server/bin/Debug/net5.0/Fabron.Server.dll",
             "args": [],
             "cwd": "${workspaceFolder}/src/Server",
             "stopAtEntry": false,

@@ -2,16 +2,16 @@ using System;
 using Microsoft.Extensions.DependencyInjection;
 using Orleans;
 using Orleans.Hosting;
-using TGH;
-using TGH.Grains.TransientJob;
-using TGH.Services;
+using Fabron;
+using Fabron.Grains.TransientJob;
+using Fabron.Services;
 
 namespace Microsoft.Extensions.Hosting
 {
 
-    public static class TGHHostBuilderExtensions
+    public static class FabronHostBuilderExtensions
     {
-        public static IHostBuilder UseTGH(this IHostBuilder builder, Action<ISiloBuilder> siloConfigure)
+        public static IHostBuilder UseFabron(this IHostBuilder builder, Action<ISiloBuilder> siloConfigure)
         {
             builder
                 .ConfigureServices((ctx, services) =>

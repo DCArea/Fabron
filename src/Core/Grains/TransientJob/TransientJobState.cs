@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace TGH.Grains.TransientJob
+namespace Fabron.Grains.TransientJob
 {
 
     public class JobCommand

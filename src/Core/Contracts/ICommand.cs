@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace TGH.Contracts
+namespace Fabron.Contracts
 {
     public interface ICommand
     { }

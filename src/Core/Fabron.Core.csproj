@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>$(DefaultNetCoreTargetFramework)</TargetFramework>
-    <RootNamespace>TGH</RootNamespace>
+    <RootNamespace>Fabron</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

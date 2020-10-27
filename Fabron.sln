@@ -5,11 +5,11 @@ VisualStudioVersion = 16.0.30608.117
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{69206C38-EB1E-4CE2-9961-FC1D1D6609FE}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TGH.Server", "src\Server\TGH.Server.csproj", "{D1EE193F-C8DE-40AF-AF9C-EFD24C2D5724}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fabron.Server", "src\Server\Fabron.Server.csproj", "{D1EE193F-C8DE-40AF-AF9C-EFD24C2D5724}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Core.Test", "src\Core.Test\Core.Test.csproj", "{5E6420B6-8A59-49CC-ACFC-9528CB6D6DCE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fabron.Core.Test", "src\Core.Test\Fabron.Core.Test.csproj", "{5E6420B6-8A59-49CC-ACFC-9528CB6D6DCE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Core", "src\Core\Core.csproj", "{5C2B22FC-0D68-421F-B01E-E5AC8EE8E7FA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fabron.Core", "src\Core\Fabron.Core.csproj", "{5C2B22FC-0D68-421F-B01E-E5AC8EE8E7FA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

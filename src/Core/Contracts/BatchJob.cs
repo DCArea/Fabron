@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace TGH.Contracts
+namespace Fabron.Contracts
 {
     public record BatchChildJob
     (

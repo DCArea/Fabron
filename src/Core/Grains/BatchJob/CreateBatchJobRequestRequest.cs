@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace TGH.Grains.BatchJob
+namespace Fabron.Grains.BatchJob
 {
     // public class CreateBatchJobRequestRequest
     // {

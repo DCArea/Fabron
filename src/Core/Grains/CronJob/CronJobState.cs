@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace TGH.Grains.CronJob
+namespace Fabron.Grains.CronJob
 {
     public class CronJobState
     {

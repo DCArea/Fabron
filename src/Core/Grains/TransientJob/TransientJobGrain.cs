@@ -5,9 +5,9 @@ using Microsoft.Extensions.Logging;
 using Orleans;
 using Orleans.Concurrency;
 using Orleans.Runtime;
-using TGH.Services;
+using Fabron.Services;
 
-namespace TGH.Grains.TransientJob
+namespace Fabron.Grains.TransientJob
 {
 
     public interface ITransientJobGrain : IGrainWithStringKey

@@ -4,9 +4,9 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
-using TGH.Services;
+using Fabron.Services;
 
-namespace TGH
+namespace Fabron
 {
     public partial class JobManager : IJobManager
     {

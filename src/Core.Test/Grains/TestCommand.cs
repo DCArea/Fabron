@@ -1,8 +1,8 @@
 using System.Text.Json;
-using TGH.Contracts;
-using TGH.Grains;
+using Fabron.Contracts;
+using Fabron.Grains;
 
-namespace TGH.Test.Grains
+namespace Fabron.Test.Grains
 {
     public record TestCommand
     (
@@ -11,9 +11,9 @@ namespace TGH.Test.Grains
 
     public static class CommandExtensions
     {
-        public static TGH.Grains.JobCommandInfo ToRaw(this TestCommand cmd)
-            => new TGH.Grains.JobCommandInfo(nameof(TestCommand), JsonSerializer.Serialize(cmd));
-        // public static TGH.Grains.JobCommandInfo ToRaw(this TestCommand cmd)
-        //     => new TGH.Grains.JobCommandInfo(nameof(TestCommand), JsonSerializer.Serialize(cmd));
+        public static Fabron.Grains.JobCommandInfo ToRaw(this TestCommand cmd)
+            => new Fabron.Grains.JobCommandInfo(nameof(TestCommand), JsonSerializer.Serialize(cmd));
+        // public static Fabron.Grains.JobCommandInfo ToRaw(this TestCommand cmd)
+        //     => new Fabron.Grains.JobCommandInfo(nameof(TestCommand), JsonSerializer.Serialize(cmd));
     }
 }

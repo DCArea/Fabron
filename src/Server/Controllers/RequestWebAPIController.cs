@@ -3,9 +3,9 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Orleans;
-using TGH.Server.Entities;
+using Fabron.Server.Entities;
 
-namespace TGH.Server.Controllers
+namespace Fabron.Server.Controllers
 {
     [ApiController]
     [Route("Jobs/[controller]")]

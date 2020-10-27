@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 
-namespace TGH.Server.Entities
+namespace Fabron.Server.Entities
 {
     public record CreateRequestWebAPIJobRequest(
         string RequestId,

@@ -12,10 +12,10 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Orleans.Runtime;
 using Orleans.TestKit;
-using TGH.Grains.CronJob;
+using Fabron.Grains.CronJob;
 using Xunit;
 
-namespace TGH.Test.Grains.CronJob
+namespace Fabron.Test.Grains.CronJob
 {
 
     public class CronJobGrainTests : TestKitBase
@@ -83,7 +83,7 @@ namespace TGH.Test.Grains.CronJob
 
         public Mock<IPersistentState<CronJobState>> MockState { get; }
         public Mock<IAttributeToFactoryMapper<PersistentStateAttribute>> MockMapper { get; }
-        public TGH.Grains.JobCommandInfo Command { get; private set; } = new TestCommand(Guid.NewGuid().ToString()).ToRaw();
+        public Fabron.Grains.JobCommandInfo Command { get; private set; } = new TestCommand(Guid.NewGuid().ToString()).ToRaw();
         public CronJobGrain TestGrain { get; private set; } = null!;
 
         public SemaphoreSlim StateWrote { get; set; } = new SemaphoreSlim(1);

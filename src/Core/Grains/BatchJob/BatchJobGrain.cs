@@ -7,10 +7,10 @@ using Microsoft.Extensions.Logging;
 using Orleans;
 using Orleans.Concurrency;
 using Orleans.Runtime;
-using TGH.Grains.TransientJob;
-using TGH.Services;
+using Fabron.Grains.TransientJob;
+using Fabron.Services;
 
-namespace TGH.Grains.BatchJob
+namespace Fabron.Grains.BatchJob
 {
     public interface IBatchJobGrain : IGrainWithStringKey
     {

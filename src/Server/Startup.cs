@@ -6,9 +6,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
-using TGH.Server.Entities;
+using Fabron.Server.Entities;
 
-namespace TGH.Server
+namespace Fabron.Server
 {
     public class Startup
     {

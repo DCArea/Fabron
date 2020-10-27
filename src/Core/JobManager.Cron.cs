@@ -8,11 +8,11 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using TGH.Contracts;
-using TGH.Grains.CronJob;
-using TGH.Grains.TransientJob;
+using Fabron.Contracts;
+using Fabron.Grains.CronJob;
+using Fabron.Grains.TransientJob;
 
-namespace TGH
+namespace Fabron
 {
     public partial class JobManager
     {

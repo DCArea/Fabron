@@ -9,11 +9,11 @@ using Moq;
 using Orleans.Runtime;
 using Orleans.TestKit;
 using Orleans.TestKit.Reminders;
-using TGH.Grains.TransientJob;
-using TGH.Services;
+using Fabron.Grains.TransientJob;
+using Fabron.Services;
 using Xunit;
 
-namespace TGH.Test.Grains.TransientJob
+namespace Fabron.Test.Grains.TransientJob
 {
 
     public class TransientGrainTests : TestKitBase
@@ -121,7 +121,7 @@ namespace TGH.Test.Grains.TransientJob
 
         public Mock<IPersistentState<TransientJobState>> MockState { get; }
         public Mock<IAttributeToFactoryMapper<PersistentStateAttribute>> MockMapper { get; }
-        public TGH.Grains.JobCommandInfo Command { get; private set; } = new TestCommand(Guid.NewGuid().ToString()).ToRaw();
+        public Fabron.Grains.JobCommandInfo Command { get; private set; } = new TestCommand(Guid.NewGuid().ToString()).ToRaw();
         public TransientJobGrain TestGrain { get; private set; } = null!;
 
         private Task<(string jobId, DateTime? scheduledAt)> CreateGrain(TimeSpan? scheduledAfter = null)

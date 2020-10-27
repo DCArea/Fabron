@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using TGH.Contracts;
+using Fabron.Contracts;
 
-namespace TGH
+namespace Fabron
 {
     public interface IJobManager
     {

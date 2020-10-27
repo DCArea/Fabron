@@ -1,7 +1,7 @@
 using System.Linq;
 using System.Reflection;
-using TGH.Contracts;
-using TGH.Services;
+using Fabron.Contracts;
+using Fabron.Services;
 
 namespace Microsoft.Extensions.DependencyInjection
 {

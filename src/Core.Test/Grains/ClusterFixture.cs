@@ -4,7 +4,7 @@ using Orleans.Hosting;
 using Orleans.TestingHost;
 using Xunit;
 
-namespace TGH.Test.Grains.CronJob
+namespace Fabron.Test.Grains.CronJob
 {
     [CollectionDefinition(ClusterCollection.Name)]
     public class ClusterCollection : ICollectionFixture<ClusterFixture>

@@ -1,4 +1,4 @@
-namespace TGH.Contracts
+namespace Fabron.Contracts
 {
     public record JobCommandInfo<TCommand>(
         TCommand CommandData

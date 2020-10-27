@@ -4,9 +4,9 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
-using TGH.Contracts;
+using Fabron.Contracts;
 
-namespace TGH.Services
+namespace Fabron.Services
 {
     public delegate Task<string?> HandleDelegate(IServiceProvider serviceProvider, string commandData, CancellationToken token);
 

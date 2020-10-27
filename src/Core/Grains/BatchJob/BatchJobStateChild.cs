@@ -1,6 +1,6 @@
 using System;
 
-namespace TGH.Grains.BatchJob
+namespace Fabron.Grains.BatchJob
 {
     public class BatchJobStateChild
     {
