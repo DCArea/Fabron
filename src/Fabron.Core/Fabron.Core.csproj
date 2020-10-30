@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Cronos" Version="0.7.0" />
+    <PackageReference Include="Cronos" Version="$(CronosVersion)" />
     <PackageReference Include="Microsoft.Orleans.CodeGenerator.MSBuild" Version="$(OrleansVersion)">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Mando\Fabron.Mando.csproj" />
+    <ProjectReference Include="..\Fabron.Mando\Fabron.Mando.csproj" />
   </ItemGroup>
 
 </Project>
