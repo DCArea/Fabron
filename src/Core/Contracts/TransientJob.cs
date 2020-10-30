@@ -1,4 +1,5 @@
 ﻿using System;
+using Fabron.Mando;
 
 namespace Fabron.Contracts
 {

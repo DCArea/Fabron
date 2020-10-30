@@ -4,7 +4,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
-using Fabron.Services;
+using Fabron.Mando;
 
 namespace Fabron
 {

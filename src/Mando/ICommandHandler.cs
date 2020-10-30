@@ -1,7 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Fabron.Contracts
+namespace Fabron.Mando
 {
     public interface ICommandHandler<in TCommand, TResult> where TCommand : ICommand<TResult>
     {

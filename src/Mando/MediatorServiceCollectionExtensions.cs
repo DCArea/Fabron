@@ -1,7 +1,6 @@
 using System.Linq;
 using System.Reflection;
-using Fabron.Contracts;
-using Fabron.Services;
+using Fabron.Mando;
 
 namespace Microsoft.Extensions.DependencyInjection
 {

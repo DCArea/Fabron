@@ -4,9 +4,8 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
-using Fabron.Contracts;
 
-namespace Fabron.Services
+namespace Fabron.Mando
 {
     public delegate Task<string?> HandleDelegate(IServiceProvider serviceProvider, string commandData, CancellationToken token);
 
