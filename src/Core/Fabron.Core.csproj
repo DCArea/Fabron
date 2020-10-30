@@ -16,4 +16,8 @@
     <PackageReference Include="Microsoft.Orleans.OrleansRuntime" Version="$(OrleansVersion)" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Mando\Fabron.Mando.csproj" />
+  </ItemGroup>
+
 </Project>

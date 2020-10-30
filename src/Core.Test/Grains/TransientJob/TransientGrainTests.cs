@@ -10,8 +10,8 @@ using Orleans.Runtime;
 using Orleans.TestKit;
 using Orleans.TestKit.Reminders;
 using Fabron.Grains.TransientJob;
-using Fabron.Services;
 using Xunit;
+using Fabron.Mando;
 
 namespace Fabron.Test.Grains.TransientJob
 {

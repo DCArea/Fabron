@@ -1,3 +1,5 @@
+using Fabron.Mando;
+
 namespace Fabron.Contracts
 {
     public record JobCommandInfo<TCommand>(

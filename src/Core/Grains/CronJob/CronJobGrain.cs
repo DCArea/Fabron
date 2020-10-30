@@ -8,7 +8,7 @@ using Orleans;
 using Orleans.Concurrency;
 using Orleans.Runtime;
 using Fabron.Grains.TransientJob;
-using Fabron.Services;
+using Fabron.Mando;
 
 namespace Fabron.Grains.CronJob
 {

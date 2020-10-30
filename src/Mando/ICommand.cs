@@ -1,6 +1,4 @@
-using System.Text.Json;
-
-namespace Fabron.Contracts
+namespace Fabron.Mando
 {
     public interface ICommand
     { }
