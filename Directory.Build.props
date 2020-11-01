@@ -23,6 +23,7 @@
   <!-- library versions -->
   <PropertyGroup>
     <CronosVersion>0.7.0</CronosVersion>
+    <SystemCommandLineVersion>2.0.0-beta1.20371.2</SystemCommandLineVersion>
     <MicrosoftDataSqlClientVersion>2.0.1</MicrosoftDataSqlClientVersion>
     <ApplicationInsightsVersion>2.15.0</ApplicationInsightsVersion>
     <SwashbuckleAspNetCoreVersion>5.5.1</SwashbuckleAspNetCoreVersion>
