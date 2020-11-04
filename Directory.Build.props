@@ -13,9 +13,9 @@
 
   <!-- framework versions -->
   <PropertyGroup>
-    <AspNetCoreVersion>5.0.0-rc.2.20455.2</AspNetCoreVersion>
+    <AspNetCoreVersion>5.0.0-rc.2.*</AspNetCoreVersion>
     <MEXVersion>5.0.0-rc.2.*</MEXVersion>
-    <CoreFXVersion>5.0.0-rc.2.20454.25</CoreFXVersion>
+    <CoreFXVersion>5.0.0-rc.2.*</CoreFXVersion>
     <EFCoreVersion>5.0.0-rc.2.*</EFCoreVersion>
     <OrleansVersion>3.3.0</OrleansVersion>
   </PropertyGroup>
@@ -23,7 +23,7 @@
   <!-- library versions -->
   <PropertyGroup>
     <CronosVersion>0.7.0</CronosVersion>
-    <SystemCommandLineVersion>2.0.0-beta1.20371.2</SystemCommandLineVersion>
+    <SystemCommandLineVersion>2.0.0-beta1.20427.1</SystemCommandLineVersion>
     <MicrosoftDataSqlClientVersion>2.0.1</MicrosoftDataSqlClientVersion>
     <ApplicationInsightsVersion>2.15.0</ApplicationInsightsVersion>
     <SwashbuckleAspNetCoreVersion>5.5.1</SwashbuckleAspNetCoreVersion>

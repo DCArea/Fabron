@@ -1,12 +1,43 @@
 ﻿using System;
+using System.CommandLine;
+using System.CommandLine.Builder;
+using System.CommandLine.Hosting;
+using System.CommandLine.Parsing;
+using System.Threading.Tasks;
+using Fabron.CLI.Commands;
+using Fabron.CLI.Services;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace Fabron.CLI
 {
     class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args) => await BuildCommandLine()
+            .UseHost(_ => Host.CreateDefaultBuilder(),
+                host =>
+                {
+                    host.ConfigureServices(ConfigureServices);
+                })
+            .UseDefaults()
+            .Build()
+            .InvokeAsync(args);
+
+        private static CommandLineBuilder BuildCommandLine()
         {
-            Console.WriteLine("Hello World!");
+            var root = new RootCommand(@"$ ");
+            root.AddCommand(new CronJob());
+            return new CommandLineBuilder(root);
+        }
+
+        private static void ConfigureServices(HostBuilderContext _, IServiceCollection services)
+        {
+            services.AddTransient<CronJobShowHandler>();
+            services.AddHttpClient<IRestJobClient, RestJobClient>(client =>
+            {
+                var url = Environment.GetEnvironmentVariable("FABRON_ENDPOINT") ?? throw new ArgumentNullException("endpoint");
+                client.BaseAddress = new Uri(url);
+            });
         }
     }
 }
