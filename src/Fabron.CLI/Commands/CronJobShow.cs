@@ -1,5 +1,6 @@
 ﻿using System.CommandLine;
 using System.CommandLine.Invocation;
+using System.CommandLine.Rendering;
 using System.Threading.Tasks;
 using Fabron.CLI.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -36,7 +37,7 @@ namespace Fabron.CLI.Commands
             _client = client;
         }
 
-        public async Task<int> HandleAsync(CronJobShowOptions options)
+        public async Task<int> HandleAsync(CronJobShowOptions options, IHost host)
         {
             var detail = await _client.GetCronJobDetail(options.Id);
 

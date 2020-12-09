@@ -9,6 +9,7 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="$(MEXVersion)" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="$(MEXVersion)" />
     <PackageReference Include="System.CommandLine" Version="$(SystemCommandLineVersion)" />
+    <PackageReference Include="System.CommandLine.Rendering" Version="0.3.0-alpha.20427.1" />
     <PackageReference Include="System.CommandLine.Hosting" Version="0.3.0-alpha.20427.1" />
     <PackageReference Include="System.Net.Http.Json" Version="$(CoreFXVersion)" />
   </ItemGroup>

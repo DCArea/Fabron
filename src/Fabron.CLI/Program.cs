@@ -33,9 +33,9 @@ namespace Fabron.CLI
         private static void ConfigureServices(HostBuilderContext _, IServiceCollection services)
         {
             services.AddTransient<CronJobShowHandler>();
+            var url = Environment.GetEnvironmentVariable("FABRON_ENDPOINT") ?? throw new ArgumentNullException("endpoint");
             services.AddHttpClient<IRestJobClient, RestJobClient>(client =>
             {
-                var url = Environment.GetEnvironmentVariable("FABRON_ENDPOINT") ?? throw new ArgumentNullException("endpoint");
                 client.BaseAddress = new Uri(url);
             });
         }
