@@ -18,8 +18,8 @@ namespace Fabron.Server
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
                 .UseFabron(fabron => {
-                    fabron.UseLocalCluster()
-                        .UseInMemoryStorage();
+                    fabron.UseLocalCluster();
+                    fabron.UseInMemoryStorage();
                 })
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
