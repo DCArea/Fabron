@@ -34,7 +34,9 @@ namespace Fabron.Mando
             static async Task<string?> Handle(IServiceProvider sp, string commandData, CancellationToken token)
             {
                 ICommandHandler<TCommand, TResult> handler = sp.GetRequiredService<ICommandHandler<TCommand, TResult>>();
-                TCommand typedcommand = JsonSerializer.Deserialize<TCommand>(commandData);
+                var typedcommand = JsonSerializer.Deserialize<TCommand>(commandData);
+                if(typedcommand is null)
+                    throw new Exception("Command should not be null");
                 TResult result = await handler.Handle(typedcommand!, token);
                 return JsonSerializer.Serialize(result);
             }

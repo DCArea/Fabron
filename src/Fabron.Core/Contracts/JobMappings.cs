@@ -15,7 +15,7 @@ namespace Fabron.Contracts
         public static TransientJob<TCommand, TResult> Map<TCommand, TResult>(this TransientJobState jobState)
             where TCommand : ICommand<TResult>
         {
-            TCommand cmdData = JsonSerializer.Deserialize<TCommand>(jobState.Command.Data);
+            TCommand? cmdData = JsonSerializer.Deserialize<TCommand>(jobState.Command.Data);
             if (cmdData is null)
                 throw new Exception();
             TResult? cmdResult = jobState.Command.Result is null
@@ -68,7 +68,7 @@ namespace Fabron.Contracts
         public static CronJob Map<TCommand>(this CronJobState jobState)
             where TCommand : ICommand
         {
-            TCommand cmdData = JsonSerializer.Deserialize<TCommand>(jobState.Command.Data);
+            TCommand? cmdData = JsonSerializer.Deserialize<TCommand>(jobState.Command.Data);
             if (cmdData is null)
                 throw new Exception();
 
