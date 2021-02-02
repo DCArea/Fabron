@@ -1,7 +1,8 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>$(DefaultNetCoreTargetFramework)</TargetFramework>
+    <UserSecretsId>6c552e26-7778-457d-a066-8b42b62b8e53</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -11,6 +12,7 @@
     <PackageReference Include="Microsoft.Orleans.Persistence.AdoNet" Version="$(OrleansVersion)" />
     <PackageReference Include="Microsoft.Orleans.Reminders.AdoNet" Version="$(OrleansVersion)" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="$(SwashbuckleAspNetCoreVersion)" />
+    <PackageReference Include="AspNetCore.Authentication.ApiKey" Version="$(AspNetCoreAuthenticationApiKeyVersion)" />
   </ItemGroup>
 
   <ItemGroup>

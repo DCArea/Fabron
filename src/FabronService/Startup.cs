@@ -7,6 +7,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using Fabron.Server.Entities;
+using AspNetCore.Authentication.ApiKey;
+using Microsoft.AspNetCore.Authorization;
+using System.Threading.Tasks;
 
 namespace Fabron.Server
 {
@@ -26,16 +29,40 @@ namespace Fabron.Server
             {
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
             });
+            var validApiKey = Configuration["ApiKey"];
+            services.AddAuthentication(ApiKeyDefaults.AuthenticationScheme)
+                .AddApiKeyInAuthorizationHeader(options =>
+                {
+                    options.Realm = "FabronService API";
+                    options.KeyName = "token";
+                    options.Events = new ApiKeyEvents
+                    {
+                        OnValidateKey = ctx =>
+                        {
+                            if (ctx.ApiKey == validApiKey)
+                            {
+                                ctx.ValidationSucceeded("debug");
+                            }
+                            else
+                            {
+                                ctx.ValidationFailed();
+                            }
+                            return Task.CompletedTask;
+                        }
+                    };
+                });
+            services.AddAuthorization(options =>
+            {
+                options.FallbackPolicy = new AuthorizationPolicyBuilder()
+                    .RequireAuthenticatedUser()
+                    .Build();
+            });
+
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Server", Version = "v1" });
             });
             services.AddHttpClient();
-            services.AddApplicationInsightsTelemetry(opt =>
-            {
-                opt.EnableDebugLogger = true;
-                opt.DeveloperMode = true;
-            });
 
             services.RegisterJobCommandHandlers(typeof(RequestWebAPI).Assembly);
         }
@@ -50,6 +77,7 @@ namespace Fabron.Server
             }
 
             app.UseRouting();
+            app.UseAuthentication();
             app.UseAuthorization();
             app.UseEndpoints(endpoints =>
             {
