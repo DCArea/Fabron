@@ -24,6 +24,7 @@
   <PropertyGroup>
     <CronosVersion>0.7.0</CronosVersion>
     <MicrosoftDataSqlClientVersion>2.1.1</MicrosoftDataSqlClientVersion>
+    <AspNetCoreAuthenticationApiKeyVersion>5.0.0</AspNetCoreAuthenticationApiKeyVersion>
     <ApplicationInsightsVersion>2.16.0</ApplicationInsightsVersion>
     <SwashbuckleAspNetCoreVersion>5.6.3</SwashbuckleAspNetCoreVersion>
     <StyleCopAnalyzersVersion>1.0.0</StyleCopAnalyzersVersion>
