@@ -30,6 +30,7 @@ jobs:
           ghcr.io/dcarea/fabron-service:git.${{ github.sha }}
   deploy:
     name: Deploy
+    needs: publish_image
     runs-on: ubuntu-latest
     environment: d001
     steps:
@@ -42,6 +43,7 @@ jobs:
       run: |
         echo "${{secrets.KUBECONFIG}}" > .kubeconfig
         npm install
+        pulumi login azblob://fabron
         pulumi up --yes --skip-preview
       working-directory: ./deploy
       env:
