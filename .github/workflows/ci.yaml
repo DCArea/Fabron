@@ -44,6 +44,7 @@ jobs:
         echo "${{secrets.KUBECONFIG}}" > .kubeconfig
         npm install
         pulumi login azblob://fabron
+        pulumi stack select d001
         pulumi up --yes --skip-preview
       working-directory: ./deploy
       env:
