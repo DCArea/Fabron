@@ -3,4 +3,6 @@ import * as kx from "@pulumi/kubernetesx";
 
 // import { namespace_fabron, secret_dca_regcred } from "./core"
 
-export * from "./core"
+// export * from "./core"
+
+export { service } from "./workload"

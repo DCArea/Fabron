@@ -12,7 +12,9 @@
         "noImplicitReturns": true,
         "forceConsistentCasingInFileNames": true
     },
-    // "files": [
-    //     "index.ts"
-    // ]
+    "files": [
+        "core.ts",
+        "workload.ts",
+        "index.ts",
+    ]
 }
