@@ -45,7 +45,7 @@ jobs:
         npm install
         pulumi login azblob://fabron
         pulumi stack select d001
-        pulumi up --yes --skip-preview
+        pulumi up --yes --skip-preview --suppress-permalink
       working-directory: ./deploy
       env:
         AZURE_STORAGE_KEY: ${{ secrets.AZURE_STORAGE_KEY }}
