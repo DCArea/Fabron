@@ -9,7 +9,14 @@ const pb = new kx.PodBuilder({
     containers: [{
         image: `ghcr.io/dcarea/fabron-service:${image_version}`,
         ports: { http: 80 },
+        readinessProbe: {
+            httpGet: {
+                path: "/health",
+                port: 80
+            }
+        }
     }],
+
 });
 export const deployment = new kx.Deployment("fabron-service", {
     metadata: {
