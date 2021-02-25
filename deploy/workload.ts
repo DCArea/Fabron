@@ -33,7 +33,7 @@ export const service = new k8s.core.v1.Service("fabron-service", {
         namespace: namespace.metadata.name,
     },
     spec: {
-        ports: [{ name: "http", port: 80 }],
+        ports: [{ name: "http", port: 80, nodePort: undefined }],
         selector: deployment.spec.template.metadata.labels,
         type: ServiceSpecType.ClusterIP
     }
