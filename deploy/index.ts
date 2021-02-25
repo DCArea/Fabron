@@ -5,4 +5,4 @@ import * as kx from "@pulumi/kubernetesx";
 
 // export * from "./core"
 
-export { deployment } from "./workload"
+export { service } from "./workload"

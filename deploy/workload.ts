@@ -28,43 +28,43 @@ export const deployment = new kx.Deployment("fabron-service", {
 });
 
 
-// export const service = new k8s.core.v1.Service("fabron-service", {
-//     metadata: {
-//         namespace: namespace.metadata.name,
-//     },
-//     spec: {
-//         ports: [{ name: "http", port: 80 }],
-//         selector: deployment.spec.template.metadata.labels,
-//         type: ServiceSpecType.ClusterIP
-//     }
+export const service = new k8s.core.v1.Service("fabron-service", {
+    metadata: {
+        namespace: namespace.metadata.name,
+    },
+    spec: {
+        ports: [{ name: "http", port: 80 }],
+        selector: deployment.spec.template.metadata.labels,
+        type: ServiceSpecType.ClusterIP
+    }
 
-// })
+})
 
-// export const ingress = new k8s.networking.v1.Ingress("fabron-service", {
-//     metadata: {
-//         namespace: namespace.metadata.name,
-//     },
-//     spec: {
-//         ingressClassName: "nginx",
-//         rules: [
-//             {
-//                 host: "fabron.doomed.app",
-//                 http: {
-//                     paths: [
-//                         {
-//                             path: "/",
-//                             pathType: "Exact",
-//                             backend: {
-//                                 service: {
-//                                     name: service.metadata.name,
-//                                     port: { name: "http" },
-//                                 }
-//                             }
-//                         },
-//                     ],
-//                 },
-//             }
-//         ]
-//     }
-// })
+export const ingress = new k8s.networking.v1.Ingress("fabron-service", {
+    metadata: {
+        namespace: namespace.metadata.name,
+    },
+    spec: {
+        ingressClassName: "nginx",
+        rules: [
+            {
+                host: "fabron.doomed.app",
+                http: {
+                    paths: [
+                        {
+                            path: "/",
+                            pathType: "Exact",
+                            backend: {
+                                service: {
+                                    name: service.metadata.name,
+                                    port: { name: "http" },
+                                }
+                            }
+                        },
+                    ],
+                },
+            }
+        ]
+    }
+})
 
