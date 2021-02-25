@@ -51,6 +51,7 @@ export const ingress = new k8s.networking.v1.Ingress("fabron-service", {
                     paths: [
                         {
                             path: "/",
+                            pathType: "Exact",
                             backend: {
                                 service: {
                                     name: service.metadata.name,
