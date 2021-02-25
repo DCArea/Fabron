@@ -1,4 +1,5 @@
 import * as k8s from "@pulumi/kubernetes";
+import { ServiceSpecType } from "@pulumi/kubernetes/core/v1";
 import * as kx from "@pulumi/kubernetesx";
 import { namespace, secret_dca_regcred } from "./core";
 
@@ -34,6 +35,7 @@ export const service = new k8s.core.v1.Service("fabron-service", {
     spec: {
         ports: [{ name: "http", port: 80 }],
         selector: deployment.spec.template.metadata.labels,
+        type: ServiceSpecType.ClusterIP
     }
 
 })
