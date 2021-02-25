@@ -25,16 +25,42 @@ export const deployment = new kx.Deployment("fabron-service", {
     spec: pb.asDeploymentSpec({ replicas: 1 })
 });
 
+
 export const service = new k8s.core.v1.Service("fabron-service", {
     metadata: {
         namespace: namespace.metadata.name,
-        annotations: { "external-dns.alpha.kubernetes.io/hostname": "fabron.doomed.app." }
     },
     spec: {
         ports: [{ name: "http", port: 80 }],
         selector: deployment.spec.template.metadata.labels,
-        type: kx.types.ServiceType.LoadBalancer
     }
 
+})
+
+export const ingress = new k8s.networking.v1.Ingress("fabron-service", {
+    metadata: {
+        namespace: namespace.metadata.name,
+    },
+    spec: {
+        ingressClassName: "nginx",
+        rules: [
+            {
+                host: "fabron.doomed.app",
+                http: {
+                    paths: [
+                        {
+                            path: "/",
+                            backend: {
+                                service: {
+                                    name: service.metadata.name,
+                                    port: { name: "http" },
+                                }
+                            }
+                        },
+                    ],
+                },
+            }
+        ]
+    }
 })
 
