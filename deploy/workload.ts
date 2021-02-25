@@ -20,7 +20,8 @@ const pb = new kx.PodBuilder({
 });
 export const deployment = new kx.Deployment("fabron-service", {
     metadata: {
-        namespace: namespace.metadata.name
+        namespace: namespace.metadata.name,
+        annotations: { "pulumi.com/skipAwait": "true" }
     },
     spec: pb.asDeploymentSpec({ replicas: 1 })
 });
