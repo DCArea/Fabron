@@ -81,7 +81,7 @@ namespace Fabron.Server
             app.UseAuthorization();
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapHealthChecks("/health");
+                endpoints.MapHealthChecks("/health").AllowAnonymous();
                 endpoints.MapControllers();
             });
         }
