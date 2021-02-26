@@ -1,7 +1,8 @@
 name: CI
 on:
   push:
-    branches: [ main, ci ]
+    branches: [ main ]
+    # branches: [ main, ci ]
 jobs:
   publish_image:
     name: Build & Push Container Image
