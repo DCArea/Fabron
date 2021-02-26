@@ -43,14 +43,11 @@ jobs:
       run: |
         echo "${{secrets.KUBECONFIG}}" > .kubeconfig
         npm install
-        pulumi login azblob://fabron
         pulumi stack select d001
-        pulumi up --yes --skip-preview --suppress-permalink
+        pulumi up --yes --skip-preview --suppress-permalink true
       working-directory: ./deploy
       env:
-        AZURE_STORAGE_KEY: ${{ secrets.AZURE_STORAGE_KEY }}
-        AZURE_STORAGE_ACCOUNT: dcainfra
-        PULUMI_CONFIG_PASSPHRASE: ''
+        PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
         KUBECONFIG: .kubeconfig
         CR_PAT: ${{ secrets.CR_PAT }}
         IMAGE_VERSION: build.${{ github.run_number }}
