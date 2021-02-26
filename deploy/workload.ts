@@ -3,7 +3,7 @@ import { ServiceSpecType } from "@pulumi/kubernetes/core/v1";
 import * as kx from "@pulumi/kubernetesx";
 import { namespace, secret_dca_regcred } from "./core";
 
-const image_version = process.env["IMAGE_VERSION"];
+export const image_version = process.env["IMAGE_VERSION"];
 if (!image_version) { throw "missing IMAGE_VERSION" }
 const pb = new kx.PodBuilder({
     imagePullSecrets: [secret_dca_regcred.metadata],
@@ -43,9 +43,18 @@ export const service = new k8s.core.v1.Service("fabron-service", {
 export const ingress = new k8s.networking.v1.Ingress("fabron-service", {
     metadata: {
         namespace: namespace.metadata.name,
+        annotations: {
+            "cert-manager.io/cluster-issuer": "letsencrypt"
+        }
     },
     spec: {
         ingressClassName: "nginx",
+        tls: [
+            {
+                hosts: ["fabron.doomed.app"],
+                secretName: "tls-secret"
+            }
+        ],
         rules: [
             {
                 host: "fabron.doomed.app",
@@ -53,7 +62,7 @@ export const ingress = new k8s.networking.v1.Ingress("fabron-service", {
                     paths: [
                         {
                             path: "/",
-                            pathType: "Exact",
+                            pathType: "Prefix",
                             backend: {
                                 service: {
                                     name: service.metadata.name,
