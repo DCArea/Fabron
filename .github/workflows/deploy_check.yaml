@@ -1,11 +1,11 @@
-name: Deploy Preview
+name: Deploy Check
 on:
   pull_request:
     branches: [ main ]
     paths: [ deploy/** ]
 jobs:
-  deploy_preview:
-    name: Deploy Preview
+  preview:
+    name: Preview Changes
     runs-on: ubuntu-latest
     environment: d001
     steps:
