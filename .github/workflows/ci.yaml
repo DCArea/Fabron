@@ -44,7 +44,7 @@ jobs:
         echo "${{secrets.KUBECONFIG}}" > .kubeconfig
         npm install
         pulumi stack select d001
-        pulumi up --yes --skip-preview --suppress-permalink true
+        pulumi up --yes --skip-preview --suppress-permalink "true"
       working-directory: ./deploy
       env:
         PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
