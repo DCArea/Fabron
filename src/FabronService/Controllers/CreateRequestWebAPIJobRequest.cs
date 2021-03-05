@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
+using FabronService.Commands;
 
 namespace Fabron.Server.Entities
 {
@@ -9,13 +10,6 @@ namespace Fabron.Server.Entities
         string RequestId,
         DateTime? ScheduledAt,
         RequestWebAPI Command);
-
-    public record GenericCommand(string name, string data);
-
-    public record CreateJobRequest(
-        string name,
-        JsonElement data
-    );
 
     public record BatchCreateRequestWebAPIJobRequest(
         string RequestId,

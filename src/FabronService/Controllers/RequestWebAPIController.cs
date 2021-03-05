@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Orleans;
 using Fabron.Server.Entities;
+using FabronService.Commands;
 
 namespace Fabron.Server.Controllers
 {

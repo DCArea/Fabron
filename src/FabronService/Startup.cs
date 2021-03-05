@@ -6,10 +6,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
-using Fabron.Server.Entities;
 using AspNetCore.Authentication.ApiKey;
 using Microsoft.AspNetCore.Authorization;
 using System.Threading.Tasks;
+using FabronService.Commands;
 
 namespace Fabron.Server
 {
