@@ -14,8 +14,7 @@ namespace Orleans.Hosting
             siloBuilder
                 .ConfigureServices((ctx, services) =>
                 {
-                    services.TryAddScoped<IMediator, Mediator>();
-                    services.TryAddSingleton<IJobManager, JobManager>();
+                    services.AddFabronCore();
                 });
             siloBuilder
                 .ConfigureApplicationParts(manager =>

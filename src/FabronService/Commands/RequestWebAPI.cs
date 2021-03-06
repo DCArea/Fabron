@@ -11,8 +11,8 @@ namespace FabronService.Commands
     (
         string Url,
         string HttpMethod,
-        Dictionary<string, string>? Headers,
-        string? PayloadJson
+        Dictionary<string, string>? Headers = null,
+        string? PayloadJson = null
     ) : ICommand<int>;
 
     public class RequestWebAPIHandler : ICommandHandler<RequestWebAPI, int>

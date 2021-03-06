@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 namespace FabronService.Resources
 {
     [ApiController]
-    [Route("Jobs/[controller]")]
+    [Route("APIReminders")]
     public class APIReminderResourceController : ControllerBase
     {
         private readonly ILogger<APIReminderResourceController> _logger;
@@ -23,12 +23,16 @@ namespace FabronService.Resources
         [HttpPost]
         public async Task<IActionResult> Create(CreateAPIReminderResourceRequest req)
         {
+            if (_logger.IsEnabled(LogLevel.Debug))
+            {
+                _logger.LogDebug($"Creating APIReminder: {req.Name}({req.Schedule})");
+            }
             var job = await _jobManager.Schedule<RequestWebAPI, int>(req.Name, req.Command, req.Schedule);
             var reminder = job.ToResource(req.Name);
             return CreatedAtAction(nameof(Get), new { name = reminder.Name }, reminder);
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{name}")]
         public async Task<IActionResult> Get(string name)
         {
             var job = await _jobManager.GetJobById<RequestWebAPI, int>(name);

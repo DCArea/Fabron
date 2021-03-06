@@ -1,11 +1,11 @@
 using System;
-using FabronService.Commands;
+using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Orleans;
-using Orleans.Hosting;
+using Microsoft.Extensions.Options;
 using Orleans.TestingHost;
 
 namespace FabronService.Test
@@ -13,6 +13,8 @@ namespace FabronService.Test
     public class WAF : WebApplicationFactory<Startup>
     {
         public TestCluster TestCluster { get; private set; }
+        public JsonSerializerOptions JsonSerializerOptions =>
+            Server.Services.GetRequiredService<IOptions<JsonOptions>>().Value.JsonSerializerOptions;
         public WAF()
         {
             TestCluster = CreateTestCluster();
@@ -22,7 +24,8 @@ namespace FabronService.Test
             return Host.CreateDefaultBuilder()
                 .ConfigureServices((ctx, services) =>
                 {
-                    services.AddSingleton<IClusterClient>(TestCluster.Client);
+                    services.AddFabronCore();
+                    services.AddSingleton(TestCluster.Client);
                 })
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
@@ -38,14 +41,6 @@ namespace FabronService.Test
             var cluster = builder.Build();
             cluster.Deploy();
             return cluster;
-        }
-    }
-
-    public class TestSiloConfigurator : ISiloConfigurator
-    {
-        public void Configure(ISiloBuilder siloBuilder)
-        {
-            siloBuilder.AddFabron(typeof(RequestWebAPI).Assembly);
         }
     }
 }

@@ -14,13 +14,14 @@ using Orleans.Runtime;
 using Orleans.TestKit;
 using Fabron.Grains.CronJob;
 using Xunit;
+using Fabron.Grains;
 
 namespace Fabron.Test.Grains.CronJob
 {
 
     public class CronJobGrainTests : TestKitBase
     {
-        private CronJobState _state = new CronJobState();
+        private CronJobState _state = new();
 
         [Fact]
         public async Task Create()
@@ -83,7 +84,7 @@ namespace Fabron.Test.Grains.CronJob
 
         public Mock<IPersistentState<CronJobState>> MockState { get; }
         public Mock<IAttributeToFactoryMapper<PersistentStateAttribute>> MockMapper { get; }
-        public Fabron.Grains.JobCommandInfo Command { get; private set; } = new TestCommand(Guid.NewGuid().ToString()).ToRaw();
+        public JobCommandInfo Command { get; private set; } = new TestCommand(Guid.NewGuid().ToString()).ToRaw();
         public CronJobGrain TestGrain { get; private set; } = null!;
 
         public SemaphoreSlim StateWrote { get; set; } = new SemaphoreSlim(1);
