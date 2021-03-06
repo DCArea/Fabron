@@ -1,8 +1,7 @@
 name: CI
 on:
   push:
-    # branches: [ main ]
-    branches: [ main, ci ]
+    branches: [ main ]
 jobs:
   publish_image:
     name: Build & Push Container Image
@@ -29,25 +28,25 @@ jobs:
         tags: |
           ghcr.io/dcarea/fabron-service:build.${{ github.run_number }}
           ghcr.io/dcarea/fabron-service:git.${{ github.sha }}
-  # deploy:
-  #   name: Deploy
-  #   needs: publish_image
-  #   runs-on: ubuntu-latest
-  #   environment: d001
-  #   steps:
-  #   - uses: actions/checkout@v2
-  #     with:
-  #       fetch-depth: 1
-  #   - name: Install Pulumi CLI
-  #     uses: pulumi/action-install-pulumi-cli@v1.0.1
-  #   - name: Pulumi up
-  #     run: |
-  #       echo "${{secrets.KUBECONFIG}}" > .kubeconfig
-  #       npm install
-  #       pulumi stack select d001
-  #       pulumi up --yes --skip-preview --suppress-permalink="true"
-  #     working-directory: ./deploy
-  #     env:
-  #       PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-  #       KUBECONFIG: .kubeconfig
-  #       IMAGE_VERSION: build.${{ github.run_number }}
+  deploy:
+    name: Deploy
+    needs: publish_image
+    runs-on: ubuntu-latest
+    environment: d001
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 1
+    - name: Install Pulumi CLI
+      uses: pulumi/action-install-pulumi-cli@v1.0.1
+    - name: Pulumi up
+      run: |
+        echo "${{secrets.KUBECONFIG}}" > .kubeconfig
+        npm install
+        pulumi stack select d001
+        pulumi up --yes --skip-preview --suppress-permalink="true"
+      working-directory: ./deploy
+      env:
+        PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+        KUBECONFIG: .kubeconfig
+        IMAGE_VERSION: build.${{ github.run_number }}
