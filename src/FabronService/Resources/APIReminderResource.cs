@@ -2,7 +2,7 @@ using System;
 using Fabron.Contracts;
 using FabronService.Commands;
 
-namespace Fabron.Server.Controllers
+namespace FabronService.Resources
 {
     public record APIReminderResource
     (

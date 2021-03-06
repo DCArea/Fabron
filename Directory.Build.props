@@ -17,7 +17,7 @@
     <MEXVersion>5.0.0</MEXVersion>
     <CoreFXVersion>5.0.1</CoreFXVersion>
     <EFCoreVersion>5.0.1</EFCoreVersion>
-    <OrleansVersion>3.4.0</OrleansVersion>
+    <OrleansVersion>3.4.1</OrleansVersion>
   </PropertyGroup>
 
   <!-- library versions -->

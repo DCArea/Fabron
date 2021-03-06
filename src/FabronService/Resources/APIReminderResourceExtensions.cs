@@ -1,7 +1,7 @@
 using Fabron.Contracts;
 using FabronService.Commands;
 
-namespace Fabron.Server.Controllers
+namespace FabronService.Resources
 {
     public static class APIReminderResourceExtensions
     {

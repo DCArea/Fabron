@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Reflection;
 using Fabron.Mando;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -37,7 +38,7 @@ namespace Microsoft.Extensions.DependencyInjection
             var commandType = typeof(TCommand);
             var handlerType = typeof(THandler);
 
-            services.AddTransient<ICommandHandler<TCommand, TResult>, THandler>();
+            services.TryAddTransient<ICommandHandler<TCommand, TResult>, THandler>();
             services.Configure<CommandRegistry>(opt =>
             {
                 opt.RegisterCommand<TCommand, TResult>();

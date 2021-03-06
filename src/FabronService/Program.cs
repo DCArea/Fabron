@@ -1,12 +1,11 @@
 using System;
-using System.Net;
+using FabronService.Commands;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
-using Orleans;
 using Orleans.Configuration;
 using Orleans.Hosting;
 
-namespace Fabron.Server
+namespace FabronService
 {
     public class Program
     {
@@ -17,9 +16,14 @@ namespace Fabron.Server
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
-                .UseFabron(fabron => {
-                    fabron.UseLocalCluster();
-                    fabron.UseInMemoryStorage();
+                .UseFabron(typeof(RequestWebAPI).Assembly, siloBuilder =>
+                {
+                    siloBuilder.UseLocalhostClustering();
+                    siloBuilder.UseInMemoryJobStore();
+                    siloBuilder.Configure<StatisticsOptions>(opts =>
+                        {
+                            opts.LogWriteInterval = TimeSpan.FromMinutes(1000);
+                        });
                 })
                 .ConfigureWebHostDefaults(webBuilder =>
                 {

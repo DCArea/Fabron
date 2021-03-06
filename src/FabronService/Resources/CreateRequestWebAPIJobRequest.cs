@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Text.Json;
 using FabronService.Commands;
 
-namespace Fabron.Server.Entities
+namespace FabronService.Resources
 {
     public record CreateRequestWebAPIJobRequest(
         string RequestId,

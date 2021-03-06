@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Authorization;
 using System.Threading.Tasks;
 using FabronService.Commands;
 
-namespace Fabron.Server
+namespace FabronService
 {
     public class Startup
     {
