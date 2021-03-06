@@ -1,5 +1,6 @@
 using System;
 using System.Text.Json;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -7,24 +8,25 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Orleans.TestingHost;
+using Xunit;
 
 namespace FabronService.Test
 {
-    public class WAF : WebApplicationFactory<Startup>
+    public class WAF : WebApplicationFactory<Startup>, IAsyncLifetime
     {
-        public TestCluster TestCluster { get; private set; }
+        public TestCluster TestCluster { get; private set; } = default!;
         public JsonSerializerOptions JsonSerializerOptions =>
             Server.Services.GetRequiredService<IOptions<JsonOptions>>().Value.JsonSerializerOptions;
-        public WAF()
+
+        public async Task InitializeAsync()
         {
-            TestCluster = CreateTestCluster();
+            TestCluster = await CreateTestClusterAsync();
         }
 
-        // protected override void Dispose(bool disposing)
-        // {
-        //     TestCluster.StopAllSilos();
-        //     base.Dispose(disposing);
-        // }
+        public async Task DisposeAsync()
+        {
+            await TestCluster.StopAllSilosAsync();
+        }
 
         protected override IHostBuilder CreateHostBuilder()
         {
@@ -40,14 +42,15 @@ namespace FabronService.Test
                 });
         }
 
-        public TestCluster CreateTestCluster()
+        public async Task<TestCluster> CreateTestClusterAsync()
         {
             var builder = new TestClusterBuilder();
             builder.Options.ServiceId = Guid.NewGuid().ToString();
             builder.AddSiloBuilderConfigurator<TestSiloConfigurator>();
             var cluster = builder.Build();
-            cluster.Deploy();
+            await cluster.DeployAsync();
             return cluster;
         }
+
     }
 }
