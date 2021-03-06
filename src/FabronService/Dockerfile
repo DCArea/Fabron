@@ -8,6 +8,7 @@ COPY Directory.Build.props .
 COPY global.json .
 COPY nuget.config .
 COPY src/FabronService/*.csproj ./src/FabronService/
+COPY src/FabronService.Test/*.csproj ./src/FabronService.Test/
 COPY src/Fabron.Core/*.csproj ./src/Fabron.Core/
 COPY src/Fabron.Core.Test/*.csproj ./src/Fabron.Core.Test/
 COPY src/Fabron.Mando/*.csproj ./src/Fabron.Mando/
