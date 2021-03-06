@@ -1,27 +1,24 @@
 using System;
-using Fabron.Server;
+using System.Reflection;
+using Orleans.Hosting;
 
 namespace Microsoft.Extensions.Hosting
 {
     public static class FabronHostBuilderExtensions
     {
-        public static IHostBuilder UseFabron(this IHostBuilder hostBuilder, Action<FabronHostBuilder> configureDelegate)
+        public static IHostBuilder UseFabron(this IHostBuilder hostBuilder, Assembly commandAssembly, Action<ISiloBuilder>? configureDelegate = null)
         {
             if (configureDelegate == null)
             {
                 throw new ArgumentNullException(nameof(configureDelegate));
             }
-            FabronHostBuilder fabronBuilder;
-            if (!hostBuilder.Properties.ContainsKey("FabronBuilder"))
+
+            hostBuilder.UseOrleans((ctx, siloBuilder) =>
             {
-                fabronBuilder = new FabronHostBuilder(hostBuilder);
-                hostBuilder.Properties.Add("FabronBuilder", fabronBuilder);
-            }
-            else
-            {
-                fabronBuilder = (FabronHostBuilder)hostBuilder.Properties["FabronBuilder"];
-            }
-            configureDelegate(fabronBuilder);
+                siloBuilder.AddFabron(commandAssembly);
+                configureDelegate?.Invoke(siloBuilder);
+            });
+
             return hostBuilder;
         }
     }

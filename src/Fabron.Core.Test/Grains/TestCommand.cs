@@ -11,8 +11,8 @@ namespace Fabron.Test.Grains
 
     public static class CommandExtensions
     {
-        public static Fabron.Grains.JobCommandInfo ToRaw(this TestCommand cmd)
-            => new Fabron.Grains.JobCommandInfo(nameof(TestCommand), JsonSerializer.Serialize(cmd));
+        public static JobCommandInfo ToRaw(this TestCommand cmd)
+            => new(nameof(TestCommand), JsonSerializer.Serialize(cmd));
         // public static Fabron.Grains.JobCommandInfo ToRaw(this TestCommand cmd)
         //     => new Fabron.Grains.JobCommandInfo(nameof(TestCommand), JsonSerializer.Serialize(cmd));
     }

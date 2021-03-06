@@ -1,19 +1,18 @@
 using System.Collections.Generic;
 using System.Net.Http;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Fabron.Mando;
 
-namespace Fabron.Server.Entities
+namespace FabronService.Commands
 {
     public record RequestWebAPI
     (
         string Url,
         string HttpMethod,
-        Dictionary<string, string>? Headers,
-        string? PayloadJson
+        Dictionary<string, string>? Headers = null,
+        string? PayloadJson = null
     ) : ICommand<int>;
 
     public class RequestWebAPIHandler : ICommandHandler<RequestWebAPI, int>
