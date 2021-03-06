@@ -19,6 +19,13 @@ namespace FabronService.Test
         {
             TestCluster = CreateTestCluster();
         }
+
+        protected override void Dispose(bool disposing)
+        {
+            TestCluster.StopAllSilos();
+            base.Dispose(disposing);
+        }
+
         protected override IHostBuilder CreateHostBuilder()
         {
             return Host.CreateDefaultBuilder()
