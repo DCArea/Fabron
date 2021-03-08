@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Fabron.Mando;
+using System;
 
 namespace FabronService.Commands
 {
@@ -21,16 +22,24 @@ namespace FabronService.Commands
         private readonly ILogger _logger;
 
         public RequestWebAPIHandler(ILogger<RequestWebAPIHandler> logger,
-            IHttpClientFactory httpClientFactory)
+            HttpClient httpClient)
         {
-            _client = httpClientFactory.CreateClient();
+            _client = httpClient;
             _logger = logger;
         }
 
         public async Task<int> Handle(RequestWebAPI command, CancellationToken token)
         {
-            HttpResponseMessage res = await _client.GetAsync(command.Url, token);
-            return (int)res.StatusCode;
+            try
+            {
+                HttpResponseMessage res = await _client.GetAsync(command.Url, token);
+                return (int)res.StatusCode;
+            }
+            catch (Exception e)
+            {
+                _logger.LogWarning(e, $"Exception on Handling {nameof(RequestWebAPI)}");
+                throw;
+            }
         }
     }
 }
