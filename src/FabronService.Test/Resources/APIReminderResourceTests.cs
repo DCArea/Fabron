@@ -8,10 +8,10 @@ using Xunit;
 
 namespace FabronService.Test.Resourcers
 {
-    public class APIReminderResourceTest : IClassFixture<WAF>
+    public class APIReminderResourceTests : IClassFixture<WAF>
     {
         private readonly WAF _waf;
-        public APIReminderResourceTest(WAF waf)
+        public APIReminderResourceTests(WAF waf)
         {
             _waf = waf;
         }
@@ -32,6 +32,25 @@ namespace FabronService.Test.Resourcers
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
             Assert.Equal(new Uri(_waf.Server.BaseAddress, "APIReminders/TestReminder123"), response.Headers.Location);
             var reminder = await response.Content.ReadFromJsonAsync<APIReminderResource>(_waf.JsonSerializerOptions);
+            Assert.NotNull(reminder);
+            Assert.Equal(request.Command.Url, reminder!.Command.Data.Url);
+        }
+
+        [Fact]
+        public async Task Get()
+        {
+            var client = _waf.WithTestUser().CreateClient();
+            var request = new CreateAPIReminderResourceRequest(
+                "TestReminder123",
+                DateTime.Now.AddDays(1),
+                new RequestWebAPI(
+                    "http://localhost",
+                    "GET")
+                );
+            var response = await client.PostAsJsonAsync("/APIReminders", request);
+
+            var reminder = await client.GetFromJsonAsync<APIReminderResource>(response.Headers.Location, _waf.JsonSerializerOptions);
+
             Assert.NotNull(reminder);
             Assert.Equal(request.Command.Url, reminder!.Command.Data.Url);
         }
