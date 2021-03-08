@@ -17,7 +17,7 @@ namespace Fabron.Grains.CronJob
 
         public string CronExp { get; }
         public JobCommandInfo Command { get; }
-        private readonly List<CronJobStateChild> _childJobs = new List<CronJobStateChild>();
+        private readonly List<CronJobStateChild> _childJobs = new();
         public CronJobStateChild? LatestJob => _childJobs.LastOrDefault();
         public IReadOnlyCollection<CronJobStateChild> ChildJobs => _childJobs.AsReadOnly();
         public IEnumerable<CronJobStateChild> NotCreatedJobs => _childJobs.Where(job => job.Status == JobStatus.NotCreated);

@@ -21,8 +21,6 @@ namespace Fabron.Test.Grains.CronJob
 
     public class CronJobGrainTests : TestKitBase
     {
-        private CronJobState _state = new();
-
         [Fact]
         public async Task Create()
         {
@@ -88,7 +86,7 @@ namespace Fabron.Test.Grains.CronJob
         public CronJobGrain TestGrain { get; private set; } = null!;
 
         public SemaphoreSlim StateWrote { get; set; } = new SemaphoreSlim(1);
-        public CronJobState State { get => _state; private set => _state = value; }
+        public CronJobState State { get; private set; } = new();
 
         public async Task WhenState(Expression<Func<CronJobState, bool>> condition, TimeSpan timeout)
         {

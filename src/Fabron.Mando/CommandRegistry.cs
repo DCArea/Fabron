@@ -11,13 +11,13 @@ namespace Fabron.Mando
 
     public class CommandRegistry
     {
-        private readonly Dictionary<Type, string> _commandNameRegistrations = new Dictionary<Type, string>();
+        private readonly Dictionary<Type, string> _commandNameRegistrations = new();
         public IReadOnlyDictionary<Type, string> CommandNameRegistrations => _commandNameRegistrations;
-        private readonly Dictionary<string, Type> _commandTypeRegistrations = new Dictionary<string, Type>();
+        private readonly Dictionary<string, Type> _commandTypeRegistrations = new();
         public IReadOnlyDictionary<string, Type> CommandTypeRegistrations => _commandTypeRegistrations;
-        private readonly Dictionary<string, Type> _resultTypeRegistrations = new Dictionary<string, Type>();
+        private readonly Dictionary<string, Type> _resultTypeRegistrations = new();
         public IReadOnlyDictionary<string, Type> ResultTypeRegistrations => _resultTypeRegistrations;
-        private readonly Dictionary<string, HandleDelegate> _handlerRegistrations = new Dictionary<string, HandleDelegate>();
+        private readonly Dictionary<string, HandleDelegate> _handlerRegistrations = new();
         public IReadOnlyDictionary<string, HandleDelegate> HandlerRegistrations => _handlerRegistrations;
 
         public void RegisterCommand<TCommand, TResult>()

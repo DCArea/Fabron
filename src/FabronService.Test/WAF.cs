@@ -12,7 +12,11 @@ using Xunit;
 
 namespace FabronService.Test
 {
-    public class WAF : WebApplicationFactory<Startup>, IAsyncLifetime
+    public class WAF : WAF<TestSiloConfigurator>
+    { }
+
+    public class WAF<TSiloConfigurator> : WebApplicationFactory<Startup>, IAsyncLifetime
+        where TSiloConfigurator : TestSiloConfigurator, new()
     {
         public TestCluster TestCluster { get; private set; } = default!;
         public JsonSerializerOptions JsonSerializerOptions =>
@@ -34,6 +38,7 @@ namespace FabronService.Test
                 .ConfigureServices((ctx, services) =>
                 {
                     services.AddFabronCore();
+                    services.AddSingleton(TestCluster);
                     services.AddSingleton(TestCluster.Client);
                 })
                 .ConfigureWebHostDefaults(webBuilder =>
@@ -46,7 +51,7 @@ namespace FabronService.Test
         {
             var builder = new TestClusterBuilder();
             builder.Options.ServiceId = Guid.NewGuid().ToString();
-            builder.AddSiloBuilderConfigurator<TestSiloConfigurator>();
+            builder.AddSiloBuilderConfigurator<TSiloConfigurator>();
             var cluster = builder.Build();
             await cluster.DeployAsync();
             return cluster;
