@@ -24,7 +24,7 @@ namespace FabronService.Test.Resourcers
         {
             var client = _waf.WithTestUser().CreateClient();
             var request = new CreateAPIReminderResourceRequest(
-                "TestReminder123",
+                "Test_Create",
                 DateTime.UtcNow.AddDays(1),
                 new RequestWebAPI(
                     "http://localhost",
@@ -33,7 +33,7 @@ namespace FabronService.Test.Resourcers
             var response = await client.PostAsJsonAsync("/APIReminders", request);
 
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-            Assert.Equal(new Uri(_waf.Server.BaseAddress, "APIReminders/TestReminder123"), response.Headers.Location);
+            Assert.Equal(new Uri(_waf.Server.BaseAddress, $"APIReminders/{request.Name}"), response.Headers.Location);
             var reminder = await response.Content.ReadFromJsonAsync<APIReminderResource>(_waf.JsonSerializerOptions);
             Assert.NotNull(reminder);
             Assert.Equal(request.Command.Url, reminder!.Command.Data.Url);
@@ -43,7 +43,7 @@ namespace FabronService.Test.Resourcers
         public async Task Get()
         {
             var request = new CreateAPIReminderResourceRequest(
-                "TestReminder123",
+                "Test_Get",
                 DateTime.UtcNow,
                 new RequestWebAPI(
                     "http://localhost",
@@ -59,8 +59,8 @@ namespace FabronService.Test.Resourcers
 
             Assert.NotNull(reminder);
             Assert.Equal(request.Command.Url, reminder!.Command.Data.Url);
-            Assert.Equal(200, reminder!.Command.Result);
             Assert.Equal(JobStatus.RanToCompletion, reminder!.Status);
+            Assert.Equal(200, reminder!.Command.Result);
         }
     }
 }

@@ -36,7 +36,6 @@ namespace Core.Test.Grains.CronJob
         [Fact]
         public void ScheduleEveryMinute()
         {
-            var now = DateTime.UtcNow;
             var cronExp = "* * * * *";
             var state = new CronJobState(cronExp, Command);
 

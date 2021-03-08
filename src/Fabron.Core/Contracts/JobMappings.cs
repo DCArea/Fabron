@@ -58,7 +58,7 @@ namespace Fabron.Contracts
         {
             string? cmdName = childJobState.Command.Name;
             object? cmdData = JsonSerializer.Deserialize(childJobState.Command.Data, registry.CommandTypeRegistrations[cmdName])!;
-            BatchChildJob childJob = new BatchChildJob(
+            BatchChildJob childJob = new(
                 childJobState.Id,
                 cmdData
             );
