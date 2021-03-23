@@ -1,5 +1,7 @@
+using System.Net.Http;
 using Microsoft.Extensions.DependencyInjection;
-using RichardSzalay.MockHttp;
+using Moq;
+using Moq.Contrib.HttpClient;
 
 namespace FabronService.Test
 {
@@ -7,8 +9,10 @@ namespace FabronService.Test
     {
         public override void ConfigureServices(Microsoft.Extensions.Hosting.HostBuilderContext context, IServiceCollection services)
         {
-            services.AddSingleton<MockHttpMessageHandler>();
-            services.AddSingleton(s => s.GetRequiredService<MockHttpMessageHandler>().ToHttpClient());
+            var handlerhMock = new Mock<HttpMessageHandler>();
+            var client = handlerhMock.CreateClient();
+            services.AddSingleton(handlerhMock);
+            services.AddSingleton(client);
         }
     }
 }
