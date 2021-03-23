@@ -9,21 +9,36 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Orleans.TestingHost;
 using Xunit;
+using Xunit.Abstractions;
+using Xunit.Sdk;
 
 namespace FabronService.Test
 {
     public class WAF : WAF<TestSiloConfigurator>
-    { }
+    {
+        public WAF(IMessageSink? output = null) : base(output)
+        {
+        }
+    }
 
     public class WAF<TSiloConfigurator> : WebApplicationFactory<Startup>, IAsyncLifetime
         where TSiloConfigurator : TestSiloConfigurator, new()
     {
+        private readonly IMessageSink? _output;
+
         public TestCluster TestCluster { get; private set; } = default!;
         public JsonSerializerOptions JsonSerializerOptions =>
             Server.Services.GetRequiredService<IOptions<JsonOptions>>().Value.JsonSerializerOptions;
 
+        public WAF(IMessageSink? output = null)
+        {
+            _output = output;
+        }
+
+
         public async Task InitializeAsync()
         {
+            _output?.OnMessage(new DiagnosticMessage("InitializeAsync"));
             TestCluster = await CreateTestClusterAsync();
         }
 
@@ -50,6 +65,7 @@ namespace FabronService.Test
         public async Task<TestCluster> CreateTestClusterAsync()
         {
             var builder = new TestClusterBuilder();
+            builder.Options.InitialSilosCount = 1;
             builder.Options.ServiceId = Guid.NewGuid().ToString();
             builder.AddSiloBuilderConfigurator<TSiloConfigurator>();
             var cluster = builder.Build();
