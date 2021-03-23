@@ -6,7 +6,8 @@ using System.Threading.Tasks;
 using Fabron.Contracts;
 using FabronService.Commands;
 using FabronService.Resources;
-using RichardSzalay.MockHttp;
+using Moq;
+using Moq.Contrib.HttpClient;
 using Xunit;
 
 namespace FabronService.Test.Resourcers
@@ -27,7 +28,7 @@ namespace FabronService.Test.Resourcers
                 "Test_Create",
                 DateTime.UtcNow.AddDays(1),
                 new RequestWebAPI(
-                    "http://localhost",
+                    "http://llhh",
                     "GET")
                 );
             var response = await client.PostAsJsonAsync("/APIReminders", request);
@@ -46,15 +47,15 @@ namespace FabronService.Test.Resourcers
                 "Test_Get",
                 DateTime.UtcNow,
                 new RequestWebAPI(
-                    "http://localhost",
+                    "http://llhh",
                     "GET")
                 );
             var client = _waf.WithTestUser().CreateClient();
-            var mockHttpHandler = _waf.GetSiloService<MockHttpMessageHandler>();
-            mockHttpHandler.When(HttpMethod.Get, request.Command.Url)
-                .Respond(HttpStatusCode.OK);
-            var response = await client.PostAsJsonAsync("/APIReminders", request);
+            var handler = _waf.GetSiloService<Mock<HttpMessageHandler>>();
+            handler.SetupRequest(HttpMethod.Get, request.Command.Url)
+                .ReturnsResponse(HttpStatusCode.OK);
 
+            var response = await client.PostAsJsonAsync("/APIReminders", request);
             var reminder = await client.GetFromJsonAsync<APIReminderResource>(response.Headers.Location, _waf.JsonSerializerOptions);
 
             Assert.NotNull(reminder);
