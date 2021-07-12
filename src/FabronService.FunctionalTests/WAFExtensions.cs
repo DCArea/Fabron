@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Orleans.TestingHost;
 
-namespace FabronService.Test
+namespace FabronService.FunctionalTests
 {
     public static class WAFExtensions
     {

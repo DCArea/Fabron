@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
 using Xunit;
 
-namespace FabronService.Test
+namespace FabronService.FunctionalTests
 {
     public class HealthCheckTests : IClassFixture<WAF>
     {

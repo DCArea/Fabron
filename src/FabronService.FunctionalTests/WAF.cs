@@ -12,7 +12,7 @@ using Xunit;
 using Xunit.Abstractions;
 using Xunit.Sdk;
 
-namespace FabronService.Test
+namespace FabronService.FunctionalTests
 {
     public class WAF : WAF<TestSiloConfigurator>
     {

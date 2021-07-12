@@ -10,7 +10,7 @@ using Moq;
 using Moq.Contrib.HttpClient;
 using Xunit;
 
-namespace FabronService.Test.Resourcers
+namespace FabronService.FunctionalTests.Resourcers
 {
     public class APIReminderResourceTests : IClassFixture<WAF<APIReminderResourceTestSiloConfigurator>>
     {

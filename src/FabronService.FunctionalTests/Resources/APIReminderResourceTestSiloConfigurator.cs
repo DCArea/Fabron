@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Moq.Contrib.HttpClient;
 
-namespace FabronService.Test
+namespace FabronService.FunctionalTests
 {
     public class APIReminderResourceTestSiloConfigurator : TestSiloConfigurator
     {

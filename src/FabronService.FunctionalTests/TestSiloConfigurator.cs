@@ -5,7 +5,7 @@ using Orleans.Configuration;
 using Orleans.Hosting;
 using Orleans.TestingHost;
 
-namespace FabronService.Test
+namespace FabronService.FunctionalTests
 {
     public class TestSiloConfigurator : ISiloConfigurator
     {
