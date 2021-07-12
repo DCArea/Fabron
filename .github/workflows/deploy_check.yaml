@@ -7,7 +7,7 @@ jobs:
   preview:
     name: Preview Changes
     runs-on: ubuntu-latest
-    environment: d001
+    environment: sandbox
     steps:
     - uses: actions/checkout@v2
       with:
@@ -18,7 +18,7 @@ jobs:
       run: |
         echo "${{secrets.KUBECONFIG}}" > .kubeconfig
         npm install
-        pulumi stack select d001
+        pulumi stack select sandbox
         pulumi preview
       working-directory: ./deploy
       env:

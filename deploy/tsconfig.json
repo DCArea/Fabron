@@ -14,7 +14,7 @@
     },
     "files": [
         "core.ts",
-        "workload.ts",
+        "workloads.ts",
         "index.ts",
     ]
 }
