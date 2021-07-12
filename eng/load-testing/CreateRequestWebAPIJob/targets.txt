@@ -1,3 +1,0 @@
-POST http://localhost:5000/Jobs/RequestWebAPI/Transient
-Content-Type: application/json
-@body.json
