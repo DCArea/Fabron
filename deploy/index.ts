@@ -1,8 +1,5 @@
-import * as k8s from "@pulumi/kubernetes";
-import * as kx from "@pulumi/kubernetesx";
+import * as workloads from "./workloads";
 
-// import { namespace_fabron, secret_dca_regcred } from "./core"
+const { deployment } = workloads.deploy();
 
-// export * from "./core"
-
-export { image_version } from "./workload"
+export const image = deployment.spec.template.spec.containers[0].image;

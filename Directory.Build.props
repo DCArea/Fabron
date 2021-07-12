@@ -1,7 +1,7 @@
 <Project>
 
   <PropertyGroup>
-    <DefaultNetCoreTargetFramework>net5.0</DefaultNetCoreTargetFramework>
+    <DefaultTargetFramework>net6.0</DefaultTargetFramework>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -13,31 +13,28 @@
 
   <!-- framework versions -->
   <PropertyGroup>
-    <AspNetCoreVersion>5.0.3</AspNetCoreVersion>
-    <MEXVersion>5.0.0</MEXVersion>
-    <CoreFXVersion>5.0.1</CoreFXVersion>
-    <EFCoreVersion>5.0.1</EFCoreVersion>
-    <OrleansVersion>3.4.1</OrleansVersion>
+    <AspNetCoreVersion>6.0.0-preview.5.21301.17</AspNetCoreVersion>
+    <MEXVersion>6.0.0-preview.5.21301.5</MEXVersion>
+    <OrleansVersion>3.4.3</OrleansVersion>
   </PropertyGroup>
 
   <!-- library versions -->
   <PropertyGroup>
-    <CronosVersion>0.7.0</CronosVersion>
+    <CronosVersion>0.7.1</CronosVersion>
     <AspNetCoreAuthenticationApiKeyVersion>5.1.0</AspNetCoreAuthenticationApiKeyVersion>
-    <SwashbuckleAspNetCoreVersion>6.1.0</SwashbuckleAspNetCoreVersion>
+    <SwashbuckleAspNetCoreVersion>6.1.4</SwashbuckleAspNetCoreVersion>
     <StyleCopAnalyzersVersion>1.0.0</StyleCopAnalyzersVersion>
   </PropertyGroup>
 
   <!-- test pkgs -->
   <PropertyGroup>
-    <NBomberVersion>1.0.0</NBomberVersion>
-    <MicrosoftTestSdkVersion>16.9.1</MicrosoftTestSdkVersion>
+    <MicrosoftTestSdkVersion>16.10.0</MicrosoftTestSdkVersion>
     <xUnitVersion>2.4.1</xUnitVersion>
     <xUnitRunnerVisualStudio>2.4.3</xUnitRunnerVisualStudio>
-    <FluentAssertionsVersion>6.0.0-alpha0002</FluentAssertionsVersion>
+    <FluentAssertionsVersion>6.0.0-beta0001</FluentAssertionsVersion>
     <CoverletCollectorVersion>3.0.3</CoverletCollectorVersion>
     <MartinCostelloLoggingXUnitVersion>0.1.0</MartinCostelloLoggingXUnitVersion>
-    <OrleansTestKitVersion>3.1.4</OrleansTestKitVersion>
+    <OrleansTestKitVersion>3.1.5</OrleansTestKitVersion>
     <MoqVersion>4.16.1</MoqVersion>
     <RichardSzalayMockHttpVersion>6.0.0</RichardSzalayMockHttpVersion>
   </PropertyGroup>

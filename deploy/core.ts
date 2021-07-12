@@ -1,29 +1,17 @@
-import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
-import * as kx from "@pulumi/kubernetesx";
-export const config = new pulumi.Config();
 
-export const namespace = k8s.core.v1.Namespace.get("fabron", "namespace/fabron");
+export const team_name = "dca";
+export const namespace_name = "dca";
+export const image_registry = "ghcr.io/dcarea";
+export const service_name = "fabron";
 
-// const cr_pat = process.env["CR_PAT"];
-// if (!cr_pat) { throw "missing CR_PAT"}
-const cr_pat = config.requireSecret("cr_pat");
-const dockerconfigjson = cr_pat.apply(v =>
-    JSON.stringify({
-        auths: {
-            "ghcr.io": {
-                username: 'fabron',
-                password: v
-            }
-        }
-    })
-)
-export const secret_dca_regcred = new k8s.core.v1.Secret("dcaregcred", {
-    metadata: {
-        namespace: namespace.metadata.name
-    },
-    type: "kubernetes.io/dockerconfigjson",
-    stringData: {
-        ".dockerconfigjson": dockerconfigjson,
-    }
-});
+export const shared_labels = {
+    team: team_name,
+    service: service_name
+}
+
+export const app_name_api = "fabron";
+export const image_name_api = "fabron";
+export const image_repo_api = `${image_registry}/${image_name_api}`;
+
+// export const namespace = k8s.core.v1.Namespace.get("dca", "namespace/dca");
