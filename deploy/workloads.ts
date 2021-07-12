@@ -67,6 +67,7 @@ function deploy_app(app_name: string, image_name: string, configmap: ConfigMap, 
                     }
                 },
                 spec: {
+                    imagePullSecrets: [{ name: "regcred" }],
                     containers: [{
                         name: app_name,
                         image: image_name,

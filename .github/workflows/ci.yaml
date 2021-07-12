@@ -23,6 +23,11 @@ jobs:
     name: Build & Push Container Image
     needs: test
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - APP: fabron-service
+          - DOCKER_FILE: ./src/FabronService/Dockerfile
     steps:
     - name: Checkout
       uses: actions/checkout@v2
@@ -33,23 +38,22 @@ jobs:
     - name: Login to GitHub Container Registry
       uses: docker/login-action@v1
       with:
-        registry: ghcr.io
-        username: ${{ github.repository_owner }}
-        password: ${{ secrets.CR_PAT }}
+        registry: ${{ secrets.REGISTRY_ENDPOINT }}
+        username: ${{ secrets.REGISTRY_USERNAME }}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
     - name: Push to GitHub Container Registry
       uses: docker/build-push-action@v2
       with:
         context: .
-        file: ./src/FabronService/Dockerfile
+        file: ${{ secrets.DOCKER_FILE }}
         push: true
         tags: |
-          ghcr.io/dcarea/fabron-service:build.${{ github.run_number }}
-          ghcr.io/dcarea/fabron-service:git.${{ github.sha }}
+          ${{ secrets.REGISTRY_ENDPOINT }}/${{ matrix.APP }}:build.${{ github.run_number }}
   deploy:
     name: Deploy
     needs: publish_image
     runs-on: ubuntu-latest
-    environment: d001
+    environment: sandbox
     steps:
     - uses: actions/checkout@v2
       with:
@@ -60,7 +64,7 @@ jobs:
       run: |
         echo "${{secrets.KUBECONFIG}}" > .kubeconfig
         npm install
-        pulumi stack select d001
+        pulumi stack select sandbox
         pulumi up --yes --skip-preview --suppress-permalink="true"
       working-directory: ./deploy
       env:
