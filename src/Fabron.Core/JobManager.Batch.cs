@@ -6,10 +6,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
+
 using Fabron.Contracts;
 using Fabron.Grains.BatchJob;
 using Fabron.Mando;
+
+using Microsoft.Extensions.Logging;
 
 namespace Fabron
 {
@@ -17,7 +19,7 @@ namespace Fabron
     {
         public async Task Schedule(string jobId, IEnumerable<ICommand> commands)
         {
-            var cmds = commands.Select(cmd =>
+            List<Grains.JobCommandInfo>? cmds = commands.Select(cmd =>
             {
                 Type cmdType = cmd.GetType();
                 string cmdName = _registry.CommandNameRegistrations[cmdType];
@@ -26,7 +28,7 @@ namespace Fabron
             }).ToList();
 
             _logger.LogInformation($"Creating Job[{jobId}]");
-            var grain = _client.GetGrain<IBatchJobGrain>(jobId);
+            IBatchJobGrain grain = _client.GetGrain<IBatchJobGrain>(jobId);
             await grain.Create(cmds);
             _logger.LogInformation($"Job[{jobId}] Created");
 
@@ -36,10 +38,13 @@ namespace Fabron
 
         public async Task<BatchJob?> GetBatchJobById(string jobId)
         {
-            var grain = _client.GetGrain<IBatchJobGrain>(jobId);
-            var jobState = await grain.GetState();
+            IBatchJobGrain grain = _client.GetGrain<IBatchJobGrain>(jobId);
+            BatchJobState? jobState = await grain.GetState();
             if (jobState is null)
+            {
                 return null;
+            }
+
             return jobState.Map(_registry);
         }
     }

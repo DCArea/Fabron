@@ -8,13 +8,18 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+
+using Fabron.Grains;
+using Fabron.Grains.CronJob;
+
 using Microsoft.Extensions.Logging;
+
 using Moq;
+
 using Orleans.Runtime;
 using Orleans.TestKit;
-using Fabron.Grains.CronJob;
+
 using Xunit;
-using Fabron.Grains;
 
 namespace Fabron.Test.Grains.CronJob
 {
@@ -24,7 +29,7 @@ namespace Fabron.Test.Grains.CronJob
         [Fact]
         public async Task Create()
         {
-            var cronExp = "0 0 * 11 *";
+            string cronExp = "0 0 * 11 *";
 
             await CreateGrain(cronExp);
 
@@ -38,7 +43,7 @@ namespace Fabron.Test.Grains.CronJob
         [Fact]
         public async Task CreateLongSchedule()
         {
-            var cronExp = "0 0 * 11 *";
+            string cronExp = "0 0 * 11 *";
 
             await CreateGrain(cronExp);
 
@@ -52,7 +57,7 @@ namespace Fabron.Test.Grains.CronJob
         [Fact]
         public async Task CreateShortSchedule()
         {
-            var cronExp = "* * * * *";
+            string cronExp = "* * * * *";
 
             await CreateGrain(cronExp);
 
@@ -90,8 +95,8 @@ namespace Fabron.Test.Grains.CronJob
 
         public async Task WhenState(Expression<Func<CronJobState, bool>> condition, TimeSpan timeout)
         {
-            var con = condition.Compile();
-            var token = new CancellationTokenSource(timeout);
+            Func<CronJobState, bool> con = condition.Compile();
+            CancellationTokenSource token = new CancellationTokenSource(timeout);
             while (!con(State))
             {
                 await StateWrote.WaitAsync(token.Token);

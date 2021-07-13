@@ -1,33 +1,121 @@
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
 using System;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Threading.Tasks;
+
+using AspNetCore.Authentication.ApiKey;
+
 using FabronService.Commands;
-using Microsoft.AspNetCore.Hosting;
+
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.OpenApi.Models;
+
 using Orleans.Configuration;
 using Orleans.Hosting;
 
-namespace FabronService
-{
-    public class Program
-    {
-        public static void Main(string[] args)
-        {
-            CreateHostBuilder(args).Build().Run();
-        }
+WebApplicationBuilder? builder = WebApplication.CreateBuilder();
 
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
-                .UseFabron(typeof(RequestWebAPI).Assembly, siloBuilder =>
+builder.Host
+    .UseFabron(typeof(RequestWebAPI).Assembly, siloBuilder =>
+    {
+        siloBuilder.UseLocalhostClustering();
+        siloBuilder.UseInMemoryJobStore();
+        siloBuilder.Configure<StatisticsOptions>(opts =>
+            {
+                opts.LogWriteInterval = TimeSpan.FromMinutes(1000);
+            });
+    })
+    .ConfigureServices(ConfigureServices);
+
+WebApplication app = builder.Build();
+
+app.UseCustomSwagger()
+    .UseAuthentication()
+    .UseRouting()
+    .UseEndpoints(endpoints =>
+    {
+        endpoints.MapHealthChecks("/health").AllowAnonymous();
+        endpoints.MapControllers();
+    });
+await app.StartAsync();
+
+static void ConfigureServices(Microsoft.Extensions.Hosting.HostBuilderContext context, IServiceCollection services)
+{
+    services.ConfigureFramework()
+        .AddApiKeyAuth(context.Configuration["ApiKey"])
+        .AddSwagger();
+    services.RegisterJobCommandHandlers(typeof(RequestWebAPI).Assembly);
+}
+
+public static class AppConfigureExtensions
+{
+    public static IServiceCollection ConfigureFramework(this IServiceCollection services)
+    {
+        services.AddControllers().AddJsonOptions(options =>
+        {
+            options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
+        });
+        services.AddAuthorization(options =>
+        {
+            options.FallbackPolicy = new AuthorizationPolicyBuilder()
+                .RequireAuthenticatedUser()
+                .Build();
+        });
+        services.AddHttpClient();
+        services.AddHealthChecks();
+        return services;
+    }
+
+    public static IServiceCollection AddSwagger(this IServiceCollection services)
+    {
+        services.AddSwaggerGen(c =>
+        {
+            c.SwaggerDoc("v1", new OpenApiInfo { Title = "Server", Version = "v1" });
+        });
+        return services;
+    }
+
+    public static IServiceCollection AddApiKeyAuth(this IServiceCollection services, Configuration configuration)
+    {
+        services.AddApiKeyAuth(configuration["ApiKey"]);
+        return services;
+    }
+    public static IServiceCollection AddApiKeyAuth(this IServiceCollection services, string validApiKey)
+    {
+        services.AddAuthentication(ApiKeyDefaults.AuthenticationScheme)
+            .AddApiKeyInAuthorizationHeader(options =>
+            {
+                options.Realm = "FabronService API";
+                options.KeyName = "token";
+                options.Events = new ApiKeyEvents
                 {
-                    siloBuilder.UseLocalhostClustering();
-                    siloBuilder.UseInMemoryJobStore();
-                    siloBuilder.Configure<StatisticsOptions>(opts =>
+                    OnValidateKey = ctx =>
+                    {
+                        if (ctx.ApiKey == validApiKey)
                         {
-                            opts.LogWriteInterval = TimeSpan.FromMinutes(1000);
-                        });
-                })
-                .ConfigureWebHostDefaults(webBuilder =>
-                {
-                    webBuilder.UseStartup<Startup>();
-                });
+                            ctx.ValidationSucceeded("debug");
+                        }
+                        else
+                        {
+                            ctx.ValidationFailed();
+                        }
+                        return Task.CompletedTask;
+                    }
+                };
+            });
+        return services;
+    }
+
+    public static IApplicationBuilder UseCustomSwagger(this IApplicationBuilder app)
+    {
+        app.UseSwagger();
+        app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Server v1"));
+        return app;
     }
 }

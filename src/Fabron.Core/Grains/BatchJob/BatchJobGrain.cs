@@ -1,14 +1,20 @@
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+
+using Fabron.Grains.TransientJob;
+using Fabron.Mando;
+
 using Microsoft.Extensions.Logging;
+
 using Orleans;
 using Orleans.Concurrency;
 using Orleans.Runtime;
-using Fabron.Grains.TransientJob;
-using Fabron.Mando;
 
 namespace Fabron.Grains.BatchJob
 {
@@ -37,10 +43,7 @@ namespace Fabron.Grains.BatchJob
             _job = job;
         }
 
-        public Task<BatchJobState> GetState()
-        {
-            return Task.FromResult(_job.State);
-        }
+        public Task<BatchJobState> GetState() => Task.FromResult(_job.State);
 
         public async Task Create(List<JobCommandInfo> commands)
         {
@@ -59,10 +62,14 @@ namespace Fabron.Grains.BatchJob
         public async Task Cancel(string reason)
         {
             if (_cancellationTokenSource is null)
+            {
                 throw new InvalidOperationException();
+            }
 
             if (!_cancellationTokenSource.IsCancellationRequested)
+            {
                 _cancellationTokenSource.Cancel();
+            }
 
             _job.State.Cancel(reason);
             await _job.WriteStateAsync();
@@ -94,7 +101,7 @@ namespace Fabron.Grains.BatchJob
         {
             while (true)
             {
-                var pendingJobs = _job.State.PendingJobs.Take(10).ToList();
+                List<BatchJobStateChild> pendingJobs = _job.State.PendingJobs.Take(10).ToList();
                 if (pendingJobs.Count == 0)
                 {
                     return;
@@ -115,7 +122,7 @@ namespace Fabron.Grains.BatchJob
         {
             while (true)
             {
-                var jobsToCheck = _job.State.EnqueuedJobs.ToList();
+                List<BatchJobStateChild> jobsToCheck = _job.State.EnqueuedJobs.ToList();
                 if (jobsToCheck.Count == 0)
                 {
                     return;
@@ -147,7 +154,10 @@ namespace Fabron.Grains.BatchJob
         {
             _logger.LogInformation($"Cleanup Job");
             if (_reminder is null)
+            {
                 _reminder = await GetReminder("Check");
+            }
+
             if (_reminder is not null)
             {
                 await UnregisterReminder(_reminder);

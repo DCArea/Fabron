@@ -1,8 +1,12 @@
-﻿using System;
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Fabron.Mando
@@ -34,9 +38,12 @@ namespace Fabron.Mando
             static async Task<string?> Handle(IServiceProvider sp, string commandData, CancellationToken token)
             {
                 ICommandHandler<TCommand, TResult> handler = sp.GetRequiredService<ICommandHandler<TCommand, TResult>>();
-                var typedcommand = JsonSerializer.Deserialize<TCommand>(commandData);
-                if(typedcommand is null)
+                TCommand? typedcommand = JsonSerializer.Deserialize<TCommand>(commandData);
+                if (typedcommand is null)
+                {
                     throw new Exception("Command should not be null");
+                }
+
                 TResult result = await handler.Handle(typedcommand!, token);
                 return JsonSerializer.Serialize(result);
             }

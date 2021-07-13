@@ -2,12 +2,15 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System;
-using System.Linq;
+
 using Cronos;
-using FluentAssertions;
+
 using Fabron.Grains;
 using Fabron.Grains.CronJob;
 using Fabron.Test.Grains;
+
+using FluentAssertions;
+
 using Xunit;
 
 namespace Core.Test.Grains.CronJob
@@ -22,22 +25,22 @@ namespace Core.Test.Grains.CronJob
         [Fact]
         public void ScheduleNextMonth()
         {
-            var now = DateTime.UtcNow;
-            var cronExp = $"0 0 * {now.AddMonths(1).Month} *";
-            var state = new CronJobState(cronExp, Command);
+            DateTime now = DateTime.UtcNow;
+            string cronExp = $"0 0 * {now.AddMonths(1).Month} *";
+            CronJobState state = new CronJobState(cronExp, Command);
 
             DateTime toTime = DateTime.UtcNow.AddMinutes(20);
             state.Schedule(toTime);
 
-            var nextSchedule = CronExpression.Parse(cronExp).GetNextOccurrence(now);
+            DateTime? nextSchedule = CronExpression.Parse(cronExp).GetNextOccurrence(now);
             state.NotCreatedJobs.Should().ContainSingle(job => job.ScheduledAt == nextSchedule);
         }
 
         [Fact]
         public void ScheduleEveryMinute()
         {
-            var cronExp = "* * * * *";
-            var state = new CronJobState(cronExp, Command);
+            string cronExp = "* * * * *";
+            CronJobState state = new CronJobState(cronExp, Command);
 
             DateTime toTime = DateTime.UtcNow.AddMinutes(20);
             state.Schedule(toTime);

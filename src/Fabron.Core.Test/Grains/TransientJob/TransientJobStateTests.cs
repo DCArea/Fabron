@@ -2,13 +2,12 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System;
-using System.Linq;
-using Cronos;
-using FluentAssertions;
+
 using Fabron.Grains;
-using Fabron.Test.Grains;
-using Xunit;
 using Fabron.Grains.TransientJob;
+using Fabron.Test.Grains;
+
+using Xunit;
 
 namespace Core.Test.Grains.CronJob
 {
@@ -17,8 +16,8 @@ namespace Core.Test.Grains.CronJob
         [Fact]
         public void Schedule20msAgo()
         {
-            var now = DateTime.UtcNow;
-            var state = new TransientJobState(Command, now.AddMilliseconds(-20));
+            DateTime now = DateTime.UtcNow;
+            TransientJobState state = new TransientJobState(Command, now.AddMilliseconds(-20));
 
             Assert.Equal(TimeSpan.Zero, state.DueTime);
         }

@@ -1,6 +1,10 @@
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
+
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -17,12 +21,12 @@ namespace FabronService.FunctionalTests
 
         protected override Task<AuthenticateResult> HandleAuthenticateAsync()
         {
-            var claims = new[] { new Claim(ClaimTypes.Name, "Test user") };
-            var identity = new ClaimsIdentity(claims, "Test");
-            var principal = new ClaimsPrincipal(identity);
-            var ticket = new AuthenticationTicket(principal, "Test");
+            Claim[]? claims = new[] { new Claim(ClaimTypes.Name, "Test user") };
+            ClaimsIdentity? identity = new ClaimsIdentity(claims, "Test");
+            ClaimsPrincipal? principal = new ClaimsPrincipal(identity);
+            AuthenticationTicket? ticket = new AuthenticationTicket(principal, "Test");
 
-            var result = AuthenticateResult.Success(ticket);
+            AuthenticateResult? result = AuthenticateResult.Success(ticket);
 
             return Task.FromResult(result);
         }
