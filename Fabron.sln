@@ -15,7 +15,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fabron.Mando", "src\Fabron.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FabronService", "src\FabronService\FabronService.csproj", "{2F7A9B06-8FF1-4098-89CC-564EDFE8DD42}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FabronService.Test", "src\FabronService.Test\FabronService.Test.csproj", "{D27DA44E-BE17-4A37-BC5C-B1FE92B4CF06}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FabronService.FunctionalTests", "src\FabronService.FunctionalTests\FabronService.FunctionalTests.csproj", "{D27DA44E-BE17-4A37-BC5C-B1FE92B4CF06}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

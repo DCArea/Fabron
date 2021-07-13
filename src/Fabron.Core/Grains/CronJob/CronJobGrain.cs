@@ -1,14 +1,20 @@
-﻿using System;
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+
+using Fabron.Grains.TransientJob;
+using Fabron.Mando;
+
 using Microsoft.Extensions.Logging;
+
 using Orleans;
 using Orleans.Concurrency;
 using Orleans.Runtime;
-using Fabron.Grains.TransientJob;
-using Fabron.Mando;
 
 namespace Fabron.Grains.CronJob
 {
@@ -37,10 +43,7 @@ namespace Fabron.Grains.CronJob
             _job = job;
         }
 
-        public Task<CronJobState> GetState()
-        {
-            return Task.FromResult(_job.State);
-        }
+        public Task<CronJobState> GetState() => Task.FromResult(_job.State);
 
         public async Task Create(string cronExp, JobCommandInfo commands)
         {
@@ -59,10 +62,14 @@ namespace Fabron.Grains.CronJob
         public async Task Cancel(string reason)
         {
             if (_cancellationTokenSource is null)
+            {
                 throw new InvalidOperationException();
+            }
 
             if (!_cancellationTokenSource.IsCancellationRequested)
+            {
                 _cancellationTokenSource.Cancel();
+            }
 
             _job.State.Cancel(reason);
             await _job.WriteStateAsync();
@@ -86,7 +93,7 @@ namespace Fabron.Grains.CronJob
             await Task.WhenAll(ScheduleChildJobs(), CheckPendingJobs());
 
 
-            var firstUnfinishedJob = _job.State.UnFinishedJobs.FirstOrDefault();
+            CronJobStateChild? firstUnfinishedJob = _job.State.UnFinishedJobs.FirstOrDefault();
             if (firstUnfinishedJob is null)
             {
                 _job.State.Complete();
@@ -95,13 +102,17 @@ namespace Fabron.Grains.CronJob
             }
             else
             {
-                var now = DateTime.UtcNow;
-                var after5Min = DateTime.UtcNow.AddMinutes(5);
-                var nextSchedule = firstUnfinishedJob.ScheduledAt;
+                DateTime now = DateTime.UtcNow;
+                DateTime after5Min = DateTime.UtcNow.AddMinutes(5);
+                DateTime nextSchedule = firstUnfinishedJob.ScheduledAt;
                 if (firstUnfinishedJob.ScheduledAt < after5Min)
+                {
                     await SetJobReminder(TimeSpan.FromMinutes(5));
+                }
                 else
+                {
                     await SetJobReminder(nextSchedule - now);
+                }
             }
         }
 
@@ -110,10 +121,12 @@ namespace Fabron.Grains.CronJob
             DateTime utcNow = DateTime.UtcNow;
             DateTime toTime = utcNow.AddMinutes(20);
             _job.State.Schedule(toTime);
-            var jobsToBeScheduled = _job.State.NotCreatedJobs.ToList();
+            List<CronJobStateChild> jobsToBeScheduled = _job.State.NotCreatedJobs.ToList();
 
             if (jobsToBeScheduled.Count == 0)
+            {
                 return;
+            }
 
             IEnumerable<Task> enqueueChildJobTasks = jobsToBeScheduled
                 .Select(job => CreateChildJob(job));
@@ -128,8 +141,8 @@ namespace Fabron.Grains.CronJob
 
         private async Task CheckPendingJobs()
         {
-            var utcNow = DateTime.UtcNow;
-            var jobsToBeChecked = _job.State.PendingJobs.Where(job => job.ScheduledAt < utcNow).ToList();
+            DateTime utcNow = DateTime.UtcNow;
+            List<CronJobStateChild> jobsToBeChecked = _job.State.PendingJobs.Where(job => job.ScheduledAt < utcNow).ToList();
             if (jobsToBeChecked.Count == 0)
             {
                 return;
@@ -159,7 +172,10 @@ namespace Fabron.Grains.CronJob
         {
             _logger.LogInformation($"Cleanup Job");
             if (_reminder is null)
+            {
                 _reminder = await GetReminder("Check");
+            }
+
             if (_reminder is not null)
             {
                 await UnregisterReminder(_reminder);

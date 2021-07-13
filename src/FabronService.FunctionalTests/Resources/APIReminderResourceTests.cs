@@ -1,41 +1,44 @@
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
 using System;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
+
 using Fabron.Contracts;
-using FabronService.Commands;
+
 using FabronService.Resources;
+
 using Moq;
 using Moq.Contrib.HttpClient;
+
 using Xunit;
 
-namespace FabronService.Test.Resourcers
+namespace FabronService.FunctionalTests.Resourcers
 {
     public class APIReminderResourceTests : IClassFixture<WAF<APIReminderResourceTestSiloConfigurator>>
     {
         private readonly WAF<APIReminderResourceTestSiloConfigurator> _waf;
-        public APIReminderResourceTests(WAF<APIReminderResourceTestSiloConfigurator> waf)
-        {
-            _waf = waf;
-        }
+        public APIReminderResourceTests(WAF<APIReminderResourceTestSiloConfigurator> waf) => _waf = waf;
 
         [Fact]
         public async Task Create()
         {
-            var client = _waf.WithTestUser().CreateClient();
-            var request = new CreateAPIReminderResourceRequest(
+            HttpClient client = _waf.WithTestUser().CreateClient();
+            CreateAPIReminderResourceRequest request = new(
                 "Test_Create",
                 DateTime.UtcNow.AddDays(1),
-                new RequestWebAPI(
+                new(
                     "http://llhh",
                     "GET")
                 );
-            var response = await client.PostAsJsonAsync("/APIReminders", request);
+            HttpResponseMessage response = await client.PostAsJsonAsync("/APIReminders", request);
 
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
             Assert.Equal(new Uri(_waf.Server.BaseAddress, $"APIReminders/{request.Name}"), response.Headers.Location);
-            var reminder = await response.Content.ReadFromJsonAsync<APIReminderResource>(_waf.JsonSerializerOptions);
+            APIReminderResource? reminder = await response.Content.ReadFromJsonAsync<APIReminderResource>(_waf.JsonSerializerOptions);
             Assert.NotNull(reminder);
             Assert.Equal(request.Command.Url, reminder!.Command.Data.Url);
         }
@@ -43,20 +46,20 @@ namespace FabronService.Test.Resourcers
         [Fact]
         public async Task Get()
         {
-            var request = new CreateAPIReminderResourceRequest(
+            CreateAPIReminderResourceRequest request = new(
                 "Test_Get",
                 DateTime.UtcNow,
-                new RequestWebAPI(
+                new(
                     "http://llhh",
                     "GET")
                 );
-            var client = _waf.WithTestUser().CreateClient();
-            var handler = _waf.GetSiloService<Mock<HttpMessageHandler>>();
+            HttpClient client = _waf.WithTestUser().CreateClient();
+            Mock<HttpMessageHandler> handler = _waf.GetSiloService<Mock<HttpMessageHandler>>();
             handler.SetupRequest(HttpMethod.Get, request.Command.Url)
                 .ReturnsResponse(HttpStatusCode.OK);
 
-            var response = await client.PostAsJsonAsync("/APIReminders", request);
-            var reminder = await client.GetFromJsonAsync<APIReminderResource>(response.Headers.Location, _waf.JsonSerializerOptions);
+            HttpResponseMessage? response = await client.PostAsJsonAsync("/APIReminders", request);
+            APIReminderResource? reminder = await client.GetFromJsonAsync<APIReminderResource>(response.Headers.Location, _waf.JsonSerializerOptions);
 
             Assert.NotNull(reminder);
             Assert.Equal(request.Command.Url, reminder!.Command.Data.Url);

@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -28,15 +31,9 @@ namespace Fabron.Grains.CronJob
         public string? Reason { get; private set; }
         public JobStatus Status { get; private set; }
 
-        public void Start()
-        {
-            Status = JobStatus.Running;
-        }
+        public void Start() => Status = JobStatus.Running;
 
-        public void Complete()
-        {
-            Status = JobStatus.RanToCompletion;
-        }
+        public void Complete() => Status = JobStatus.RanToCompletion;
 
         public void Cancel(string reason)
         {
@@ -51,13 +48,16 @@ namespace Fabron.Grains.CronJob
 
         public void Schedule(DateTime toTime)
         {
-            var cron = Cronos.CronExpression.Parse(CronExp);
-            var lastedJob = LatestJob;
+            Cronos.CronExpression cron = Cronos.CronExpression.Parse(CronExp);
+            CronJobStateChild? lastedJob = LatestJob;
             DateTime lastestScheduledAt = lastedJob is null ? DateTime.UtcNow : lastedJob.ScheduledAt;
-            var nextSchedule = cron.GetNextOccurrence(lastestScheduledAt);
-            if (nextSchedule is null) return;
+            DateTime? nextSchedule = cron.GetNextOccurrence(lastestScheduledAt);
+            if (nextSchedule is null)
+            {
+                return;
+            }
 
-            var nextJob = new CronJobStateChild(nextSchedule.Value);
+            CronJobStateChild? nextJob = new CronJobStateChild(nextSchedule.Value);
             _childJobs.Add(nextJob);
 
             if (nextSchedule < toTime)

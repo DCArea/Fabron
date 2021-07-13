@@ -11,7 +11,8 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MicrosoftTestSdkVersion)" />
     <PackageReference Include="Microsoft.Orleans.TestingHost" Version="$(OrleansVersion)" />
     <PackageReference Include="Moq" Version="$(MoqVersion)" />
-    <PackageReference Include="Moq.Contrib.HttpClient" Version="1.3.0" />
+    <PackageReference Include="Moq.Contrib.HttpClient" Version="$(MoqContribHttpClientVersion)" />
+    <PackageReference Include="FakeItEasy" Version="$(FakeItEasyVersion)" />
     <PackageReference Include="xunit" Version="$(xUnitVersion)" />
     <PackageReference Include="xunit.runner.visualstudio" Version="$(xUnitRunnerVisualStudio)">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

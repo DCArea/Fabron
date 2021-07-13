@@ -1,24 +1,26 @@
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading.Tasks;
+
+using AspNetCore.Authentication.ApiKey;
+
+using FabronService.Commands;
+
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.OpenApi.Models;
-using AspNetCore.Authentication.ApiKey;
-using Microsoft.AspNetCore.Authorization;
-using System.Threading.Tasks;
-using FabronService.Commands;
 
 namespace FabronService
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
-        {
-            Configuration = configuration;
-        }
+        public Startup(IConfiguration configuration) => Configuration = configuration;
 
         public IConfiguration Configuration { get; }
 
@@ -29,7 +31,7 @@ namespace FabronService
             {
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
             });
-            var validApiKey = Configuration["ApiKey"];
+            string? validApiKey = Configuration["ApiKey"];
             services.AddAuthentication(ApiKeyDefaults.AuthenticationScheme)
                 .AddApiKeyInAuthorizationHeader(options =>
                 {
@@ -58,10 +60,7 @@ namespace FabronService
                     .Build();
             });
 
-            services.AddSwaggerGen(c =>
-            {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Server", Version = "v1" });
-            });
+            services.AddSwagger();
             services.AddHttpClient();
 
             services.RegisterJobCommandHandlers(typeof(RequestWebAPI).Assembly);

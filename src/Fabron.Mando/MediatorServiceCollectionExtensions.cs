@@ -1,6 +1,11 @@
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
 using System.Linq;
 using System.Reflection;
+
 using Fabron.Mando;
+
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Microsoft.Extensions.DependencyInjection
@@ -9,18 +14,18 @@ namespace Microsoft.Extensions.DependencyInjection
     {
         public static IServiceCollection RegisterJobCommandHandlers(this IServiceCollection services, Assembly assembly)
         {
-            var assemblyTypes = assembly.GetExportedTypes();
-            var commandTypes = assemblyTypes.Where(t => t.IsClass && t.GetInterface(typeof(ICommand<>).Name) is not null);
-            var tuples = commandTypes.Select(commandType =>
+            System.Type[]? assemblyTypes = assembly.GetExportedTypes();
+            System.Collections.Generic.IEnumerable<System.Type>? commandTypes = assemblyTypes.Where(t => t.IsClass && t.GetInterface(typeof(ICommand<>).Name) is not null);
+            System.Collections.Generic.IEnumerable<(System.Type commandType, System.Type resultType, System.Type handlerInterfaceType)>? tuples = commandTypes.Select(commandType =>
             {
-                var resultType = commandType.GetInterface(typeof(ICommand<>).Name)!.GetGenericArguments().Single();
-                var handlerInterfaceType = typeof(ICommandHandler<,>).MakeGenericType(commandType, resultType);
+                System.Type? resultType = commandType.GetInterface(typeof(ICommand<>).Name)!.GetGenericArguments().Single();
+                System.Type? handlerInterfaceType = typeof(ICommandHandler<,>).MakeGenericType(commandType, resultType);
                 return (commandType, resultType, handlerInterfaceType);
             });
 
-            foreach (var (commandType, resultType, handlerInterfaceType) in tuples)
+            foreach ((System.Type commandType, System.Type resultType, System.Type handlerInterfaceType) in tuples)
             {
-                var handlerImplemention = assemblyTypes
+                System.Type? handlerImplemention = assemblyTypes
                     .Single(t => t.IsClass && handlerInterfaceType.IsAssignableFrom(t));
 
                 typeof(MediatorServiceCollectionExtensions)
@@ -35,8 +40,8 @@ namespace Microsoft.Extensions.DependencyInjection
             where THandler : class, ICommandHandler<TCommand, TResult>
             where TCommand : ICommand<TResult>
         {
-            var commandType = typeof(TCommand);
-            var handlerType = typeof(THandler);
+            System.Type? commandType = typeof(TCommand);
+            System.Type? handlerType = typeof(THandler);
 
             services.TryAddTransient<ICommandHandler<TCommand, TResult>, THandler>();
             services.Configure<CommandRegistry>(opt =>

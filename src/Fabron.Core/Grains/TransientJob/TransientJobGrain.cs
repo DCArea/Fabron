@@ -1,11 +1,17 @@
-﻿using System;
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System;
 using System.Threading;
 using System.Threading.Tasks;
+
+using Fabron.Mando;
+
 using Microsoft.Extensions.Logging;
+
 using Orleans;
 using Orleans.Concurrency;
 using Orleans.Runtime;
-using Fabron.Mando;
 
 namespace Fabron.Grains.TransientJob
 {
@@ -42,7 +48,7 @@ namespace Fabron.Grains.TransientJob
 
         public Task<TransientJobState?> GetState()
         {
-            var state = _job.RecordExists ? _job.State : null;
+            TransientJobState? state = _job.RecordExists ? _job.State : null;
             return Task.FromResult(state);
         }
 
@@ -62,7 +68,7 @@ namespace Fabron.Grains.TransientJob
 
         private async Task Schedule()
         {
-            var dueTime = _job.State.DueTime;
+            TimeSpan dueTime = _job.State.DueTime;
             _logger.LogInformation($"Schedule Job, dueTime={dueTime}");
             switch (dueTime)
             {
@@ -83,10 +89,14 @@ namespace Fabron.Grains.TransientJob
         public async Task Cancel(string reason)
         {
             if (_cancellationTokenSource is null)
+            {
                 throw new InvalidOperationException();
+            }
 
             if (!_cancellationTokenSource.IsCancellationRequested)
+            {
                 _cancellationTokenSource.Cancel();
+            }
 
             _job.State.Cancel(reason);
             await _job.WriteStateAsync();
@@ -128,7 +138,10 @@ namespace Fabron.Grains.TransientJob
         {
             _logger.LogInformation($"Cleanup Job");
             if (_reminder is null)
+            {
                 _reminder = await GetReminder("Check");
+            }
+
             if (_reminder is not null)
             {
                 await UnregisterReminder(_reminder);

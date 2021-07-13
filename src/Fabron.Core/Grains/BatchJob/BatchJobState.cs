@@ -1,3 +1,6 @@
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
 using System.Collections.Generic;
 using System.Linq;
 
@@ -9,12 +12,9 @@ namespace Fabron.Grains.BatchJob
 #nullable disable
         public BatchJobState() { }
 #nullable enable
-        public BatchJobState(List<JobCommandInfo> commands)
-        {
-            _childJobs = commands
+        public BatchJobState(List<JobCommandInfo> commands) => _childJobs = commands
                 .Select(cmd => new BatchJobStateChild(cmd))
                 .ToList();
-        }
 
         private readonly List<BatchJobStateChild> _childJobs = null!;
         public IEnumerable<BatchJobStateChild> PendingJobs => _childJobs.Where(job => job.Status == JobStatus.NotCreated);
@@ -25,15 +25,9 @@ namespace Fabron.Grains.BatchJob
 
         public JobStatus Status { get; private set; }
 
-        public void Start()
-        {
-            Status = JobStatus.Running;
-        }
+        public void Start() => Status = JobStatus.Running;
 
-        public void Complete()
-        {
-            Status = JobStatus.RanToCompletion;
-        }
+        public void Complete() => Status = JobStatus.RanToCompletion;
 
         public void Cancel(string reason)
         {

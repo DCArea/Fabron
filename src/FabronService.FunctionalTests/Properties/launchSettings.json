@@ -15,7 +15,7 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
     },
-    "FabronService.Test": {
+    "FabronService.FunctionalTests": {
       "commandName": "Project",
       "launchBrowser": true,
       "environmentVariables": {
