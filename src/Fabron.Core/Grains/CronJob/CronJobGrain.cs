@@ -93,7 +93,7 @@ namespace Fabron.Grains.CronJob
             await Task.WhenAll(ScheduleChildJobs(), CheckPendingJobs());
 
 
-            CronJobStateChild firstUnfinishedJob = _job.State.UnFinishedJobs.FirstOrDefault();
+            CronJobStateChild? firstUnfinishedJob = _job.State.UnFinishedJobs.FirstOrDefault();
             if (firstUnfinishedJob is null)
             {
                 _job.State.Complete();
