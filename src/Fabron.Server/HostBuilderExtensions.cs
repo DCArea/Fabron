@@ -10,7 +10,7 @@ namespace Microsoft.Extensions.Hosting
 {
     public static class FabronHostBuilderExtensions
     {
-        public static IHostBuilder UseFabron(this IHostBuilder hostBuilder, Assembly commandAssembly, Action<ISiloBuilder>? configureDelegate = null)
+        public static IHostBuilder UseFabron(this IHostBuilder hostBuilder, Assembly commandAssembly, Action<ISiloBuilder> configureDelegate)
         {
             if (configureDelegate == null)
             {
@@ -20,7 +20,7 @@ namespace Microsoft.Extensions.Hosting
             hostBuilder.UseOrleans((ctx, siloBuilder) =>
             {
                 siloBuilder.AddFabron(commandAssembly);
-                configureDelegate?.Invoke(siloBuilder);
+                configureDelegate(siloBuilder);
             });
 
             return hostBuilder;
