@@ -12,6 +12,7 @@ using FabronService.Commands;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
@@ -19,9 +20,7 @@ using Microsoft.OpenApi.Models;
 using Orleans.Configuration;
 using Orleans.Hosting;
 
-WebApplicationBuilder? builder = WebApplication.CreateBuilder();
-
-builder.Host
+IHostBuilder hostBuilder = Host.CreateDefaultBuilder(args)
     .UseFabron(typeof(RequestWebAPI).Assembly, siloBuilder =>
     {
         siloBuilder.UseLocalhostClustering();
@@ -31,27 +30,36 @@ builder.Host
                 opts.LogWriteInterval = TimeSpan.FromMinutes(1000);
             });
     })
-    .ConfigureServices(ConfigureServices);
-
-WebApplication app = builder.Build();
-
-app.UseCustomSwagger()
-    .UseAuthentication()
-    .UseRouting()
-    .UseEndpoints(endpoints =>
+    .ConfigureWebHostDefaults(builder =>
     {
-        endpoints.MapHealthChecks("/health").AllowAnonymous();
-        endpoints.MapControllers();
+        builder
+             .ConfigureServices(ConfigureServices)
+             .Configure(ConfigureWebApplication);
     });
-await app.StartAsync();
+IHost host = hostBuilder.Build();
+await host.RunAsync();
 
-static void ConfigureServices(Microsoft.Extensions.Hosting.HostBuilderContext context, IServiceCollection services)
+
+static void ConfigureServices(WebHostBuilderContext context, IServiceCollection services)
 {
     services.ConfigureFramework()
         .AddApiKeyAuth(context.Configuration["ApiKey"])
         .AddSwagger();
     services.RegisterJobCommandHandlers(typeof(RequestWebAPI).Assembly);
 }
+
+static void ConfigureWebApplication(IApplicationBuilder app)
+{
+    app.UseCustomSwagger()
+        .UseAuthentication()
+        .UseRouting()
+        .UseEndpoints(endpoints =>
+        {
+            endpoints.MapHealthChecks("/health").AllowAnonymous();
+            endpoints.MapControllers();
+        });
+}
+
 
 public static class AppConfigureExtensions
 {
