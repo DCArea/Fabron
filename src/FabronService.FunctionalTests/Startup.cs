@@ -20,7 +20,7 @@ namespace FabronService.FunctionalTests
             => services.ConfigureFramework()
                 .AddApiKeyAuth(Configuration["ApiKey"])
                 .AddSwagger()
-                .RegisterJobCommandHandlers(typeof(RequestWebAPI).Assembly);
+                .RegisterJobCommandHandlers();
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
             => app.UseCustomSwagger()

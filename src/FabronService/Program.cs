@@ -21,7 +21,7 @@ using Orleans.Configuration;
 using Orleans.Hosting;
 
 IHostBuilder hostBuilder = Host.CreateDefaultBuilder(args)
-    .UseFabron(typeof(RequestWebAPI).Assembly, siloBuilder =>
+    .UseFabron(siloBuilder =>
     {
         siloBuilder.UseLocalhostClustering();
         siloBuilder.UseInMemoryJobStore();
@@ -33,8 +33,8 @@ IHostBuilder hostBuilder = Host.CreateDefaultBuilder(args)
     .ConfigureWebHostDefaults(builder =>
     {
         builder
-             .ConfigureServices(ConfigureServices)
-             .Configure(ConfigureWebApplication);
+            .ConfigureServices(ConfigureServices)
+            .Configure(ConfigureWebApplication);
     });
 IHost host = hostBuilder.Build();
 await host.RunAsync();
@@ -45,7 +45,7 @@ static void ConfigureServices(WebHostBuilderContext context, IServiceCollection 
     services.ConfigureFramework()
         .AddApiKeyAuth(context.Configuration["ApiKey"])
         .AddSwagger();
-    services.RegisterJobCommandHandlers(typeof(RequestWebAPI).Assembly);
+    services.RegisterJobCommandHandlers();
 }
 
 static void ConfigureWebApplication(IApplicationBuilder app)
@@ -84,7 +84,7 @@ public static class AppConfigureExtensions
     {
         services.AddSwaggerGen(c =>
         {
-            c.SwaggerDoc("v1", new OpenApiInfo { Title = "Server", Version = "v1" });
+            c.SwaggerDoc("v1", new OpenApiInfo { Title = "FabronService", Version = "v1" });
         });
         return services;
     }
@@ -123,7 +123,7 @@ public static class AppConfigureExtensions
     public static IApplicationBuilder UseCustomSwagger(this IApplicationBuilder app)
     {
         app.UseSwagger();
-        app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Server v1"));
+        app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "FabronService v1"));
         return app;
     }
 }
