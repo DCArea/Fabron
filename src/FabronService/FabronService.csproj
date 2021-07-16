@@ -6,11 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Orleans.OrleansTelemetryConsumers.AI" Version="$(OrleansVersion)" />
-    <PackageReference Include="Microsoft.Orleans.Persistence.AdoNet" Version="$(OrleansVersion)" />
-    <PackageReference Include="Microsoft.Orleans.Reminders.AdoNet" Version="$(OrleansVersion)" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="$(SwashbuckleAspNetCoreVersion)" />
     <PackageReference Include="AspNetCore.Authentication.ApiKey" Version="$(AspNetCoreAuthenticationApiKeyVersion)" />
+    <PackageReference Include="Microsoft.Orleans.Hosting.Kubernetes" Version="$(OrleansVersion)" />
+    <PackageReference Include="Orleans.Clustering.Redis" Version="$(OrleansClusteringRedisVersion)" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="$(SwashbuckleAspNetCoreVersion)" />
   </ItemGroup>
 
   <ItemGroup>

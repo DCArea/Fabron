@@ -1,14 +1,11 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 using AspNetCore.Authentication.ApiKey;
-
-using FabronService.Commands;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -17,18 +14,26 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 
-using Orleans.Configuration;
 using Orleans.Hosting;
 
 IHostBuilder hostBuilder = Host.CreateDefaultBuilder(args)
-    .UseFabron(siloBuilder =>
+    .UseFabron((ctx, siloBuilder) =>
     {
-        siloBuilder.UseLocalhostClustering();
-        siloBuilder.UseInMemoryJobStore();
-        siloBuilder.Configure<StatisticsOptions>(opts =>
+        if (ctx.HostingEnvironment.IsEnvironment("Localhost"))
+        {
+            siloBuilder.UseLocalhostClustering();
+        }
+        else
+        {
+            siloBuilder.UseKubernetesHosting();
+            siloBuilder.UseRedisClustering(config =>
             {
-                opts.LogWriteInterval = TimeSpan.FromMinutes(1000);
+                config.ConnectionString = ctx.Configuration["RedisConnectionString"];
+                config.Database = 0;
             });
+        }
+
+        siloBuilder.UseInMemoryJobStore();
     })
     .ConfigureWebHostDefaults(builder =>
     {
