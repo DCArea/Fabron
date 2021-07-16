@@ -33,7 +33,7 @@ export function deploy(namespace_name: string): RedisConfig {
             }
         }
     });
-    const redis_svc = redis.getResource("v1/Service", namespace_name, "");
+    const redis_svc = redis.getResource("v1/Service", namespace_name, "redis-master");
     return {
         host: pulumi.interpolate`${redis_svc.metadata.name}.${namespace_name}.svc.cluster.local`,
         port: redis_svc.spec.ports[0].port,
