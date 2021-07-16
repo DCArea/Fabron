@@ -8,7 +8,7 @@ export const shared_labels = {
     service: service_name
 }
 
-export const app_name_api = "fabron";
+export const app_name_api = "fabron-service";
 export const image_name_api = "fabron-service";
 export const image_repo_api = `${image_registry}/${image_name_api}`;
 

@@ -1,23 +1,62 @@
 import * as pulumi from "@pulumi/pulumi";
+import { RedisConfig } from "./redis";
 import { ConfigMap, Secret, Service, ServiceSpecType } from "@pulumi/kubernetes/core/v1";
-import { service_name, namespace_name, team_name, shared_labels, app_name_api, image_repo_api } from "./core";
+import { service_name, namespace_name, shared_labels, app_name_api as app_name, image_repo_api } from "./core";
 import { Deployment } from "@pulumi/kubernetes/apps/v1";
-import { Ingress } from "@pulumi/kubernetes/networking/v1beta1";
+import { Role, RoleBinding } from "@pulumi/kubernetes/rbac/v1";
+import { ServiceAccount } from "@pulumi/kubernetes/core/v1";
 
-const config = new pulumi.Config();
 const image_version = process.env["IMAGE_VERSION"];
 if (!image_version) { throw "missing IMAGE_VERSION" };
 const image = `${image_repo_api}:${image_version}`;
 
-export function deploy() {
-    const secret = deploy_secret();
+export function deploy(redis_config: RedisConfig) {
+    const sa = deploy_rbac();
+    const secret = deploy_secret(redis_config);
     const configmap = deploy_configmap();
-    const { deployment, service } = deploy_app(app_name_api, image, configmap, secret);
+    const { deployment, service } = deploy_app(app_name, image, configmap, secret, sa);
     return { deployment, service }
 }
 
+function deploy_rbac() {
+    const service_account = new ServiceAccount(app_name, {
+        metadata: {
+            name: app_name,
+            namespace: namespace_name
+        }
+    });
+    const subject = {
+        kind: service_account.kind,
+        name: service_account.metadata.name,
+        namespace: service_account.metadata.namespace
+    };
 
-function deploy_secret() {
+    const pod_reader_role = new Role("pod_reader", {
+        metadata: {
+            name: "pod_reader",
+            namespace: subject.namespace
+        },
+        rules: [{
+            apiGroups: [""],
+            resources: ["pods"],
+            verbs: ["get", "list", "watch"]
+        }]
+    });
+    const pod_reader_rolebinding = new RoleBinding(app_name, {
+        metadata: { name: app_name, namespace: subject.namespace },
+        roleRef: {
+            apiGroup: "",
+            kind: pod_reader_role.kind,
+            name: pod_reader_role.metadata.name,
+        },
+        subjects: [subject]
+    });
+
+    return service_account;
+}
+
+
+function deploy_secret(redis_config: RedisConfig) {
     const secret = new Secret(service_name, {
         metadata: {
             namespace: namespace_name,
@@ -26,6 +65,7 @@ function deploy_secret() {
         },
         type: "Opaque",
         stringData: {
+            "RedisConnectionString": pulumi.interpolate`${redis_config.host}:${redis_config.port},password=${redis_config.password}`,
         }
     });
     return secret;
@@ -44,9 +84,11 @@ function deploy_configmap() {
     return configmap;
 }
 
-function deploy_app(app_name: string, image_name: string, configmap: ConfigMap, secret: Secret) {
+function deploy_app(app_name: string, image_name: string, configmap: ConfigMap, secret: Secret, service_account: ServiceAccount) {
     const labels: { [key: string]: string } = {
         app: app_name,
+        "orleans/serviceId": app_name,
+        "orleans/clusterId": app_name,
         ...shared_labels
     };
     const deployment = new Deployment(app_name, {
@@ -62,11 +104,9 @@ function deploy_app(app_name: string, image_name: string, configmap: ConfigMap, 
             template: {
                 metadata: {
                     labels: labels,
-                    annotations: {
-                        "linkerd.io/inject": "enabled"
-                    }
                 },
                 spec: {
+                    serviceAccountName: service_account.metadata.name,
                     imagePullSecrets: [{ name: "regcred" }],
                     containers: [{
                         name: app_name,
@@ -74,6 +114,12 @@ function deploy_app(app_name: string, image_name: string, configmap: ConfigMap, 
                         ports: [{
                             name: 'http',
                             containerPort: 80
+                        }, {
+                            name: 'silo',
+                            containerPort: 11111
+                        }, {
+                            name: 'gateway',
+                            containerPort: 30000
                         }],
                         livenessProbe: {
                             httpGet: {
@@ -90,6 +136,44 @@ function deploy_app(app_name: string, image_name: string, configmap: ConfigMap, 
                         env: [{
                             name: "ASPNETCORE_ENVIRONMENT",
                             value: pulumi.getStack()
+                        }, {
+                            name: "DOTNET_SHUTDOWNTIMEOUTSECONDS",
+                            value: "120"
+                        }, {
+                            name: "ORLEANS_SERVICE_ID",
+                            valueFrom: {
+                                fieldRef: {
+                                    fieldPath: "metadata.labels['orleans/serviceId']"
+                                }
+                            }
+                        }, {
+                            name: "ORLEANS_CLUSTER_ID",
+                            valueFrom: {
+                                fieldRef: {
+                                    fieldPath: "metadata.labels['orleans/clusterId']"
+                                }
+                            }
+                        }, {
+                            name: "POD_NAMESPACE",
+                            valueFrom: {
+                                fieldRef: {
+                                    fieldPath: "metadata.namespace"
+                                }
+                            }
+                        }, {
+                            name: "POD_NAME",
+                            valueFrom: {
+                                fieldRef: {
+                                    fieldPath: "metadata.name"
+                                }
+                            }
+                        }, {
+                            name: "POD_IP",
+                            valueFrom: {
+                                fieldRef: {
+                                    fieldPath: "status.podIP"
+                                }
+                            }
                         }],
                         envFrom: [{
                             secretRef: { name: secret.metadata.name }

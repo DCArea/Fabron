@@ -30,10 +30,8 @@ namespace FabronService.FunctionalTests.Resourcers
             CreateAPIReminderResourceRequest request = new(
                 "Test_Create",
                 DateTime.UtcNow.AddDays(1),
-                new(
-                    "http://llhh",
-                    "GET")
-                );
+                new("http://llhh", "GET")
+            );
             HttpResponseMessage response = await client.PostAsJsonAsync("/APIReminders", request);
 
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
@@ -49,10 +47,8 @@ namespace FabronService.FunctionalTests.Resourcers
             CreateAPIReminderResourceRequest request = new(
                 "Test_Get",
                 DateTime.UtcNow,
-                new(
-                    "http://llhh",
-                    "GET")
-                );
+                new("http://llhh","GET")
+            );
             HttpClient client = _waf.WithTestUser().CreateClient();
             Mock<HttpMessageHandler> handler = _waf.GetSiloService<Mock<HttpMessageHandler>>();
             handler.SetupRequest(HttpMethod.Get, request.Command.Url)

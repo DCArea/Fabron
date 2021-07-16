@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 
 using Orleans.Hosting;
@@ -10,7 +11,10 @@ namespace Microsoft.Extensions.Hosting
 {
     public static class FabronHostBuilderExtensions
     {
-        public static IHostBuilder UseFabron(this IHostBuilder hostBuilder, Assembly commandAssembly, Action<ISiloBuilder> configureDelegate)
+        public static IHostBuilder UseFabron(this IHostBuilder hostBuilder, Action<HostBuilderContext, ISiloBuilder> configureDelegate)
+            => hostBuilder.UseFabron(configureDelegate, null);
+
+        public static IHostBuilder UseFabron(this IHostBuilder hostBuilder, Action<HostBuilderContext, ISiloBuilder> configureDelegate, IEnumerable<Assembly>? assemblies)
         {
             if (configureDelegate == null)
             {
@@ -19,8 +23,8 @@ namespace Microsoft.Extensions.Hosting
 
             hostBuilder.UseOrleans((ctx, siloBuilder) =>
             {
-                siloBuilder.AddFabron(commandAssembly);
-                configureDelegate(siloBuilder);
+                siloBuilder.AddFabron(assemblies);
+                configureDelegate(ctx, siloBuilder);
             });
 
             return hostBuilder;

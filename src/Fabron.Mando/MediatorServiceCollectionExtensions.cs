@@ -1,6 +1,8 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
@@ -12,20 +14,27 @@ namespace Microsoft.Extensions.DependencyInjection
 {
     public static class MediatorServiceCollectionExtensions
     {
-        public static IServiceCollection RegisterJobCommandHandlers(this IServiceCollection services, Assembly assembly)
+        public static IServiceCollection RegisterJobCommandHandlers(this IServiceCollection services, IEnumerable<Assembly>? assemblies = null)
         {
-            System.Type[]? assemblyTypes = assembly.GetExportedTypes();
-            System.Collections.Generic.IEnumerable<System.Type>? commandTypes = assemblyTypes.Where(t => t.IsClass && t.GetInterface(typeof(ICommand<>).Name) is not null);
-            System.Collections.Generic.IEnumerable<(System.Type commandType, System.Type resultType, System.Type handlerInterfaceType)>? tuples = commandTypes.Select(commandType =>
+            if (assemblies is null || !assemblies.Any())
             {
-                System.Type? resultType = commandType.GetInterface(typeof(ICommand<>).Name)!.GetGenericArguments().Single();
-                System.Type? handlerInterfaceType = typeof(ICommandHandler<,>).MakeGenericType(commandType, resultType);
+                assemblies = AppDomain.CurrentDomain
+                    .GetAssemblies()
+                    .Where(a => !a.IsDynamic);
+            }
+
+            IEnumerable<Type> assemblyTypes = assemblies.SelectMany(assembly => assembly.GetExportedTypes());
+            IEnumerable<Type> commandTypes = assemblyTypes.Where(t => t.IsClass && !t.IsAbstract && t.GetInterface(typeof(ICommand<>).Name) is not null);
+            IEnumerable<(Type commandType, Type resultType, Type handlerInterfaceType)> tuples = commandTypes.Select(commandType =>
+            {
+                Type resultType = commandType.GetInterface(typeof(ICommand<>).Name)!.GetGenericArguments().Single();
+                Type handlerInterfaceType = typeof(ICommandHandler<,>).MakeGenericType(commandType, resultType);
                 return (commandType, resultType, handlerInterfaceType);
             });
 
-            foreach ((System.Type commandType, System.Type resultType, System.Type handlerInterfaceType) in tuples)
+            foreach ((Type commandType, Type resultType, Type handlerInterfaceType) in tuples)
             {
-                System.Type? handlerImplemention = assemblyTypes
+                Type handlerImplemention = assemblyTypes
                     .Single(t => t.IsClass && handlerInterfaceType.IsAssignableFrom(t));
 
                 typeof(MediatorServiceCollectionExtensions)
@@ -40,8 +49,8 @@ namespace Microsoft.Extensions.DependencyInjection
             where THandler : class, ICommandHandler<TCommand, TResult>
             where TCommand : ICommand<TResult>
         {
-            System.Type? commandType = typeof(TCommand);
-            System.Type? handlerType = typeof(THandler);
+            Type commandType = typeof(TCommand);
+            Type handlerType = typeof(THandler);
 
             services.TryAddTransient<ICommandHandler<TCommand, TResult>, THandler>();
             services.Configure<CommandRegistry>(opt =>

@@ -20,23 +20,24 @@
 
   <!-- library versions -->
   <PropertyGroup>
-    <CronosVersion>0.7.1</CronosVersion>
     <AspNetCoreAuthenticationApiKeyVersion>5.1.0</AspNetCoreAuthenticationApiKeyVersion>
-    <SwashbuckleAspNetCoreVersion>6.1.4</SwashbuckleAspNetCoreVersion>
+    <CronosVersion>0.7.1</CronosVersion>
+    <OrleansClusteringRedisVersion>3.1.1</OrleansClusteringRedisVersion>
     <StyleCopAnalyzersVersion>1.0.0</StyleCopAnalyzersVersion>
+    <SwashbuckleAspNetCoreVersion>6.1.4</SwashbuckleAspNetCoreVersion>
   </PropertyGroup>
 
   <!-- test pkgs -->
   <PropertyGroup>
-    <MicrosoftTestSdkVersion>16.10.0</MicrosoftTestSdkVersion>
-    <xUnitVersion>2.4.1</xUnitVersion>
-    <xUnitRunnerVisualStudio>2.4.3</xUnitRunnerVisualStudio>
-    <FluentAssertionsVersion>6.0.0-beta0001</FluentAssertionsVersion>
     <CoverletCollectorVersion>3.0.3</CoverletCollectorVersion>
-    <MartinCostelloLoggingXUnitVersion>0.1.0</MartinCostelloLoggingXUnitVersion>
-    <OrleansTestKitVersion>3.1.5</OrleansTestKitVersion>
-    <MoqVersion>4.16.1</MoqVersion>
-    <MoqContribHttpClientVersion>1.3.0</MoqContribHttpClientVersion>
     <FakeItEasyVersion>7.1.0</FakeItEasyVersion>
+    <FluentAssertionsVersion>6.0.0-beta0001</FluentAssertionsVersion>
+    <MartinCostelloLoggingXUnitVersion>0.1.0</MartinCostelloLoggingXUnitVersion>
+    <MicrosoftTestSdkVersion>16.10.0</MicrosoftTestSdkVersion>
+    <MoqContribHttpClientVersion>1.3.0</MoqContribHttpClientVersion>
+    <MoqVersion>4.16.1</MoqVersion>
+    <OrleansTestKitVersion>3.1.5</OrleansTestKitVersion>
+    <xUnitRunnerVisualStudio>2.4.3</xUnitRunnerVisualStudio>
+    <xUnitVersion>2.4.1</xUnitVersion>
   </PropertyGroup>
 </Project>
