@@ -18,11 +18,13 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             if (assemblies is null || !assemblies.Any())
             {
-                assemblies = AppDomain.CurrentDomain.GetAssemblies();
+                assemblies = AppDomain.CurrentDomain
+                    .GetAssemblies()
+                    .Where(a => !a.IsDynamic);
             }
 
             IEnumerable<Type> assemblyTypes = assemblies.SelectMany(assembly => assembly.GetExportedTypes());
-            IEnumerable<Type> commandTypes = assemblyTypes.Where(t => t.IsClass && t.GetInterface(typeof(ICommand<>).Name) is not null);
+            IEnumerable<Type> commandTypes = assemblyTypes.Where(t => t.IsClass && !t.IsAbstract && t.GetInterface(typeof(ICommand<>).Name) is not null);
             IEnumerable<(Type commandType, Type resultType, Type handlerInterfaceType)> tuples = commandTypes.Select(commandType =>
             {
                 Type resultType = commandType.GetInterface(typeof(ICommand<>).Name)!.GetGenericArguments().Single();

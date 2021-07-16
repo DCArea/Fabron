@@ -10,7 +10,7 @@ namespace Orleans.Hosting
 {
     public static class FabronSiloBuilderExtensions
     {
-        public static ISiloBuilder AddFabron(this ISiloBuilder siloBuilder, IEnumerable<Assembly>? commandAssemblies)
+        public static ISiloBuilder AddFabron(this ISiloBuilder siloBuilder, IEnumerable<Assembly>? commandAssemblies = null)
         {
             siloBuilder
                 .ConfigureServices((ctx, services) =>

@@ -25,7 +25,7 @@ namespace FabronService.FunctionalTests
             });
             siloBuilder.UseInMemoryJobStore();
             siloBuilder.ConfigureServices(ConfigureServices);
-            siloBuilder.AddFabron(typeof(RequestWebAPI).Assembly);
+            siloBuilder.AddFabron();
         }
     }
 }
