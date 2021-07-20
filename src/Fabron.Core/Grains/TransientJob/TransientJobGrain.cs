@@ -60,6 +60,7 @@ namespace Fabron.Grains.TransientJob
             {
                 _job.State = new TransientJobState(command, scheduledAt);
                 await _job.WriteStateAsync();
+                MetricsHelper.JobCount_Created.Inc();
                 _logger.LogInformation($"Created Job");
             }
 
@@ -84,6 +85,7 @@ namespace Fabron.Grains.TransientJob
                     await SetJobReminder(dueTime);
                     break;
             }
+            MetricsHelper.JobCount_Scheduled.Inc();
         }
 
         public async Task Cancel(string reason)
@@ -100,15 +102,18 @@ namespace Fabron.Grains.TransientJob
 
             _job.State.Cancel(reason);
             await _job.WriteStateAsync();
+            MetricsHelper.JobCount_Canceled.Inc();
         }
 
         private async Task Start()
         {
             _timer?.Dispose();
-            _logger.LogInformation($"Start Job");
+            _logger.LogInformation("Start Job");
             _job.State.Start();
             await _job.WriteStateAsync();
+            MetricsHelper.JobCount_Running.Inc();
             _logger.LogInformation($"Job Started");
+
             await Run();
         }
 
@@ -121,16 +126,20 @@ namespace Fabron.Grains.TransientJob
             {
                 string? result = await _mediator.Handle(_job.State.Command.Name, _job.State.Command.Data, _cancellationTokenSource.Token);
                 _job.State.Complete(result);
+                await _job.WriteStateAsync();
+                MetricsHelper.JobCount_RanToCompletion.Inc();
             }
             catch (Exception e)
             {
                 if (e is not TaskCanceledException || _job.State.Status != JobStatus.Canceled)
                 {
                     _job.State.Fault(e);
+                    await _job.WriteStateAsync();
+                    MetricsHelper.JobCount_Faulted.Inc();
                 }
             }
-            await _job.WriteStateAsync();
             _logger.LogInformation($"Job Finished: {_job.State.Status}");
+
             await Cleanup();
         }
 
@@ -153,7 +162,7 @@ namespace Fabron.Grains.TransientJob
 
         private Task Go() => _job.State.Status switch
         {
-            JobStatus.NotCreated or JobStatus.Created => Start(),
+            JobStatus.Created or JobStatus.Scheduled => Start(),
             JobStatus.Running => Run(),
             _ => Cleanup()
         };

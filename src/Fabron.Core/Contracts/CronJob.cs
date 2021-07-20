@@ -9,8 +9,8 @@ namespace Fabron.Contracts
     public record CronJobBase
     (
         string CronExp,
-        IEnumerable<CronChildJob> NotCreatedJobs,
         IEnumerable<CronChildJob> PendingJobs,
+        IEnumerable<CronChildJob> ScheduledJobs,
         IEnumerable<CronChildJob> FinishedJobs,
         JobStatus Status,
         string? Reason
@@ -19,8 +19,8 @@ namespace Fabron.Contracts
     (
         string CronExp,
         object Command,
-        IEnumerable<CronChildJob> NotCreatedJobs,
         IEnumerable<CronChildJob> PendingJobs,
+        IEnumerable<CronChildJob> ScheduledJobs,
         IEnumerable<CronChildJob> FinishedJobs,
         JobStatus Status,
         string? Reason
@@ -30,8 +30,8 @@ namespace Fabron.Contracts
     (
         string CronExp,
         object Command,
-        IEnumerable<CronChildJobDetail> NotCreatedJobs,
         IEnumerable<CronChildJobDetail> PendingJobs,
+        IEnumerable<CronChildJobDetail> ScheduledJobs,
         IEnumerable<CronChildJobDetail> FinishedJobs,
         JobStatus Status,
         string? Reason

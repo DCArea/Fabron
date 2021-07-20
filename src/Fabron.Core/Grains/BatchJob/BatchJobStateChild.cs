@@ -5,6 +5,15 @@ using System;
 
 namespace Fabron.Grains.BatchJob
 {
+    public enum ChildJobStatus
+    {
+        WaitToSchedule,
+        Scheduled,
+        RanToCompletion,
+        Canceled,
+        Faulted
+    }
+
     public class BatchJobStateChild
     {
 #nullable disable
@@ -18,10 +27,8 @@ namespace Fabron.Grains.BatchJob
 
         public string Id { get; }
         public JobCommandInfo Command { get; }
-        public JobStatus Status { get; set; }
-        public bool IsPending
-            => Status is (JobStatus.Created or JobStatus.Running);
+        public ChildJobStatus Status { get; set; }
         public bool IsFinished
-            => Status is (JobStatus.RanToCompletion or JobStatus.Canceled or JobStatus.Faulted);
+            => Status is (ChildJobStatus.RanToCompletion or ChildJobStatus.Canceled or ChildJobStatus.Faulted);
     }
 }

@@ -2,21 +2,15 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection;
-using System.Threading;
 using System.Threading.Tasks;
 
+using Fabron.Core.Test.Grains;
 using Fabron.Grains;
 using Fabron.Grains.CronJob;
 
 using Microsoft.Extensions.Logging;
 
-using Moq;
-
-using Orleans.Runtime;
 using Orleans.TestKit;
 
 using Xunit;
@@ -24,14 +18,14 @@ using Xunit;
 namespace Fabron.Test.Grains.CronJob
 {
 
-    public class CronJobGrainTests : TestKitBase
+    public class CronJobGrainTests : GrainTestBase<CronJobState>
     {
         [Fact]
         public async Task Create()
         {
             string cronExp = "0 0 * 11 *";
 
-            await CreateGrain(cronExp);
+            await Schedule(cronExp);
 
             CronJobState state = MockState.Object.State;
             Assert.Equal(cronExp, state.CronExp);
@@ -45,13 +39,13 @@ namespace Fabron.Test.Grains.CronJob
         {
             string cronExp = "0 0 * 11 *";
 
-            await CreateGrain(cronExp);
+            await Schedule(cronExp);
 
             CronJobState state = MockState.Object.State;
             Assert.Equal(cronExp, state.CronExp);
             Assert.Equal(Command.Name, state.Command.Name);
             Assert.Equal(Command.Data, state.Command.Data);
-            await WhenState(j => j.PendingJobs.Count() == 1, TimeSpan.FromMilliseconds(1000));
+            await WaitUntil(j => j.PendingJobs.Count() == 1, TimeSpan.FromMilliseconds(1000));
         }
 
         [Fact]
@@ -59,64 +53,28 @@ namespace Fabron.Test.Grains.CronJob
         {
             string cronExp = "* * * * *";
 
-            await CreateGrain(cronExp);
+            await Schedule(cronExp);
 
             CronJobState state = MockState.Object.State;
             Assert.Equal(cronExp, state.CronExp);
             Assert.Equal(Command.Name, state.Command.Name);
             Assert.Equal(Command.Data, state.Command.Data);
-            await WhenState(j => j.PendingJobs.Count() == 20, TimeSpan.FromMilliseconds(1000));
+            await WaitUntil(j => j.PendingJobs.Count() == 20, TimeSpan.FromMilliseconds(1000));
         }
 
 
-        public CronJobGrainTests()
-        {
-            MockState = new Mock<IPersistentState<CronJobState>>();
-            MockState.SetupGet(o => o.RecordExists).Returns(false);
-            MockState.SetupGet(o => o.State).Returns(() => State);
-            MockState.SetupSet(o => o.State = It.IsAny<CronJobState>()).Callback<CronJobState>(v => State = v);
-            MockState.Setup(m => m.WriteStateAsync()).Callback(() => StateWrote.Release());
+        protected override void SetupServices() => Silo.AddServiceProbe<ILogger<CronJobGrain>>();
 
-            MockMapper = new Mock<IAttributeToFactoryMapper<PersistentStateAttribute>>();
-            MockMapper.Setup(o => o.GetFactory(It.IsAny<ParameterInfo>(), It.IsAny<PersistentStateAttribute>())).Returns(context => MockState.Object);
-
-            Silo.AddService(MockMapper.Object);
-
-            Silo.AddServiceProbe<ILogger<CronJobGrain>>();
-        }
-
-        public Mock<IPersistentState<CronJobState>> MockState { get; }
-        public Mock<IAttributeToFactoryMapper<PersistentStateAttribute>> MockMapper { get; }
         public JobCommandInfo Command { get; private set; } = new TestCommand(Guid.NewGuid().ToString()).ToRaw();
-        public CronJobGrain TestGrain { get; private set; } = null!;
 
-        public SemaphoreSlim StateWrote { get; set; } = new SemaphoreSlim(1);
-        public CronJobState State { get; private set; } = new();
-
-        public async Task WhenState(Expression<Func<CronJobState, bool>> condition, TimeSpan timeout)
+        private async Task<CronJobGrain> Schedule(string cronExp)
         {
-            Func<CronJobState, bool> con = condition.Compile();
-            CancellationTokenSource token = new CancellationTokenSource(timeout);
-            while (!con(State))
-            {
-                await StateWrote.WaitAsync(token.Token);
-            }
-
+            CronJobGrain grain = await Silo.CreateGrainAsync<CronJobGrain>(Guid.NewGuid().ToString());
+            await Schedule(grain, cronExp);
+            return grain;
         }
 
-        private Task<string> CreateGrain(string cronExp)
-            => CreateGrain(Guid.NewGuid().ToString(), cronExp);
-
-        [MemberNotNull(nameof(TestGrain))]
-        private async Task<string> CreateGrain(string jobId, string cronExp)
-        {
-            TestGrain = null!;
-            TestGrain = await Silo.CreateGrainAsync<CronJobGrain>(jobId)!;
-            if (TestGrain is null) { throw new Exception(); }
-
-            await TestGrain.Create(cronExp, Command);
-            return jobId;
-        }
+        private async Task Schedule(CronJobGrain grain, string cronExp) => await grain.Create(cronExp, Command);
     }
 }
 

@@ -33,7 +33,7 @@ namespace Core.Test.Grains.CronJob
             state.Schedule(toTime);
 
             DateTime? nextSchedule = CronExpression.Parse(cronExp).GetNextOccurrence(now);
-            state.NotCreatedJobs.Should().ContainSingle(job => job.ScheduledAt == nextSchedule);
+            state.PendingJobs.Should().ContainSingle(job => job.ScheduledAt == nextSchedule);
         }
 
         [Fact]
@@ -45,7 +45,7 @@ namespace Core.Test.Grains.CronJob
             DateTime toTime = DateTime.UtcNow.AddMinutes(20);
             state.Schedule(toTime);
 
-            state.NotCreatedJobs.Should().HaveCount(20);
+            state.PendingJobs.Should().HaveCount(20);
         }
 
         public JobCommandInfo Command { get; private set; } = new TestCommand(Guid.NewGuid().ToString()).ToRaw();

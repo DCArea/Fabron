@@ -7,6 +7,14 @@ using System.Linq;
 
 namespace Fabron.Grains.CronJob
 {
+    public enum CronJobStatus
+    {
+        Created,
+        Running,
+        RanToCompletion,
+        Canceled,
+    }
+
     public class CronJobState
     {
 #nullable disable
@@ -23,27 +31,20 @@ namespace Fabron.Grains.CronJob
         private readonly List<CronJobStateChild> _childJobs = new();
         public CronJobStateChild? LatestJob => _childJobs.LastOrDefault();
         public IReadOnlyCollection<CronJobStateChild> ChildJobs => _childJobs.AsReadOnly();
-        public IEnumerable<CronJobStateChild> NotCreatedJobs => _childJobs.Where(job => job.Status == JobStatus.NotCreated);
-        public IEnumerable<CronJobStateChild> CreatedJobs => _childJobs.Where(job => job.Status != JobStatus.NotCreated);
-        public IEnumerable<CronJobStateChild> PendingJobs => _childJobs.Where(job => !job.IsFinished && job.Status != JobStatus.NotCreated);
-        public IEnumerable<CronJobStateChild> UnFinishedJobs => _childJobs.Where(job => !job.IsFinished);
+        public IEnumerable<CronJobStateChild> PendingJobs => _childJobs.Where(job => job.Status == CronChildJobStatus.WaitToSchedule);
+        public IEnumerable<CronJobStateChild> ScheduledJobs => _childJobs.Where(job => job.Status == CronChildJobStatus.Scheduled);
         public IEnumerable<CronJobStateChild> FinishedJobs => _childJobs.Where(job => job.IsFinished);
         public string? Reason { get; private set; }
-        public JobStatus Status { get; private set; }
+        public CronJobStatus Status { get; private set; }
 
-        public void Start() => Status = JobStatus.Running;
+        public void Start() => Status = CronJobStatus.Running;
 
-        public void Complete() => Status = JobStatus.RanToCompletion;
+        public void Complete() => Status = CronJobStatus.RanToCompletion;
 
         public void Cancel(string reason)
         {
-            Status = JobStatus.Canceled;
+            Status = CronJobStatus.Canceled;
             Reason = reason;
-        }
-
-        public void SetNextReminder()
-        {
-
         }
 
         public void Schedule(DateTime toTime)
