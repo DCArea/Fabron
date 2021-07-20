@@ -1,0 +1,34 @@
+{
+    "compilerOptions": {
+        "outDir": "bin",
+        "target": "es2016",
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "declaration": true,
+        "sourceMap": true,
+        "stripInternal": true,
+        "experimentalDecorators": true,
+        "noFallthroughCasesInSwitch": true,
+        "forceConsistentCasingInFileNames": true,
+        "strict": true
+    },
+    "files": [
+        "index.ts",
+        "monitoring/index.ts",
+        "monitoring/v1/alertmanager.ts",
+        "monitoring/v1/index.ts",
+        "monitoring/v1/podMonitor.ts",
+        "monitoring/v1/probe.ts",
+        "monitoring/v1/prometheus.ts",
+        "monitoring/v1/prometheusRule.ts",
+        "monitoring/v1/serviceMonitor.ts",
+        "monitoring/v1/thanosRuler.ts",
+        "monitoring/v1alpha1/alertmanagerConfig.ts",
+        "monitoring/v1alpha1/index.ts",
+        "provider.ts",
+        "types/index.ts",
+        "types/input.ts",
+        "types/output.ts",
+        "utilities.ts"
+    ]
+}
