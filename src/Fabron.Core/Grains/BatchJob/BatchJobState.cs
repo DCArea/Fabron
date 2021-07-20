@@ -6,7 +6,13 @@ using System.Linq;
 
 namespace Fabron.Grains.BatchJob
 {
-
+    public enum BatchJobStatus
+    {
+        Created,
+        Running,
+        RanToCompletion,
+        Canceled,
+    }
     public class BatchJobState
     {
 #nullable disable
@@ -17,21 +23,21 @@ namespace Fabron.Grains.BatchJob
                 .ToList();
 
         private readonly List<BatchJobStateChild> _childJobs = null!;
-        public IEnumerable<BatchJobStateChild> PendingJobs => _childJobs.Where(job => job.Status == JobStatus.NotCreated);
-        public IEnumerable<BatchJobStateChild> EnqueuedJobs => _childJobs.Where(job => !job.IsFinished && job.Status != JobStatus.NotCreated);
+        public IEnumerable<BatchJobStateChild> PendingJobs => _childJobs.Where(job => job.Status == ChildJobStatus.WaitToSchedule);
+        public IEnumerable<BatchJobStateChild> ScheduledJobs => _childJobs.Where(job => job.Status == ChildJobStatus.Scheduled);
         public IEnumerable<BatchJobStateChild> FinishedJobs => _childJobs.Where(job => job.IsFinished);
 
         public string? Reason { get; private set; }
 
-        public JobStatus Status { get; private set; }
+        public BatchJobStatus Status { get; private set; }
 
-        public void Start() => Status = JobStatus.Running;
+        public void Start() => Status = BatchJobStatus.Running;
 
-        public void Complete() => Status = JobStatus.RanToCompletion;
+        public void Complete() => Status = BatchJobStatus.RanToCompletion;
 
         public void Cancel(string reason)
         {
-            Status = JobStatus.Canceled;
+            Status = BatchJobStatus.Canceled;
             Reason = reason;
         }
 

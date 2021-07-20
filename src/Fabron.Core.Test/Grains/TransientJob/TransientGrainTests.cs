@@ -26,7 +26,7 @@ namespace Fabron.Test.Grains.TransientJob
     public class TransientGrainTests : GrainTestBase<TransientJobState>
     {
         [Fact]
-        public async Task Create()
+        public async Task Create_Immediately()
         {
             await Schedule();
 
@@ -35,26 +35,12 @@ namespace Fabron.Test.Grains.TransientJob
             Assert.Equal(Command.Data, state.Command.Data);
             Assert.Null(state.ScheduledAt);
 
-            Silo.ReminderRegistry.Mock
-                .Verify(m => m.RegisterOrUpdateReminder("Check", TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(2)));
-        }
-
-        [Fact]
-        public async Task Create_Immediately()
-        {
-            (TransientJobGrain _, DateTime? scheduledAt) = await Schedule(TimeSpan.FromSeconds(0));
-
-            TransientJobState state = MockState.Object.State;
-            Assert.Equal(Command.Name, state.Command.Name);
-            Assert.Equal(Command.Data, state.Command.Data);
-            Assert.Equal(scheduledAt, state.ScheduledAt);
-
             Silo.TimerRegistry.Mock.VerifyNoOtherCalls();
             Silo.ReminderRegistry.Mock
                 .Verify(m => m.RegisterOrUpdateReminder("Check", TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(2)));
 
+            await WaitUntil(state => state.Status == JobStatus.RanToCompletion, TimeSpan.FromSeconds(1));
         }
-
 
         [Fact]
         public async Task Create_10sDelay()

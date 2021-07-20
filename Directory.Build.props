@@ -20,6 +20,7 @@
 
   <!-- library versions -->
   <PropertyGroup>
+    <MicrosoftToolkitDiagnostics>7.0.2</MicrosoftToolkitDiagnostics>
     <PrometheusNetVersion>4.2.0</PrometheusNetVersion>
     <AspNetCoreAuthenticationApiKeyVersion>5.1.0</AspNetCoreAuthenticationApiKeyVersion>
     <CronosVersion>0.7.1</CronosVersion>

@@ -16,6 +16,8 @@ using Microsoft.OpenApi.Models;
 
 using Orleans.Hosting;
 
+using Prometheus;
+
 IHostBuilder hostBuilder = Host.CreateDefaultBuilder(args)
     .UseFabron((ctx, siloBuilder) =>
     {
@@ -61,6 +63,7 @@ static void ConfigureWebApplication(IApplicationBuilder app)
         .UseEndpoints(endpoints =>
         {
             endpoints.MapHealthChecks("/health").AllowAnonymous();
+            endpoints.MapMetrics();
             endpoints.MapControllers();
         });
 }

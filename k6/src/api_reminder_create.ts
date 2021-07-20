@@ -16,7 +16,8 @@ export var create_reminder = () => {
         "name": `TEST0001.${__VU}.${__ITER}`,
         "schedule": new Date().toISOString(),
         "command": {
-            "url": "https://test-api.k6.io",
+            // "url": "https://test-api.k6.io",
+            "url": "http://localhost:5600/health",
             "httpMethod": "GET"
         }
     };

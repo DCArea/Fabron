@@ -96,8 +96,8 @@ namespace Fabron.Contracts
             CronJob job = new CronJob(
                 jobState.CronExp,
                 cmd,
-                jobState.NotCreatedJobs.Select(job => job.To()),
                 jobState.PendingJobs.Select(job => job.To()),
+                jobState.ScheduledJobs.Select(job => job.To()),
                 jobState.FinishedJobs.Select(job => job.To()),
                 (JobStatus)(int)jobState.Status,
                 jobState.Reason

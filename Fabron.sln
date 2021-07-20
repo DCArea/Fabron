@@ -1,21 +1,29 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30608.117
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31512.422
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{69206C38-EB1E-4CE2-9961-FC1D1D6609FE}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fabron.Server", "src\Fabron.Server\Fabron.Server.csproj", "{D1EE193F-C8DE-40AF-AF9C-EFD24C2D5724}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fabron.Core.Test", "src\Fabron.Core.Test\Fabron.Core.Test.csproj", "{5E6420B6-8A59-49CC-ACFC-9528CB6D6DCE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fabron.Core.Test", "src\Fabron.Core.Test\Fabron.Core.Test.csproj", "{5E6420B6-8A59-49CC-ACFC-9528CB6D6DCE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fabron.Core", "src\Fabron.Core\Fabron.Core.csproj", "{5C2B22FC-0D68-421F-B01E-E5AC8EE8E7FA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fabron.Core", "src\Fabron.Core\Fabron.Core.csproj", "{5C2B22FC-0D68-421F-B01E-E5AC8EE8E7FA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fabron.Mando", "src\Fabron.Mando\Fabron.Mando.csproj", "{1CC2D67D-7CFB-4095-BC32-D96C44E4A690}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fabron.Mando", "src\Fabron.Mando\Fabron.Mando.csproj", "{1CC2D67D-7CFB-4095-BC32-D96C44E4A690}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FabronService", "src\FabronService\FabronService.csproj", "{2F7A9B06-8FF1-4098-89CC-564EDFE8DD42}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FabronService", "src\FabronService\FabronService.csproj", "{2F7A9B06-8FF1-4098-89CC-564EDFE8DD42}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FabronService.FunctionalTests", "src\FabronService.FunctionalTests\FabronService.FunctionalTests.csproj", "{D27DA44E-BE17-4A37-BC5C-B1FE92B4CF06}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FabronService.FunctionalTests", "src\FabronService.FunctionalTests\FabronService.FunctionalTests.csproj", "{D27DA44E-BE17-4A37-BC5C-B1FE92B4CF06}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E0630ADA-34EA-41F6-8916-2D7661B32005}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+		Directory.Build.props = Directory.Build.props
+		global.json = global.json
+		nuget.config = nuget.config
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

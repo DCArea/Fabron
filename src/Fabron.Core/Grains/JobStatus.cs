@@ -5,8 +5,8 @@ namespace Fabron.Grains
 {
     public enum JobStatus
     {
-        NotCreated,
         Created,
+        Scheduled,
         Running,
         RanToCompletion,
         Canceled,

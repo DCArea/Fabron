@@ -122,7 +122,7 @@ namespace Fabron.Grains.BatchJob
         {
             while (true)
             {
-                List<BatchJobStateChild> jobsToCheck = _job.State.EnqueuedJobs.ToList();
+                List<BatchJobStateChild> jobsToCheck = _job.State.ScheduledJobs.ToList();
                 if (jobsToCheck.Count == 0)
                 {
                     return;
@@ -141,13 +141,21 @@ namespace Fabron.Grains.BatchJob
         {
             ITransientJobGrain grain = GrainFactory.GetGrain<ITransientJobGrain>(job.Id);
             await grain.Create(job.Command);
-            job.Status = JobStatus.Created;
+            job.Status = ChildJobStatus.WaitToSchedule;
         }
 
         private async Task CheckChildJobStatus(BatchJobStateChild job)
         {
             ITransientJobGrain grain = GrainFactory.GetGrain<ITransientJobGrain>(job.Id);
-            job.Status = await grain.GetStatus();
+            job.Status = await grain.GetStatus() switch
+            {
+                JobStatus.Created => ChildJobStatus.WaitToSchedule,
+                JobStatus.Scheduled or JobStatus.Running => ChildJobStatus.Scheduled,
+                JobStatus.RanToCompletion => ChildJobStatus.RanToCompletion,
+                JobStatus.Canceled => ChildJobStatus.Canceled,
+                JobStatus.Faulted => ChildJobStatus.Faulted,
+                _ => throw new InvalidOperationException("invalid child job state")
+            };
         }
 
         private async Task Cleanup()
@@ -168,8 +176,8 @@ namespace Fabron.Grains.BatchJob
 
         private Task Go() => _job.State.Status switch
         {
-            JobStatus.NotCreated or JobStatus.Created => Start(),
-            JobStatus.Running => Run(),
+            BatchJobStatus.Created => Start(),
+            BatchJobStatus.Running => Run(),
             _ => Cleanup()
         };
 

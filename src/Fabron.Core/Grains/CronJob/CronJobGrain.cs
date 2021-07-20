@@ -93,7 +93,7 @@ namespace Fabron.Grains.CronJob
             await Task.WhenAll(ScheduleChildJobs(), CheckPendingJobs());
 
 
-            CronJobStateChild? firstUnfinishedJob = _job.State.UnFinishedJobs.FirstOrDefault();
+            CronJobStateChild? firstUnfinishedJob = _job.State.ChildJobs.Where(cj => !cj.IsFinished).FirstOrDefault();
             if (firstUnfinishedJob is null)
             {
                 _job.State.Complete();
@@ -121,10 +121,11 @@ namespace Fabron.Grains.CronJob
             DateTime utcNow = DateTime.UtcNow;
             DateTime toTime = utcNow.AddMinutes(20);
             _job.State.Schedule(toTime);
-            List<CronJobStateChild> jobsToBeScheduled = _job.State.NotCreatedJobs.ToList();
+            List<CronJobStateChild> jobsToBeScheduled = _job.State.PendingJobs.ToList();
 
             if (jobsToBeScheduled.Count == 0)
             {
+                // TODO: check when to schedule the next child job
                 return;
             }
 
@@ -142,7 +143,7 @@ namespace Fabron.Grains.CronJob
         private async Task CheckPendingJobs()
         {
             DateTime utcNow = DateTime.UtcNow;
-            List<CronJobStateChild> jobsToBeChecked = _job.State.PendingJobs.Where(job => job.ScheduledAt < utcNow).ToList();
+            List<CronJobStateChild> jobsToBeChecked = _job.State.ScheduledJobs.Where(job => job.ScheduledAt < utcNow).ToList();
             if (jobsToBeChecked.Count == 0)
             {
                 return;
@@ -159,13 +160,21 @@ namespace Fabron.Grains.CronJob
         {
             ITransientJobGrain grain = GrainFactory.GetGrain<ITransientJobGrain>(job.Id);
             await grain.Create(_job.State.Command, job.ScheduledAt);
-            job.Status = JobStatus.Created;
+            job.Status = CronChildJobStatus.WaitToSchedule;
         }
 
         private async Task CheckChildJobStatus(CronJobStateChild job)
         {
             ITransientJobGrain grain = GrainFactory.GetGrain<ITransientJobGrain>(job.Id);
-            job.Status = await grain.GetStatus();
+            job.Status = await grain.GetStatus() switch
+            {
+                JobStatus.Created => CronChildJobStatus.WaitToSchedule,
+                JobStatus.Scheduled or JobStatus.Running => CronChildJobStatus.Scheduled,
+                JobStatus.RanToCompletion => CronChildJobStatus.RanToCompletion,
+                JobStatus.Canceled => CronChildJobStatus.Canceled,
+                JobStatus.Faulted => CronChildJobStatus.Faulted,
+                _ => throw new InvalidOperationException("invalid child job state")
+            };
         }
 
         private async Task Cleanup()
@@ -186,8 +195,8 @@ namespace Fabron.Grains.CronJob
 
         private Task Go() => _job.State.Status switch
         {
-            JobStatus.NotCreated or JobStatus.Created => Start(),
-            JobStatus.Running => Run(),
+            CronJobStatus.Created => Start(),
+            CronJobStatus.Running => Run(),
             _ => Cleanup()
         };
 
