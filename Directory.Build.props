@@ -20,6 +20,7 @@
 
   <!-- library versions -->
   <PropertyGroup>
+    <PrometheusNetVersion>4.2.0</PrometheusNetVersion>
     <AspNetCoreAuthenticationApiKeyVersion>5.1.0</AspNetCoreAuthenticationApiKeyVersion>
     <CronosVersion>0.7.1</CronosVersion>
     <OrleansClusteringRedisVersion>3.1.1</OrleansClusteringRedisVersion>

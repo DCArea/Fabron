@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 using Orleans;
 using Orleans.Concurrency;
 using Orleans.Runtime;
+using Prometheus;
 
 namespace Fabron.Grains.TransientJob
 {
@@ -29,6 +30,11 @@ namespace Fabron.Grains.TransientJob
 
     public class TransientJobGrain : Grain, ITransientJobGrain, IRemindable
     {
+        private static readonly Counter ProcessedJobCount = Metrics
+            .CreateCounter("fabron_jobs_processed_total", "Number of processed jobs.");
+        private static readonly Counter ReceivedJobCount = Metrics
+            .CreateCounter("fabron_jobs_received_total", "Number of received jobs.");
+
         private readonly ILogger _logger;
         private readonly IPersistentState<TransientJobState> _job;
         private readonly IMediator _mediator;
@@ -68,6 +74,7 @@ namespace Fabron.Grains.TransientJob
 
         private async Task Schedule()
         {
+            ReceivedJobCount.Inc();
             TimeSpan dueTime = _job.State.DueTime;
             _logger.LogInformation($"Schedule Job, dueTime={dueTime}");
             switch (dueTime)
@@ -99,6 +106,7 @@ namespace Fabron.Grains.TransientJob
             }
 
             _job.State.Cancel(reason);
+            ProcessedJobCount.WithLabels(nameof(JobStatus.Canceled)).Inc();
             await _job.WriteStateAsync();
         }
 
@@ -121,12 +129,14 @@ namespace Fabron.Grains.TransientJob
             {
                 string? result = await _mediator.Handle(_job.State.Command.Name, _job.State.Command.Data, _cancellationTokenSource.Token);
                 _job.State.Complete(result);
+                ProcessedJobCount.WithLabels(nameof(JobStatus.RanToCompletion)).Inc();
             }
             catch (Exception e)
             {
                 if (e is not TaskCanceledException || _job.State.Status != JobStatus.Canceled)
                 {
                     _job.State.Fault(e);
+                    ProcessedJobCount.WithLabels(nameof(JobStatus.Faulted)).Inc();
                 }
             }
             await _job.WriteStateAsync();
