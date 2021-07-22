@@ -20,11 +20,12 @@
 
   <!-- library versions -->
   <PropertyGroup>
-    <MicrosoftToolkitDiagnostics>7.0.2</MicrosoftToolkitDiagnostics>
-    <PrometheusNetVersion>4.2.0</PrometheusNetVersion>
     <AspNetCoreAuthenticationApiKeyVersion>5.1.0</AspNetCoreAuthenticationApiKeyVersion>
     <CronosVersion>0.7.1</CronosVersion>
+    <MicrosoftToolkitDiagnostics>7.0.2</MicrosoftToolkitDiagnostics>
+    <NpgsqlVersion>5.0.7</NpgsqlVersion>
     <OrleansClusteringRedisVersion>3.1.1</OrleansClusteringRedisVersion>
+    <PrometheusNetVersion>4.2.0</PrometheusNetVersion>
     <StyleCopAnalyzersVersion>1.0.0</StyleCopAnalyzersVersion>
     <SwashbuckleAspNetCoreVersion>6.1.4</SwashbuckleAspNetCoreVersion>
   </PropertyGroup>

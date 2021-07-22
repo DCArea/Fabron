@@ -8,6 +8,7 @@
   <ItemGroup>
     <PackageReference Include="AspNetCore.Authentication.ApiKey" Version="$(AspNetCoreAuthenticationApiKeyVersion)" />
     <PackageReference Include="Microsoft.Orleans.Hosting.Kubernetes" Version="$(OrleansVersion)" />
+    <PackageReference Include="Npgsql" Version="$(NpgsqlVersion)" />
     <PackageReference Include="Orleans.Clustering.Redis" Version="$(OrleansClusteringRedisVersion)" />
     <PackageReference Include="Orleans.Persistence.Redis" Version="$(OrleansClusteringRedisVersion)" />
     <PackageReference Include="Microsoft.Orleans.Reminders.AdoNet" Version="$(OrleansVersion)" />
