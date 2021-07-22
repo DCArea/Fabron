@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>$(DefaultTargetFramework)</TargetFramework>
@@ -10,6 +10,7 @@
     <PackageReference Include="Microsoft.Orleans.Hosting.Kubernetes" Version="$(OrleansVersion)" />
     <PackageReference Include="Orleans.Clustering.Redis" Version="$(OrleansClusteringRedisVersion)" />
     <PackageReference Include="Orleans.Persistence.Redis" Version="$(OrleansClusteringRedisVersion)" />
+    <PackageReference Include="Microsoft.Orleans.Reminders.AdoNet" Version="$(OrleansVersion)" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="$(SwashbuckleAspNetCoreVersion)" />
     <PackageReference Include="prometheus-net.AspNetCore" Version="$(PrometheusNetVersion)" />
   </ItemGroup>

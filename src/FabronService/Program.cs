@@ -28,15 +28,23 @@ IHostBuilder hostBuilder = Host.CreateDefaultBuilder(args)
         }
         else
         {
-            siloBuilder.UseKubernetesHosting();
-            siloBuilder.UseRedisClustering(config =>
-            {
-                config.ConnectionString = ctx.Configuration["RedisConnectionString"];
-                config.Database = 0;
-            });
-            siloBuilder
-                .UseInMemoryReminderService()
-                .AddMemoryGrainStorage("JobStore");
+            siloBuilder.UseKubernetesHosting()
+                .UseRedisClustering(options =>
+                {
+                    options.ConnectionString = ctx.Configuration["RedisConnectionString"];
+                    options.Database = 0;
+                })
+                .AddRedisGrainStorage("JobStore", options =>
+                {
+                    options.ConnectionString = ctx.Configuration["RedisConnectionString"];
+                    options.UseJson = true;
+                    options.DatabaseNumber = 1;
+                })
+                .UseAdoNetReminderService(options =>
+                {
+                    options.Invariant = "Npgsql";
+                    options.ConnectionString = ctx.Configuration["PgSQLConnectionString"];
+                });
         }
 
     })

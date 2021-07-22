@@ -67,7 +67,7 @@ function deploy_secret(redis_config: RedisConfig, pgsql_config: PgSQLConfig) {
         type: "Opaque",
         stringData: {
             "RedisConnectionString": pulumi.interpolate`${redis_config.host}:${redis_config.port},password=${redis_config.password}`,
-            "PgSQLConnectionString": pulumi.interpolate`${pgsql_config.host}:${pgsql_config.port},password=${pgsql_config.password}`,
+            "PgSQLConnectionString": pulumi.interpolate`Host=${pgsql_config.host};Port=${pgsql_config.port};Database=fabron;Username=postgres;password=${pgsql_config.password}`,
         }
     });
     return secret;
