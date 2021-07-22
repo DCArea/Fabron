@@ -24,6 +24,7 @@ IHostBuilder hostBuilder = Host.CreateDefaultBuilder(args)
         if (ctx.HostingEnvironment.IsEnvironment("Localhost"))
         {
             siloBuilder.UseLocalhostClustering();
+            siloBuilder.UseInMemoryJobStore();
         }
         else
         {
@@ -33,9 +34,11 @@ IHostBuilder hostBuilder = Host.CreateDefaultBuilder(args)
                 config.ConnectionString = ctx.Configuration["RedisConnectionString"];
                 config.Database = 0;
             });
+            siloBuilder
+                .UseInMemoryReminderService()
+                .AddMemoryGrainStorage("JobStore");
         }
 
-        siloBuilder.UseInMemoryJobStore();
     })
     .ConfigureWebHostDefaults(builder =>
     {

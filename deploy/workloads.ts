@@ -5,14 +5,15 @@ import { service_name, namespace_name, shared_labels, app_name_api as app_name, 
 import { Deployment } from "@pulumi/kubernetes/apps/v1";
 import { Role, RoleBinding } from "@pulumi/kubernetes/rbac/v1";
 import { ServiceAccount } from "@pulumi/kubernetes/core/v1";
+import { PgSQLConfig } from "./pgsql";
 
 const image_version = process.env["IMAGE_VERSION"];
 if (!image_version) { throw "missing IMAGE_VERSION" };
 const image = `${image_repo_api}:${image_version}`;
 
-export function deploy(redis_config: RedisConfig) {
+export function deploy(redis_config: RedisConfig, pgsql_config: PgSQLConfig) {
     const sa = deploy_rbac();
-    const secret = deploy_secret(redis_config);
+    const secret = deploy_secret(redis_config, pgsql_config);
     const configmap = deploy_configmap();
     const { deployment, service } = deploy_app(app_name, image, configmap, secret, sa);
     return { deployment, service }
@@ -56,7 +57,7 @@ function deploy_rbac() {
 }
 
 
-function deploy_secret(redis_config: RedisConfig) {
+function deploy_secret(redis_config: RedisConfig, pgsql_config: PgSQLConfig) {
     const secret = new Secret(service_name, {
         metadata: {
             namespace: namespace_name,
@@ -66,6 +67,7 @@ function deploy_secret(redis_config: RedisConfig) {
         type: "Opaque",
         stringData: {
             "RedisConnectionString": pulumi.interpolate`${redis_config.host}:${redis_config.port},password=${redis_config.password}`,
+            "PgSQLConnectionString": pulumi.interpolate`${pgsql_config.host}:${pgsql_config.port},password=${pgsql_config.password}`,
         }
     });
     return secret;
