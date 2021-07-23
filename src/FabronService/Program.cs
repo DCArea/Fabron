@@ -1,6 +1,7 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
@@ -14,6 +15,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 
+using Orleans.Configuration;
 using Orleans.Hosting;
 
 using Prometheus;
@@ -21,10 +23,15 @@ using Prometheus;
 IHostBuilder hostBuilder = Host.CreateDefaultBuilder(args)
     .UseFabron((ctx, siloBuilder) =>
     {
+        siloBuilder.AddPrometheusTelemetryConsumer()
+            .Configure<StatisticsOptions>(options =>
+            {
+                options.LogWriteInterval = TimeSpan.FromMilliseconds(-1);
+            });
         if (ctx.HostingEnvironment.IsEnvironment("Localhost"))
         {
-            siloBuilder.UseLocalhostClustering();
-            siloBuilder.UseInMemoryJobStore();
+            siloBuilder.UseLocalhostClustering()
+                .UseInMemoryJobStore();
         }
         else
         {
