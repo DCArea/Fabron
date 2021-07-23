@@ -30,7 +30,8 @@ export function deploy(namespace_name: string): PgSQLConfig {
             },
             persistence:{
                 size: "20Gi"
-            }
+            },
+            postgresqlMaxConnections: "1000"
         }
     });
     const pgsql_svc = redis.getResource("v1/Service", namespace_name, "pgsql-postgresql");
