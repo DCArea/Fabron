@@ -1,5 +1,5 @@
 import { Service } from "@pulumi/kubernetes/core/v1";
-import { ServiceMonitor } from "./prometheus-operator-crds/monitoring/v1";
+import { ServiceMonitor } from "pulumi-crds-prometheus-operator/monitoring/v1";
 
 export function deploy(name: string, service: Service) {
     return new ServiceMonitor(name, {
