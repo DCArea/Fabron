@@ -47,11 +47,16 @@ IHostBuilder hostBuilder = Host.CreateDefaultBuilder(args)
                     options.UseJson = true;
                     options.DatabaseNumber = 1;
                 })
-                .UseAdoNetReminderService(options =>
+                .UseRedisReminderService(options =>
                 {
-                    options.Invariant = "Npgsql";
-                    options.ConnectionString = ctx.Configuration["PgSQLConnectionString"];
+                    options.ConnectionString = ctx.Configuration["RedisConnectionString"];
+                    options.DatabaseNumber = 2;
                 });
+                //.UseAdoNetReminderService(options =>
+                //{
+                //    options.Invariant = "Npgsql";
+                //    options.ConnectionString = ctx.Configuration["PgSQLConnectionString"];
+                //});
         }
 
     })
