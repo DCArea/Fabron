@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>$(DefaultTargetFramework)</TargetFramework>
@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Fabron.Server\Fabron.Server.csproj" />
+    <ProjectReference Include="..\Orleans.Reminders.Redis\Orleans.Reminders.Redis.csproj" />
   </ItemGroup>
 
 </Project>

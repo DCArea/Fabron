@@ -25,6 +25,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		nuget.config = nuget.config
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Orleans.Reminders.Redis", "src\Orleans.Reminders.Redis\Orleans.Reminders.Redis.csproj", "{98E02A95-D7ED-456B-B48B-AE8E7059A25F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -107,6 +109,18 @@ Global
 		{D27DA44E-BE17-4A37-BC5C-B1FE92B4CF06}.Release|x64.Build.0 = Release|Any CPU
 		{D27DA44E-BE17-4A37-BC5C-B1FE92B4CF06}.Release|x86.ActiveCfg = Release|Any CPU
 		{D27DA44E-BE17-4A37-BC5C-B1FE92B4CF06}.Release|x86.Build.0 = Release|Any CPU
+		{98E02A95-D7ED-456B-B48B-AE8E7059A25F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{98E02A95-D7ED-456B-B48B-AE8E7059A25F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{98E02A95-D7ED-456B-B48B-AE8E7059A25F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{98E02A95-D7ED-456B-B48B-AE8E7059A25F}.Debug|x64.Build.0 = Debug|Any CPU
+		{98E02A95-D7ED-456B-B48B-AE8E7059A25F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{98E02A95-D7ED-456B-B48B-AE8E7059A25F}.Debug|x86.Build.0 = Debug|Any CPU
+		{98E02A95-D7ED-456B-B48B-AE8E7059A25F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{98E02A95-D7ED-456B-B48B-AE8E7059A25F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{98E02A95-D7ED-456B-B48B-AE8E7059A25F}.Release|x64.ActiveCfg = Release|Any CPU
+		{98E02A95-D7ED-456B-B48B-AE8E7059A25F}.Release|x64.Build.0 = Release|Any CPU
+		{98E02A95-D7ED-456B-B48B-AE8E7059A25F}.Release|x86.ActiveCfg = Release|Any CPU
+		{98E02A95-D7ED-456B-B48B-AE8E7059A25F}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -118,6 +132,7 @@ Global
 		{1CC2D67D-7CFB-4095-BC32-D96C44E4A690} = {69206C38-EB1E-4CE2-9961-FC1D1D6609FE}
 		{2F7A9B06-8FF1-4098-89CC-564EDFE8DD42} = {69206C38-EB1E-4CE2-9961-FC1D1D6609FE}
 		{D27DA44E-BE17-4A37-BC5C-B1FE92B4CF06} = {69206C38-EB1E-4CE2-9961-FC1D1D6609FE}
+		{98E02A95-D7ED-456B-B48B-AE8E7059A25F} = {69206C38-EB1E-4CE2-9961-FC1D1D6609FE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {131A525F-A9C4-4AC3-B730-FC206DF60CD0}
