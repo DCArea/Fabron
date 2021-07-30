@@ -29,13 +29,13 @@ namespace Fabron.Grains.TransientJob
         {
             Command = new JobCommand(command.Name, command.Data);
             CreatedAt = DateTime.UtcNow;
-            ScheduledAt = scheduledAt;
+            ScheduledAt = scheduledAt is null || scheduledAt.Value < CreatedAt ? CreatedAt : (DateTime)scheduledAt;
             Status = JobStatus.Created;
         }
 
         public JobCommand Command { get; }
         public DateTime CreatedAt { get; private set; }
-        public DateTime? ScheduledAt { get; private set; }
+        public DateTime ScheduledAt { get; private set; }
         public DateTime? StartedAt { get; private set; }
         public DateTime? FinishedAt { get; private set; }
         public JobStatus Status { get; private set; }
@@ -46,21 +46,22 @@ namespace Fabron.Grains.TransientJob
             get
             {
                 DateTime utcNow = DateTime.UtcNow;
-                if (ScheduledAt is null || ScheduledAt.Value < utcNow)
+                if (ScheduledAt < utcNow)
                 {
                     return TimeSpan.Zero;
                 }
 
-                DateTime scheduledAt = ScheduledAt.Value;
-                TimeSpan dueTime = scheduledAt - DateTime.UtcNow;
+                TimeSpan dueTime = ScheduledAt - utcNow;
                 if (dueTime < TimeSpan.FromSeconds(10))
                 {
                     dueTime = TimeSpan.Zero;
                 }
-
                 return dueTime;
             }
         }
+
+        public TimeSpan Tardiness
+            => StartedAt is null || StartedAt < ScheduledAt ? TimeSpan.Zero : StartedAt.Value.Subtract(ScheduledAt);
 
         public void Start()
         {

@@ -33,7 +33,7 @@ namespace Fabron.Test.Grains.TransientJob
             TransientJobState state = MockState.Object.State;
             Assert.Equal(Command.Name, state.Command.Name);
             Assert.Equal(Command.Data, state.Command.Data);
-            Assert.Null(state.ScheduledAt);
+            Assert.Equal(state.CreatedAt, state.ScheduledAt);
 
             Silo.TimerRegistry.Mock.VerifyNoOtherCalls();
             Silo.ReminderRegistry.Mock

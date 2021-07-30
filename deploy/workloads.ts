@@ -1,11 +1,12 @@
 import * as pulumi from "@pulumi/pulumi";
 import { RedisConfig } from "./redis";
 import { ConfigMap, Secret, Service, ServiceSpecType } from "@pulumi/kubernetes/core/v1";
-import { service_name, namespace_name, shared_labels, app_name_api as app_name, image_repo_api } from "./core";
+import { service_name, namespace_name, shared_labels, app_name_api, image_repo_api, host } from "./core";
 import { Deployment } from "@pulumi/kubernetes/apps/v1";
 import { Role, RoleBinding } from "@pulumi/kubernetes/rbac/v1";
 import { ServiceAccount } from "@pulumi/kubernetes/core/v1";
 import { PgSQLConfig } from "./pgsql";
+import { Ingress } from "@pulumi/kubernetes/networking/v1beta1";
 
 const image_version = process.env["IMAGE_VERSION"];
 if (!image_version) { throw "missing IMAGE_VERSION" };
@@ -15,14 +16,15 @@ export function deploy(redis_config: RedisConfig, pgsql_config: PgSQLConfig) {
     const sa = deploy_rbac();
     const secret = deploy_secret(redis_config, pgsql_config);
     const configmap = deploy_configmap();
-    const { deployment, service } = deploy_app(app_name, image, configmap, secret, sa);
+    const { deployment, service } = deploy_app(app_name_api, image, configmap, secret, sa);
+    deploy_ingress(service);
     return { deployment, service }
 }
 
 function deploy_rbac() {
-    const service_account = new ServiceAccount(app_name, {
+    const service_account = new ServiceAccount(app_name_api, {
         metadata: {
-            name: app_name,
+            name: app_name_api,
             namespace: namespace_name
         }
     });
@@ -43,8 +45,8 @@ function deploy_rbac() {
             verbs: ["get", "list", "watch"]
         }]
     });
-    const pod_reader_rolebinding = new RoleBinding(app_name, {
-        metadata: { name: app_name, namespace: subject.namespace },
+    const pod_reader_rolebinding = new RoleBinding(app_name_api, {
+        metadata: { name: app_name_api, namespace: subject.namespace },
         roleRef: {
             apiGroup: "",
             kind: pod_reader_role.kind,
@@ -100,7 +102,7 @@ function deploy_app(app_name: string, image_name: string, configmap: ConfigMap, 
             labels: labels
         },
         spec: {
-            replicas: 3,
+            replicas: 6,
             selector: {
                 matchLabels: labels
             },
@@ -210,3 +212,42 @@ function deploy_app(app_name: string, image_name: string, configmap: ConfigMap, 
 
     return { deployment, service };
 }
+
+function deploy_ingress(service: Service) {
+    return new Ingress(app_name_api, {
+        metadata: {
+            name: app_name_api,
+            namespace: namespace_name,
+            labels: shared_labels,
+            annotations: {
+                "cert-manager.io/cluster-issuer": "letsencrypt"
+            }
+        },
+        spec: {
+            ingressClassName: "nginx",
+            tls: [
+                {
+                    hosts: [host],
+                    secretName: `${app_name_api}-tls-secret`
+                }
+            ],
+            rules: [
+                {
+                    host: host,
+                    http: {
+                        paths: [
+                            {
+                                path: "/",
+                                backend: {
+                                    serviceName: service.metadata.name,
+                                    servicePort: "http"
+                                }
+                            },
+                        ],
+                    },
+                }
+            ]
+        }
+    });
+}
+

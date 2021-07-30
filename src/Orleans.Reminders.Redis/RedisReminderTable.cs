@@ -60,7 +60,7 @@ namespace Orleans.Reminders.Redis
         {
             (string from, string to) = GetFilter(grainRef, reminderName);
             RedisValue[] values = await _db.SortedSetRangeByValueAsync(RemindersRedisKey, from, to);
-            return ConvertToEntry(values.Single());
+            return ConvertToEntry(values.SingleOrDefault());
         }
 
         public async Task<ReminderTableData> ReadRows(GrainReference key)

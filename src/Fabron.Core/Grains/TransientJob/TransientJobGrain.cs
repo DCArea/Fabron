@@ -64,7 +64,7 @@ namespace Fabron.Grains.TransientJob
                 _logger.LogInformation($"Created Job");
             }
 
-            await Schedule();
+            await Go();
         }
 
         private async Task Schedule()
@@ -111,9 +111,12 @@ namespace Fabron.Grains.TransientJob
             _logger.LogInformation("Start Job");
             _job.State.Start();
             await _job.WriteStateAsync();
-            MetricsHelper.JobCount_Running.Inc();
             _logger.LogInformation($"Job Started");
 
+            MetricsHelper.JobCount_Running.Inc();
+            TimeSpan tardiness = _job.State.Tardiness;
+            MetricsHelper.JobScheduleTardiness.Observe(tardiness.TotalSeconds);
+            _logger.LogWarning($"Observed: {tardiness.TotalSeconds}");
             await Run();
         }
 
@@ -162,7 +165,8 @@ namespace Fabron.Grains.TransientJob
 
         private Task Go() => _job.State.Status switch
         {
-            JobStatus.Created or JobStatus.Scheduled => Start(),
+            JobStatus.Created => Schedule(),
+            JobStatus.Scheduled => Start(),
             JobStatus.Running => Run(),
             _ => Cleanup()
         };
@@ -177,6 +181,17 @@ namespace Fabron.Grains.TransientJob
             _reminder = await RegisterOrUpdateReminder("Check", dueTime, TimeSpan.FromMinutes(2));
             _logger.LogInformation($"Job Reminder Registered, dueTime={dueTime}");
         }
-        Task IRemindable.ReceiveReminder(string reminderName, TickStatus status) => Go();
+        Task IRemindable.ReceiveReminder(string reminderName, TickStatus status)
+        {
+            try
+            {
+                return Go();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error on ReceiveReminder");
+                throw;
+            }
+        }
     }
 }

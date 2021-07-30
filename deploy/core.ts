@@ -1,6 +1,6 @@
 export const team_name = "dca";
 export const namespace_name = "dca";
-export const image_registry = "ghcr.io/dcarea";
+export const image_registry = "registry.cn-hangzhou.aliyuncs.com/dca";
 export const service_name = "fabron";
 
 export const shared_labels = {
@@ -12,4 +12,4 @@ export const app_name_api = "fabron-service";
 export const image_name_api = "fabron-service";
 export const image_repo_api = `${image_registry}/${image_name_api}`;
 
-// export const namespace = k8s.core.v1.Namespace.get("dca", "namespace/dca");
+export const host = "fabron.s.ichnb.com";

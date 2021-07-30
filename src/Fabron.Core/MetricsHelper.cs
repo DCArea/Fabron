@@ -31,5 +31,26 @@ namespace Fabron
         public static readonly Counter.Child JobCount_Canceled = JobCount
             .WithLabels(new[] { "canceled" });
 
+        public static readonly Histogram JobScheduleTardiness =  Metrics
+            .CreateHistogram("fabron_jobs_schedule_tardiness", "Job schedule tardiness.", new HistogramConfiguration
+            {
+                Buckets = new double[14]
+                {
+                    0.5,
+                    1,
+                    2,
+                    3,
+                    5,
+                    8,
+                    13,
+                    21,
+                    34,
+                    55,
+                    89,
+                    144,
+                    233,
+                    377
+                }
+            });
     }
 }

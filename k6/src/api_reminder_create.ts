@@ -5,19 +5,18 @@ import { base_url } from './constants';
 
 
 export let options: Options = {
-    vus: 20,
-    duration: '20s'
+    vus: 200,
+    duration: '120s'
 };
 
 
 export var create_reminder = () => {
     const url = `${base_url}/APIReminders`
     const req_body = {
-        "name": `TEST0001.${__VU}.${__ITER}`,
-        "schedule": new Date().toISOString(),
+        "name": `TEST0009.${__VU}.${__ITER}`,
+        "schedule": "2021-08-02T06:30:00.000Z",
         "command": {
-            // "url": "https://test-api.k6.io",
-            "url": "http://localhost:5600/health",
+            "url": "http://stub.dca.svc.cluster.local/wait/200",
             "httpMethod": "GET"
         }
     };
