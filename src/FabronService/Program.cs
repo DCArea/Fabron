@@ -41,24 +41,17 @@ IHostBuilder hostBuilder = Host.CreateDefaultBuilder(args)
                     options.ConnectionString = ctx.Configuration["RedisConnectionString"];
                     options.Database = 0;
                 })
-                .AddRedisGrainStorage("JobStore", options =>
+                .AddAdoNetGrainStorage("JobStore", options =>
                 {
-                    options.ConnectionString = ctx.Configuration["RedisConnectionString"];
-                    options.UseJson = true;
-                    options.DatabaseNumber = 1;
+                    options.Invariant = "Npgsql";
+                    options.ConnectionString = ctx.Configuration["PgSQLConnectionString"];
                 })
                 .UseRedisReminderService(options =>
                 {
                     options.ConnectionString = ctx.Configuration["RedisConnectionString"];
                     options.DatabaseNumber = 2;
                 });
-                //.UseAdoNetReminderService(options =>
-                //{
-                //    options.Invariant = "Npgsql";
-                //    options.ConnectionString = ctx.Configuration["PgSQLConnectionString"];
-                //});
         }
-
     })
     .ConfigureWebHostDefaults(builder =>
     {
