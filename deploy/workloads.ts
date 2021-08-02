@@ -112,7 +112,6 @@ function deploy_app(app_name: string, image_name: string, configmap: ConfigMap, 
                 },
                 spec: {
                     serviceAccountName: service_account.metadata.name,
-                    imagePullSecrets: [{ name: "regcred" }],
                     containers: [{
                         name: app_name,
                         image: image_name,
@@ -130,13 +129,17 @@ function deploy_app(app_name: string, image_name: string, configmap: ConfigMap, 
                             httpGet: {
                                 path: "/health",
                                 port: 80
-                            }
+                            },
+                            failureThreshold: 10,
+                            timeoutSeconds: 5,
                         },
                         readinessProbe: {
                             httpGet: {
                                 path: "/health",
                                 port: 80
-                            }
+                            },
+                            failureThreshold: 3,
+                            timeoutSeconds: 3,
                         },
                         env: [{
                             name: "ASPNETCORE_ENVIRONMENT",

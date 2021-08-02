@@ -13,8 +13,8 @@ export let options: Options = {
 export var create_reminder = () => {
     const url = `${base_url}/APIReminders`
     const req_body = {
-        "name": `TEST0009.${__VU}.${__ITER}`,
-        "schedule": "2021-08-02T06:30:00.000Z",
+        "name": `TEST0010.${__VU}.${__ITER}`,
+        "schedule": "2021-08-02T07:20:00.000Z",
         "command": {
             "url": "http://stub.dca.svc.cluster.local/wait/200",
             "httpMethod": "GET"
