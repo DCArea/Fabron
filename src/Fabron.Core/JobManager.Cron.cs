@@ -88,7 +88,7 @@ namespace Fabron
 
         private async Task<CronChildJobDetail> GetCreatedChildJobDetail(CronJobStateChild childState)
         {
-            TransientJobState? jobState = await GetTransientJobState(childState.Id);
+            JobState? jobState = await GetTransientJobState(childState.Id);
             if (jobState is null)
             {
                 throw new Exception();

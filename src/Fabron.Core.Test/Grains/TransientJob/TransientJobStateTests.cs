@@ -17,7 +17,7 @@ namespace Core.Test.Grains.CronJob
         public void Schedule20msAgo()
         {
             DateTime now = DateTime.UtcNow;
-            TransientJobState state = new TransientJobState(Command, now.AddMilliseconds(-20));
+            JobState state = new JobState(Command, now.AddMilliseconds(-20));
 
             Assert.Equal(TimeSpan.Zero, state.DueTime);
         }

@@ -15,7 +15,7 @@ namespace Fabron.Contracts
 {
     public static class JobMappings
     {
-        public static TransientJob<TCommand, TResult> Map<TCommand, TResult>(this TransientJobState jobState)
+        public static TransientJob<TCommand, TResult> Map<TCommand, TResult>(this JobState jobState)
             where TCommand : ICommand<TResult>
         {
             TCommand? cmdData = JsonSerializer.Deserialize<TCommand>(jobState.Command.Data);

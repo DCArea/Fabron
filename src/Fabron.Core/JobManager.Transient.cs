@@ -21,24 +21,24 @@ namespace Fabron
             string commandName = _registry.CommandNameRegistrations[typeof(TCommand)];
             string commandData = JsonSerializer.Serialize(command);
 
-            TransientJobState state = await Schedule(jobId, new(commandName, commandData), scheduledAt);
+            JobState state = await Schedule(jobId, new(commandName, commandData), scheduledAt);
             return state.Map<TCommand, TResult>();
         }
 
-        private async Task<TransientJobState> Schedule(string jobId, Grains.JobCommandInfo command, DateTime? scheduledAt)
+        private async Task<JobState> Schedule(string jobId, Grains.JobCommandInfo command, DateTime? scheduledAt)
         {
             _logger.LogInformation($"Creating Job[{jobId}]");
-            ITransientJobGrain grain = _client.GetGrain<ITransientJobGrain>(jobId);
-            await grain.Create(command, scheduledAt);
+            IJobGrain grain = _client.GetGrain<IJobGrain>(jobId);
+            await grain.Schedule(command, scheduledAt);
             _logger.LogInformation($"Job[{jobId}] Created");
 
-            return new TransientJobState(command, scheduledAt);
+            return new JobState(command, scheduledAt);
         }
 
         public async Task<TransientJob<TJobCommand, TResult>?> GetJobById<TJobCommand, TResult>(string jobId)
             where TJobCommand : ICommand<TResult>
         {
-            TransientJobState? jobState = await GetTransientJobState(jobId);
+            JobState? jobState = await GetTransientJobState(jobId);
             if (jobState is null)
             {
                 return null;
@@ -47,9 +47,9 @@ namespace Fabron
             return jobState.Map<TJobCommand, TResult>();
         }
 
-        private async Task<TransientJobState?> GetTransientJobState(string jobId)
+        private async Task<JobState?> GetTransientJobState(string jobId)
         {
-            ITransientJobGrain grain = _client.GetGrain<ITransientJobGrain>(jobId);
+            IJobGrain grain = _client.GetGrain<IJobGrain>(jobId);
             return await grain.GetState();
         }
     }

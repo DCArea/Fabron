@@ -35,7 +35,7 @@ namespace Fabron.Grains.BatchJob
         private CancellationTokenSource? _cancellationTokenSource;
 
         public BatchJobGrain(
-            ILogger<TransientJobGrain> logger,
+            ILogger<JobGrain> logger,
             [PersistentState("BatchJob", "JobStore")] IPersistentState<BatchJobState> job,
             IMediator mediator)
         {
@@ -139,14 +139,14 @@ namespace Fabron.Grains.BatchJob
 
         private async Task CreateChildJob(BatchJobStateChild job)
         {
-            ITransientJobGrain grain = GrainFactory.GetGrain<ITransientJobGrain>(job.Id);
-            await grain.Create(job.Command);
+            IJobGrain grain = GrainFactory.GetGrain<IJobGrain>(job.Id);
+            await grain.Schedule(job.Command);
             job.Status = ChildJobStatus.WaitToSchedule;
         }
 
         private async Task CheckChildJobStatus(BatchJobStateChild job)
         {
-            ITransientJobGrain grain = GrainFactory.GetGrain<ITransientJobGrain>(job.Id);
+            IJobGrain grain = GrainFactory.GetGrain<IJobGrain>(job.Id);
             job.Status = await grain.GetStatus() switch
             {
                 JobStatus.Created => ChildJobStatus.WaitToSchedule,

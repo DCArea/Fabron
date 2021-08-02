@@ -19,13 +19,13 @@ namespace Fabron.Grains.TransientJob
         public string? Result { get; set; }
     }
 
-    public class TransientJobState
+    public class JobState
     {
 #nullable disable
-        public TransientJobState() { }
+        public JobState() { }
 #nullable enable
 
-        public TransientJobState(JobCommandInfo command, DateTime? scheduledAt)
+        public JobState(JobCommandInfo command, DateTime? scheduledAt)
         {
             Command = new JobCommand(command.Name, command.Data);
             CreatedAt = DateTime.UtcNow;
@@ -33,12 +33,12 @@ namespace Fabron.Grains.TransientJob
             Status = JobStatus.Created;
         }
 
-        public JobCommand Command { get; }
+        public JobCommand Command { get; set; }
         public DateTime CreatedAt { get; private set; }
-        public DateTime ScheduledAt { get; private set; }
+        public DateTime ScheduledAt { get; set; }
         public DateTime? StartedAt { get; private set; }
         public DateTime? FinishedAt { get; private set; }
-        public JobStatus Status { get; private set; }
+        public JobStatus Status { get; set; }
         public string? Reason { get; private set; }
 
         public TimeSpan DueTime

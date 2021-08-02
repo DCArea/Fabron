@@ -16,29 +16,29 @@ using Orleans.Runtime;
 namespace Fabron.Grains.TransientJob
 {
 
-    public interface ITransientJobGrain : IGrainWithStringKey
+    public interface IJobGrain : IGrainWithStringKey
     {
         [AlwaysInterleave]
         Task Cancel(string reason);
         [ReadOnly]
-        Task<TransientJobState?> GetState();
+        Task<JobState?> GetState();
         [ReadOnly]
         Task<JobStatus> GetStatus();
-        Task Create(JobCommandInfo command, DateTime? scheduledAt = null);
+        Task Schedule(JobCommandInfo command, DateTime? scheduledAt = null);
     }
 
-    public class TransientJobGrain : Grain, ITransientJobGrain, IRemindable
+    public class JobGrain : Grain, IJobGrain, IRemindable
     {
         private readonly ILogger _logger;
-        private readonly IPersistentState<TransientJobState> _job;
+        private readonly IPersistentState<JobState> _job;
         private readonly IMediator _mediator;
         private IDisposable? _timer;
         private IGrainReminder? _reminder;
         private CancellationTokenSource? _cancellationTokenSource;
 
-        public TransientJobGrain(
-            ILogger<TransientJobGrain> logger,
-            [PersistentState("Job", "JobStore")] IPersistentState<TransientJobState> job,
+        public JobGrain(
+            ILogger<JobGrain> logger,
+            [PersistentState("Job", "JobStore")] IPersistentState<JobState> job,
             IMediator mediator)
         {
             _logger = logger;
@@ -46,47 +46,13 @@ namespace Fabron.Grains.TransientJob
             _mediator = mediator;
         }
 
-        public Task<TransientJobState?> GetState()
+        public Task<JobState?> GetState()
         {
-            TransientJobState? state = _job.RecordExists ? _job.State : null;
+            JobState? state = _job.RecordExists ? _job.State : null;
             return Task.FromResult(state);
         }
 
         public Task<JobStatus> GetStatus() => Task.FromResult(_job.State.Status);
-
-        public async Task Create(JobCommandInfo command, DateTime? scheduledAt = null)
-        {
-            if (!_job.RecordExists)
-            {
-                _job.State = new TransientJobState(command, scheduledAt);
-                await _job.WriteStateAsync();
-                MetricsHelper.JobCount_Created.Inc();
-                _logger.LogInformation($"Created Job");
-            }
-
-            await Go();
-        }
-
-        private async Task Schedule()
-        {
-            TimeSpan dueTime = _job.State.DueTime;
-            _logger.LogInformation($"Schedule Job, dueTime={dueTime}");
-            switch (dueTime)
-            {
-                case TimeSpan when dueTime == TimeSpan.Zero:
-                    await SetJobReminder(TimeSpan.FromMinutes(2));
-                    _ = Start();
-                    break;
-                case TimeSpan when dueTime < TimeSpan.FromMinutes(1):
-                    SetJobTimer(dueTime);
-                    await SetJobReminder(TimeSpan.FromMinutes(2));
-                    break;
-                default:
-                    await SetJobReminder(dueTime);
-                    break;
-            }
-            MetricsHelper.JobCount_Scheduled.Inc();
-        }
 
         public async Task Cancel(string reason)
         {
@@ -105,18 +71,59 @@ namespace Fabron.Grains.TransientJob
             MetricsHelper.JobCount_Canceled.Inc();
         }
 
+        public async Task Schedule(JobCommandInfo command, DateTime? scheduledAt = null)
+        {
+            if (!_job.RecordExists)
+            {
+                _job.State = new JobState(command, scheduledAt);
+                await _job.WriteStateAsync();
+                MetricsHelper.JobCount_Created.Inc();
+                _logger.LogDebug($"Created Job");
+            }
+
+            await Next();
+        }
+
+        private async Task Schedule()
+        {
+            TimeSpan dueTime = _job.State.DueTime;
+
+            if (dueTime < TimeSpan.FromMinutes(2))
+            {
+                await CheckAfter(dueTime);
+            }
+            else
+            {
+                await CheckAfter(dueTime - TimeSpan.FromMinutes(2));
+            }
+
+            _job.State.Status = JobStatus.Scheduled;
+            await _job.WriteStateAsync();
+            MetricsHelper.JobCount_Scheduled.Inc();
+
+            await Start();
+        }
+
         private async Task Start()
         {
+            TimeSpan dueTime = _job.State.DueTime;
+            bool startImmediately = dueTime < TimeSpan.FromSeconds(10);
+            if (!startImmediately)
+            {
+                if (dueTime < TimeSpan.FromMinutes(2))
+                {
+                    StartAfter(dueTime);
+                }
+                return;
+            }
+
             _timer?.Dispose();
-            _logger.LogInformation("Start Job");
             _job.State.Start();
+
             await _job.WriteStateAsync();
-            _logger.LogInformation($"Job Started");
 
             MetricsHelper.JobCount_Running.Inc();
-            TimeSpan tardiness = _job.State.Tardiness;
-            MetricsHelper.JobScheduleTardiness.Observe(tardiness.TotalSeconds);
-            _logger.LogWarning($"Observed: {tardiness.TotalSeconds}");
+            MetricsHelper.JobScheduleTardiness.Observe(_job.State.Tardiness.TotalSeconds);
             await Run();
         }
 
@@ -124,7 +131,7 @@ namespace Fabron.Grains.TransientJob
         private async Task Run()
         {
             _logger.LogInformation($"Run Job");
-            _cancellationTokenSource ??= new CancellationTokenSource(TimeSpan.FromMinutes(10));
+            _cancellationTokenSource ??= new CancellationTokenSource(TimeSpan.FromMinutes(1));
             try
             {
                 string? result = await _mediator.Handle(_job.State.Command.Name, _job.State.Command.Data, _cancellationTokenSource.Token);
@@ -141,7 +148,7 @@ namespace Fabron.Grains.TransientJob
                     MetricsHelper.JobCount_Faulted.Inc();
                 }
             }
-            _logger.LogInformation($"Job Finished: {_job.State.Status}");
+            _logger.LogDebug($"Job Finished: {_job.State.Status}");
 
             await Cleanup();
         }
@@ -163,7 +170,7 @@ namespace Fabron.Grains.TransientJob
             DeactivateOnIdle();
         }
 
-        private Task Go() => _job.State.Status switch
+        private Task Next() => _job.State.Status switch
         {
             JobStatus.Created => Schedule(),
             JobStatus.Scheduled => Start(),
@@ -171,21 +178,35 @@ namespace Fabron.Grains.TransientJob
             _ => Cleanup()
         };
 
-        private void SetJobTimer(TimeSpan dueTime)
+        private async Task CheckAfter(TimeSpan dueTime)
         {
+            if (dueTime < TimeSpan.FromMinutes(2))
+            {
+                await SetReminder(TimeSpan.FromMinutes(2));
+            }
+            else
+            {
+                await SetReminder(dueTime - TimeSpan.FromMinutes(2));
+            }
+
+            async Task SetReminder(TimeSpan dueTime)
+            {
+                _reminder = await RegisterOrUpdateReminder("Check", dueTime, TimeSpan.FromMinutes(2));
+                _logger.LogDebug($"Job Reminder Registered, dueTime={dueTime}");
+            }
+        }
+        private void StartAfter(TimeSpan dueTime)
+        {
+            _timer?.Dispose();
             _timer = RegisterTimer(_ => Start(), null, dueTime, TimeSpan.MaxValue);
-            _logger.LogInformation($"Set Job Timer with, dueTime={dueTime}");
+            _logger.LogDebug($"Set Job Timer with, dueTime={dueTime}");
         }
-        private async Task SetJobReminder(TimeSpan dueTime)
-        {
-            _reminder = await RegisterOrUpdateReminder("Check", dueTime, TimeSpan.FromMinutes(2));
-            _logger.LogInformation($"Job Reminder Registered, dueTime={dueTime}");
-        }
+
         Task IRemindable.ReceiveReminder(string reminderName, TickStatus status)
         {
             try
             {
-                return Go();
+                return Next();
             }
             catch (Exception ex)
             {
