@@ -20,10 +20,10 @@ using Orleans.TestKit.Reminders;
 
 using Xunit;
 
-namespace Fabron.Test.Grains.TransientJob
+namespace Fabron.Test.Grains.Job
 {
 
-    public class TransientGrainTests : GrainTestBase<JobState>
+    public class JobGrainTests : GrainTestBase<JobState>
     {
         [Fact]
         public async Task Create_Immediately()
@@ -39,7 +39,7 @@ namespace Fabron.Test.Grains.TransientJob
             Silo.ReminderRegistry.Mock
                 .Verify(m => m.RegisterOrUpdateReminder("Check", TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(2)));
 
-            await WaitUntil(state => state.Status == JobStatus.RanToCompletion, TimeSpan.FromSeconds(1));
+            await WaitUntil(state => state.Status == JobStatus.Succeed, TimeSpan.FromSeconds(1));
         }
 
         [Fact]
@@ -79,16 +79,16 @@ namespace Fabron.Test.Grains.TransientJob
         [Fact]
         public async Task Create_1mDelay()
         {
-            (JobGrain _, DateTime? scheduledAt) = await Schedule(TimeSpan.FromMinutes(1.1));
+            (JobGrain grain, DateTime? scheduledAt) = await Schedule(TimeSpan.FromMinutes(1));
 
             JobState state = MockState.Object.State;
             Assert.Equal(scheduledAt, state.ScheduledAt);
 
-            Silo.TimerRegistry.Mock.VerifyNoOtherCalls();
+            Silo.TimerRegistry.Mock.Verify(t => t.RegisterTimer(grain, It.IsAny<Func<object, Task>>(), null, It.Is<TimeSpan>(ts => ts.TotalSeconds < 60 && ts.TotalSeconds > 50), TimeSpan.MaxValue));
 
             TestReminder? reminder = (TestReminder)await Silo.ReminderRegistry.GetReminder("Check");
             Assert.NotNull(reminder);
-            reminder.DueTime.Should().BeCloseTo(TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(0.1));
+            reminder.DueTime.Should().BeCloseTo(TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(0.1));
             reminder.Period.Should().Equals(TimeSpan.FromMinutes(2));
         }
 
@@ -104,7 +104,7 @@ namespace Fabron.Test.Grains.TransientJob
 
             TestReminder? reminder = (TestReminder)await Silo.ReminderRegistry.GetReminder("Check");
             Assert.NotNull(reminder);
-            reminder.DueTime.Should().BeCloseTo(TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(0.1));
+            reminder.DueTime.Should().BeCloseTo(TimeSpan.FromMinutes(5 - 2), TimeSpan.FromMinutes(0.1));
             reminder.Period.Should().Equals(TimeSpan.FromMinutes(2));
         }
 

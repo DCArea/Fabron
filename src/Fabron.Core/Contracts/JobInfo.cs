@@ -25,10 +25,9 @@ namespace Fabron.Contracts
 
     public enum JobStatus
     {
-        NotCreated,
-        Created,
-        Running,
-        RanToCompletion,
+        Scheduled,
+        Started,
+        Succeed,
         Canceled,
         Faulted
     }

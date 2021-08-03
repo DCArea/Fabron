@@ -169,8 +169,8 @@ namespace Fabron.Grains.CronJob
             job.Status = await grain.GetStatus() switch
             {
                 JobStatus.Created => CronChildJobStatus.WaitToSchedule,
-                JobStatus.Scheduled or JobStatus.Running => CronChildJobStatus.Scheduled,
-                JobStatus.RanToCompletion => CronChildJobStatus.RanToCompletion,
+                JobStatus.Scheduled or JobStatus.Started => CronChildJobStatus.Scheduled,
+                JobStatus.Succeed => CronChildJobStatus.RanToCompletion,
                 JobStatus.Canceled => CronChildJobStatus.Canceled,
                 JobStatus.Faulted => CronChildJobStatus.Faulted,
                 _ => throw new InvalidOperationException("invalid child job state")

@@ -84,53 +84,60 @@ namespace Fabron.Grains.TransientJob
             await Next();
         }
 
+        private async Task Next()
+        {
+            while (true)
+            {
+                if (_job.State.Finalized)
+                {
+                    return;
+                }
+                if (_job.State is { Status: JobStatus.Scheduled, DueTime.TotalSeconds: > 2 * 60 })
+                {
+                    return;
+                }
+                if (_job.State is { Status: JobStatus.Scheduled, DueTime.TotalSeconds: > 10 and < 2 * 60 })
+                {
+                    StartAfter(_job.State.DueTime);
+                    return;
+                }
+
+                Task next = _job.State switch
+                {
+                    { Status: JobStatus.Created } => Schedule(),
+                    { Status: JobStatus.Scheduled, DueTime.TotalSeconds: < 10 } => Start(),
+                    { Status: JobStatus.Started } => Execute(),
+                    { Status: JobStatus.Succeed or JobStatus.Canceled or JobStatus.Faulted } => Cleanup(),
+                    _ => throw new InvalidOperationException()
+                };
+                await next;
+            }
+        }
+
         private async Task Schedule()
         {
             TimeSpan dueTime = _job.State.DueTime;
-
-            if (dueTime < TimeSpan.FromMinutes(2))
-            {
-                await CheckAfter(dueTime);
-            }
-            else
-            {
-                await CheckAfter(dueTime - TimeSpan.FromMinutes(2));
-            }
+            await CheckAfter(dueTime);
 
             _job.State.Status = JobStatus.Scheduled;
             await _job.WriteStateAsync();
             MetricsHelper.JobCount_Scheduled.Inc();
-
-            await Start();
         }
 
         private async Task Start()
         {
-            TimeSpan dueTime = _job.State.DueTime;
-            bool startImmediately = dueTime < TimeSpan.FromSeconds(10);
-            if (!startImmediately)
-            {
-                if (dueTime < TimeSpan.FromMinutes(2))
-                {
-                    StartAfter(dueTime);
-                }
-                return;
-            }
-
             _timer?.Dispose();
-            _job.State.Start();
 
+            _job.State.Start();
             await _job.WriteStateAsync();
 
             MetricsHelper.JobCount_Running.Inc();
             MetricsHelper.JobScheduleTardiness.Observe(_job.State.Tardiness.TotalSeconds);
-            await Run();
         }
 
-
-        private async Task Run()
+        private async Task Execute()
         {
-            _logger.LogInformation($"Run Job");
+            _logger.LogDebug($"Run Job");
             _cancellationTokenSource ??= new CancellationTokenSource(TimeSpan.FromMinutes(1));
             try
             {
@@ -149,13 +156,10 @@ namespace Fabron.Grains.TransientJob
                 }
             }
             _logger.LogDebug($"Job Finished: {_job.State.Status}");
-
-            await Cleanup();
         }
 
         private async Task Cleanup()
         {
-            _logger.LogInformation($"Cleanup Job");
             if (_reminder is null)
             {
                 _reminder = await GetReminder("Check");
@@ -165,18 +169,13 @@ namespace Fabron.Grains.TransientJob
             {
                 await UnregisterReminder(_reminder);
                 _reminder = null;
-                _logger.LogInformation($"Job Reminder Unregistered");
+                _logger.LogDebug($"Job Reminder Unregistered");
             }
+
+            _job.State.Finalized = true;
+            await _job.WriteStateAsync();
             DeactivateOnIdle();
         }
-
-        private Task Next() => _job.State.Status switch
-        {
-            JobStatus.Created => Schedule(),
-            JobStatus.Scheduled => Start(),
-            JobStatus.Running => Run(),
-            _ => Cleanup()
-        };
 
         private async Task CheckAfter(TimeSpan dueTime)
         {

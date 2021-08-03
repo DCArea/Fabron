@@ -33,7 +33,7 @@ namespace FabronService.Resources
             {
                 _logger.LogDebug($"Creating APIReminder: {req.Name}({req.Schedule})");
             }
-            Fabron.Contracts.TransientJob<RequestWebAPI, int>? job = await _jobManager.Schedule<RequestWebAPI, int>(req.Name, req.Command, req.Schedule);
+            Fabron.Contracts.Job<RequestWebAPI, int>? job = await _jobManager.Schedule<RequestWebAPI, int>(req.Name, req.Command, req.Schedule);
             APIReminderResource? reminder = job.ToResource(req.Name);
             return CreatedAtAction(nameof(Get), new { name = reminder.Name }, reminder);
         }
@@ -41,7 +41,7 @@ namespace FabronService.Resources
         [HttpGet("{name}")]
         public async Task<IActionResult> Get(string name)
         {
-            Fabron.Contracts.TransientJob<RequestWebAPI, int>? job = await _jobManager.GetJobById<RequestWebAPI, int>(name);
+            Fabron.Contracts.Job<RequestWebAPI, int>? job = await _jobManager.GetJobById<RequestWebAPI, int>(name);
             if (job is null)
             {
                 return NotFound();

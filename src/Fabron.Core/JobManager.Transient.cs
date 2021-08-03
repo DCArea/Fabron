@@ -15,7 +15,7 @@ namespace Fabron
 {
     public partial class JobManager
     {
-        public async Task<TransientJob<TCommand, TResult>> Schedule<TCommand, TResult>(string jobId, TCommand command, DateTime? scheduledAt = null)
+        public async Task<Job<TCommand, TResult>> Schedule<TCommand, TResult>(string jobId, TCommand command, DateTime? scheduledAt = null)
             where TCommand : ICommand<TResult>
         {
             string commandName = _registry.CommandNameRegistrations[typeof(TCommand)];
@@ -35,7 +35,7 @@ namespace Fabron
             return new JobState(command, scheduledAt);
         }
 
-        public async Task<TransientJob<TJobCommand, TResult>?> GetJobById<TJobCommand, TResult>(string jobId)
+        public async Task<Job<TJobCommand, TResult>?> GetJobById<TJobCommand, TResult>(string jobId)
             where TJobCommand : ICommand<TResult>
         {
             JobState? jobState = await GetTransientJobState(jobId);

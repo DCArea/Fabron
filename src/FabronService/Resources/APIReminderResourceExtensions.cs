@@ -9,7 +9,7 @@ namespace FabronService.Resources
 {
     public static class APIReminderResourceExtensions
     {
-        public static APIReminderResource ToResource(this TransientJob<RequestWebAPI, int> job, string reminderName) => new APIReminderResource(
+        public static APIReminderResource ToResource(this Job<RequestWebAPI, int> job, string reminderName) => new APIReminderResource(
                 reminderName,
                 job.Command,
                 job.CreatedAt,

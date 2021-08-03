@@ -31,7 +31,6 @@ namespace Fabron.Contracts
         string CronExp,
         object Command,
         IEnumerable<CronChildJobDetail> PendingJobs,
-        IEnumerable<CronChildJobDetail> ScheduledJobs,
         IEnumerable<CronChildJobDetail> FinishedJobs,
         JobStatus Status,
         string? Reason
@@ -58,9 +57,9 @@ namespace Fabron.Contracts
     public static class CronJobExtensions
     {
         public static bool IsPending(this CronChildJobDetail job)
-            => job.Status is JobStatus.Created or JobStatus.Running;
+            => job.Status is JobStatus.Scheduled or JobStatus.Started;
 
         public static bool IsFinished(this CronChildJobDetail job)
-            => job.Status is JobStatus.RanToCompletion or JobStatus.Canceled or JobStatus.Faulted;
+            => job.Status is JobStatus.Succeed or JobStatus.Canceled or JobStatus.Faulted;
     }
 }
