@@ -68,7 +68,6 @@ namespace Fabron
             string cmdName = jobState.Command.Name;
             ICommand cmdData = (ICommand)JsonSerializer.Deserialize(jobState.Command.Data, _registry.CommandTypeRegistrations[cmdName])!;
 
-            IEnumerable<CronChildJobDetail> notCreatedJobs = jobState.PendingJobs.Select(job => GetNotCreatedChildJobDetail(job));
             IEnumerable<Task<CronChildJobDetail>> getCreatedJobTasks = jobState.ScheduledJobs.Select(job => GetCreatedChildJobDetail(job));
             CronChildJobDetail[] createdJobs = await Task.WhenAll(getCreatedJobTasks);
 
@@ -79,7 +78,6 @@ namespace Fabron
             return new CronJobDetail(
                 jobState.CronExp,
                 cmdData,
-                notCreatedJobs,
                 pendingJobs,
                 finishedJobs,
                 (JobStatus)(int)jobState.Status,
@@ -88,7 +86,7 @@ namespace Fabron
 
         private async Task<CronChildJobDetail> GetCreatedChildJobDetail(CronJobStateChild childState)
         {
-            TransientJobState? jobState = await GetTransientJobState(childState.Id);
+            JobState? jobState = await GetTransientJobState(childState.Id);
             if (jobState is null)
             {
                 throw new Exception();
@@ -105,7 +103,5 @@ namespace Fabron
                 jobState.StartedAt,
                 jobState.FinishedAt);
         }
-
-        private static CronChildJobDetail GetNotCreatedChildJobDetail(CronJobStateChild childState) => new CronChildJobDetail(childState.Id, null, JobStatus.NotCreated, null, childState.ScheduledAt, null, null);
     }
 }

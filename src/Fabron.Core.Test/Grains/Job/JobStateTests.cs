@@ -9,15 +9,15 @@ using Fabron.Test.Grains;
 
 using Xunit;
 
-namespace Core.Test.Grains.CronJob
+namespace Core.Test.Grains.Job
 {
-    public class TransientJobStateTests
+    public class JobStateTests
     {
         [Fact]
         public void Schedule20msAgo()
         {
             DateTime now = DateTime.UtcNow;
-            TransientJobState state = new TransientJobState(Command, now.AddMilliseconds(-20));
+            JobState state = new (Command, now.AddMilliseconds(-20));
 
             Assert.Equal(TimeSpan.Zero, state.DueTime);
         }

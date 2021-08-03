@@ -34,14 +34,14 @@ namespace FabronService.Resources
         [HttpPost("Transient")]
         public async Task<IActionResult> CreateTransientJob(CreateRequestWebAPIJobRequest req)
         {
-            Fabron.Contracts.TransientJob<RequestWebAPI, int>? job = await _jobManager.Schedule<RequestWebAPI, int>(req.RequestId, req.Command, req.ScheduledAt);
+            Fabron.Contracts.Job<RequestWebAPI, int>? job = await _jobManager.Schedule<RequestWebAPI, int>(req.RequestId, req.Command, req.ScheduledAt);
             return CreatedAtAction(nameof(GetTransientJobState), new { Id = req.RequestId }, job);
         }
 
         [HttpGet("Transient/{id}")]
         public async Task<IActionResult> GetTransientJobState(string id)
         {
-            Fabron.Contracts.TransientJob<RequestWebAPI, int>? job = await _jobManager.GetJobById<RequestWebAPI, int>(id);
+            Fabron.Contracts.Job<RequestWebAPI, int>? job = await _jobManager.GetJobById<RequestWebAPI, int>(id);
             return Ok(job);
         }
 

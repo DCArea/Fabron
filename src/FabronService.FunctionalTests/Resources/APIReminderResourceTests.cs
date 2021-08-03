@@ -59,7 +59,7 @@ namespace FabronService.FunctionalTests.Resourcers
 
             Assert.NotNull(reminder);
             Assert.Equal(request.Command.Url, reminder!.Command.Data.Url);
-            Assert.Equal(JobStatus.RanToCompletion, reminder!.Status);
+            Assert.Equal(JobStatus.Succeed, reminder!.Status);
             Assert.Equal(200, reminder!.Command.Result);
         }
     }

@@ -35,7 +35,7 @@ namespace Fabron.Grains.CronJob
         private CancellationTokenSource? _cancellationTokenSource;
 
         public CronJobGrain(
-            ILogger<TransientJobGrain> logger,
+            ILogger<JobGrain> logger,
             [PersistentState("CronJob", "JobStore")] IPersistentState<CronJobState> job,
             IMediator mediator)
         {
@@ -158,19 +158,19 @@ namespace Fabron.Grains.CronJob
 
         private async Task CreateChildJob(CronJobStateChild job)
         {
-            ITransientJobGrain grain = GrainFactory.GetGrain<ITransientJobGrain>(job.Id);
-            await grain.Create(_job.State.Command, job.ScheduledAt);
+            IJobGrain grain = GrainFactory.GetGrain<IJobGrain>(job.Id);
+            await grain.Schedule(_job.State.Command, job.ScheduledAt);
             job.Status = CronChildJobStatus.WaitToSchedule;
         }
 
         private async Task CheckChildJobStatus(CronJobStateChild job)
         {
-            ITransientJobGrain grain = GrainFactory.GetGrain<ITransientJobGrain>(job.Id);
+            IJobGrain grain = GrainFactory.GetGrain<IJobGrain>(job.Id);
             job.Status = await grain.GetStatus() switch
             {
                 JobStatus.Created => CronChildJobStatus.WaitToSchedule,
-                JobStatus.Scheduled or JobStatus.Running => CronChildJobStatus.Scheduled,
-                JobStatus.RanToCompletion => CronChildJobStatus.RanToCompletion,
+                JobStatus.Scheduled or JobStatus.Started => CronChildJobStatus.Scheduled,
+                JobStatus.Succeed => CronChildJobStatus.RanToCompletion,
                 JobStatus.Canceled => CronChildJobStatus.Canceled,
                 JobStatus.Faulted => CronChildJobStatus.Faulted,
                 _ => throw new InvalidOperationException("invalid child job state")

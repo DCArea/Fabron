@@ -7,8 +7,8 @@ namespace Fabron.Grains
     {
         Created,
         Scheduled,
-        Running,
-        RanToCompletion,
+        Started,
+        Succeed,
         Canceled,
         Faulted
     }

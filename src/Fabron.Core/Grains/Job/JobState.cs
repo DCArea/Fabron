@@ -19,13 +19,13 @@ namespace Fabron.Grains.TransientJob
         public string? Result { get; set; }
     }
 
-    public class TransientJobState
+    public class JobState
     {
 #nullable disable
-        public TransientJobState() { }
+        public JobState() { }
 #nullable enable
 
-        public TransientJobState(JobCommandInfo command, DateTime? scheduledAt)
+        public JobState(JobCommandInfo command, DateTime? scheduledAt)
         {
             Command = new JobCommand(command.Name, command.Data);
             CreatedAt = DateTime.UtcNow;
@@ -33,30 +33,20 @@ namespace Fabron.Grains.TransientJob
             Status = JobStatus.Created;
         }
 
-        public JobCommand Command { get; }
+        public JobCommand Command { get; set; }
         public DateTime CreatedAt { get; private set; }
-        public DateTime ScheduledAt { get; private set; }
+        public DateTime ScheduledAt { get; set; }
         public DateTime? StartedAt { get; private set; }
         public DateTime? FinishedAt { get; private set; }
-        public JobStatus Status { get; private set; }
         public string? Reason { get; private set; }
-
+        public JobStatus Status { get; set; }
+        public bool Finalized { get; set; }
         public TimeSpan DueTime
         {
             get
             {
                 DateTime utcNow = DateTime.UtcNow;
-                if (ScheduledAt < utcNow)
-                {
-                    return TimeSpan.Zero;
-                }
-
-                TimeSpan dueTime = ScheduledAt - utcNow;
-                if (dueTime < TimeSpan.FromSeconds(10))
-                {
-                    dueTime = TimeSpan.Zero;
-                }
-                return dueTime;
+                return ScheduledAt < utcNow ? TimeSpan.Zero : ScheduledAt - utcNow;
             }
         }
 
@@ -66,12 +56,12 @@ namespace Fabron.Grains.TransientJob
         public void Start()
         {
             StartedAt = DateTime.UtcNow;
-            Status = JobStatus.Running;
+            Status = JobStatus.Started;
         }
 
         public void Complete(string? result)
         {
-            Status = JobStatus.RanToCompletion;
+            Status = JobStatus.Succeed;
             FinishedAt = DateTime.UtcNow;
             Command.Result = result;
         }

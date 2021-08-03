@@ -23,7 +23,7 @@ namespace Fabron.Contracts
         string Result
     ) : JobCommandRawInfo(Name, Data);
 
-    public record TransientJob<TCommand, TResult>
+    public record Job<TCommand, TResult>
     (
         JobCommand<TCommand, TResult> Command,
         DateTime CreatedAt,

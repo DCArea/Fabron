@@ -15,7 +15,7 @@ namespace Fabron.Contracts
 {
     public static class JobMappings
     {
-        public static TransientJob<TCommand, TResult> Map<TCommand, TResult>(this TransientJobState jobState)
+        public static Job<TCommand, TResult> Map<TCommand, TResult>(this JobState jobState)
             where TCommand : ICommand<TResult>
         {
             TCommand? cmdData = JsonSerializer.Deserialize<TCommand>(jobState.Command.Data);
@@ -28,34 +28,24 @@ namespace Fabron.Contracts
                     ? default
                     : JsonSerializer.Deserialize<TResult>(jobState.Command.Result);
 
-            TransientJob<TCommand, TResult> job = new TransientJob<TCommand, TResult>(
+            Job<TCommand, TResult> job = new(
                 new(cmdData, cmdResult),
                 jobState.CreatedAt,
                 jobState.ScheduledAt,
                 jobState.StartedAt,
                 jobState.FinishedAt,
-                (JobStatus)(int)jobState.Status,
+                (JobStatus)((int)jobState.Status - 1),
                 jobState.Reason
             );
             return job;
         }
 
-        public static BatchJob Map(this BatchJobState jobState, CommandRegistry registry) => new BatchJob(
+        public static BatchJob Map(this BatchJobState jobState, CommandRegistry registry) => new(
                 jobState.PendingJobs.Select(j => j.Map(registry)),
                 jobState.FinishedJobs.Select(j => j.Map(registry)),
                 (JobStatus)(int)jobState.Status,
                 jobState.Reason
             );
-        //public static BatchJob Map(this BatchJobState jobState, IEnumerable<ICommand> commands)
-        //{
-        //    return new BatchJob(
-
-        //        //jobState.PendingJobs.Select(j => j.To(registry)),
-        //        //jobState.FinishedJobs.Select(j => j.To(registry)),
-        //        (JobStatus)(int)jobState.Status,
-        //        jobState.Reason
-        //    );
-        //}
 
         public static BatchChildJob Map(this BatchJobStateChild childJobState, CommandRegistry registry)
         {
@@ -85,7 +75,7 @@ namespace Fabron.Contracts
             ICommand cmdData = (ICommand)JsonSerializer.Deserialize(jobState.Command.Data, registry.CommandTypeRegistrations[cmdName])!;
             if (cmdData is null)
             {
-                throw new Exception();
+                throw new InvalidOperationException();
             }
 
             return jobState.Map(cmdData);
@@ -93,7 +83,7 @@ namespace Fabron.Contracts
 
         private static CronJob Map(this CronJobState jobState, ICommand cmd)
         {
-            CronJob job = new CronJob(
+            CronJob job = new(
                 jobState.CronExp,
                 cmd,
                 jobState.PendingJobs.Select(job => job.To()),
@@ -107,7 +97,7 @@ namespace Fabron.Contracts
 
         public static CronChildJob To(this CronJobStateChild childJobState)
         {
-            CronChildJob childJob = new CronChildJob(
+            CronChildJob childJob = new(
                 childJobState.Id,
                 (JobStatus)(int)childJobState.Status,
                 childJobState.ScheduledAt

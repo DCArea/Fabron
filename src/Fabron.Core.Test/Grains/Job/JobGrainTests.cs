@@ -20,17 +20,17 @@ using Orleans.TestKit.Reminders;
 
 using Xunit;
 
-namespace Fabron.Test.Grains.TransientJob
+namespace Fabron.Test.Grains.Job
 {
 
-    public class TransientGrainTests : GrainTestBase<TransientJobState>
+    public class JobGrainTests : GrainTestBase<JobState>
     {
         [Fact]
         public async Task Create_Immediately()
         {
             await Schedule();
 
-            TransientJobState state = MockState.Object.State;
+            JobState state = MockState.Object.State;
             Assert.Equal(Command.Name, state.Command.Name);
             Assert.Equal(Command.Data, state.Command.Data);
             Assert.Equal(state.CreatedAt, state.ScheduledAt);
@@ -39,15 +39,15 @@ namespace Fabron.Test.Grains.TransientJob
             Silo.ReminderRegistry.Mock
                 .Verify(m => m.RegisterOrUpdateReminder("Check", TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(2)));
 
-            await WaitUntil(state => state.Status == JobStatus.RanToCompletion, TimeSpan.FromSeconds(1));
+            await WaitUntil(state => state.Status == JobStatus.Succeed, TimeSpan.FromSeconds(1));
         }
 
         [Fact]
         public async Task Create_10sDelay()
         {
-            (TransientJobGrain _, DateTime? scheduledAt) = await Schedule(TimeSpan.FromSeconds(8));
+            (JobGrain _, DateTime? scheduledAt) = await Schedule(TimeSpan.FromSeconds(8));
 
-            TransientJobState state = MockState.Object.State;
+            JobState state = MockState.Object.State;
             Assert.Equal(Command.Name, state.Command.Name);
             Assert.Equal(Command.Data, state.Command.Data);
             Assert.Equal(scheduledAt, state.ScheduledAt);
@@ -60,10 +60,10 @@ namespace Fabron.Test.Grains.TransientJob
         [Fact]
         public async Task Create_15sDelay()
         {
-            TransientJobGrain grain = await Silo.CreateGrainAsync<TransientJobGrain>(Guid.NewGuid().ToString());
+            JobGrain grain = await Silo.CreateGrainAsync<JobGrain>(Guid.NewGuid().ToString());
             DateTime? scheduledAt = await Schedule(grain, TimeSpan.FromSeconds(15));
 
-            TransientJobState state = MockState.Object.State;
+            JobState state = MockState.Object.State;
             Assert.Equal(Command.Name, state.Command.Name);
             Assert.Equal(Command.Data, state.Command.Data);
             Assert.Equal(scheduledAt, state.ScheduledAt);
@@ -79,51 +79,51 @@ namespace Fabron.Test.Grains.TransientJob
         [Fact]
         public async Task Create_1mDelay()
         {
-            (TransientJobGrain _, DateTime? scheduledAt) = await Schedule(TimeSpan.FromMinutes(1.1));
+            (JobGrain grain, DateTime? scheduledAt) = await Schedule(TimeSpan.FromMinutes(1));
 
-            TransientJobState state = MockState.Object.State;
+            JobState state = MockState.Object.State;
             Assert.Equal(scheduledAt, state.ScheduledAt);
 
-            Silo.TimerRegistry.Mock.VerifyNoOtherCalls();
+            Silo.TimerRegistry.Mock.Verify(t => t.RegisterTimer(grain, It.IsAny<Func<object, Task>>(), null, It.Is<TimeSpan>(ts => ts.TotalSeconds < 60 && ts.TotalSeconds > 50), TimeSpan.MaxValue));
 
             TestReminder? reminder = (TestReminder)await Silo.ReminderRegistry.GetReminder("Check");
             Assert.NotNull(reminder);
-            reminder.DueTime.Should().BeCloseTo(TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(0.1));
+            reminder.DueTime.Should().BeCloseTo(TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(0.1));
             reminder.Period.Should().Equals(TimeSpan.FromMinutes(2));
         }
 
         [Fact]
         public async Task Create_5mDelay()
         {
-            (TransientJobGrain _, DateTime? scheduledAt) = await Schedule(TimeSpan.FromMinutes(5.1));
+            (JobGrain _, DateTime? scheduledAt) = await Schedule(TimeSpan.FromMinutes(5.1));
 
-            TransientJobState state = MockState.Object.State;
+            JobState state = MockState.Object.State;
             Assert.Equal(scheduledAt, state.ScheduledAt);
 
             Silo.TimerRegistry.Mock.VerifyNoOtherCalls();
 
             TestReminder? reminder = (TestReminder)await Silo.ReminderRegistry.GetReminder("Check");
             Assert.NotNull(reminder);
-            reminder.DueTime.Should().BeCloseTo(TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(0.1));
+            reminder.DueTime.Should().BeCloseTo(TimeSpan.FromMinutes(5 - 2), TimeSpan.FromMinutes(0.1));
             reminder.Period.Should().Equals(TimeSpan.FromMinutes(2));
         }
 
         protected override void SetupServices()
         {
-            Silo.AddServiceProbe<ILogger<TransientJobGrain>>();
+            Silo.AddServiceProbe<ILogger<JobGrain>>();
             Silo.AddServiceProbe<IMediator>();
         }
 
 
         public JobCommandInfo Command { get; private set; } = new TestCommand(Guid.NewGuid().ToString()).ToRaw();
 
-        private async Task<(TransientJobGrain grain, DateTime? scheduledAt)> Schedule(TimeSpan? scheduledAfter = null)
+        private async Task<(JobGrain grain, DateTime? scheduledAt)> Schedule(TimeSpan? scheduledAfter = null)
         {
-            TransientJobGrain grain = await Silo.CreateGrainAsync<TransientJobGrain>(Guid.NewGuid().ToString());
+            JobGrain grain = await Silo.CreateGrainAsync<JobGrain>(Guid.NewGuid().ToString());
             return (grain, await Schedule(grain, scheduledAfter));
         }
 
-        private async Task<DateTime?> Schedule(TransientJobGrain grain, TimeSpan? scheduledAfter = null)
+        private async Task<DateTime?> Schedule(JobGrain grain, TimeSpan? scheduledAfter = null)
         {
             DateTime? scheduledAt = null;
             if (scheduledAfter is not null)
@@ -132,7 +132,7 @@ namespace Fabron.Test.Grains.TransientJob
                 scheduledAt = utcNow.Add(scheduledAfter.Value);
             }
 
-            await grain.Create(Command, scheduledAt);
+            await grain.Schedule(Command, scheduledAt);
             return scheduledAt;
         }
 
