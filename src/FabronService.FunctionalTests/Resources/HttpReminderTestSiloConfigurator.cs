@@ -10,7 +10,7 @@ using Moq.Contrib.HttpClient;
 
 namespace FabronService.FunctionalTests
 {
-    public class APIReminderResourceTestSiloConfigurator : TestSiloConfigurator
+    public class HttpReminderTestSiloConfigurator : TestSiloConfigurator
     {
         public override void ConfigureServices(Microsoft.Extensions.Hosting.HostBuilderContext context, IServiceCollection services)
         {
