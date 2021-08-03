@@ -85,7 +85,9 @@ static void ConfigureWebApplication(IApplicationBuilder app)
 }
 
 
+#pragma warning disable CA1050 // Declare types in namespaces
 public static class AppConfigureExtensions
+#pragma warning restore CA1050 // Declare types in namespaces
 {
     public static IServiceCollection ConfigureFramework(this IServiceCollection services)
     {
