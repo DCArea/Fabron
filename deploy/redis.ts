@@ -14,7 +14,6 @@ export function deploy(namespace_name: string): RedisConfig {
         special: false
     });
     const redis = new k8s.helm.v3.Chart(name, {
-        repo: "bitnami",
         chart: name,
         fetchOpts: {
             repo: "https://charts.bitnami.com/bitnami"

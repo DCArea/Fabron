@@ -3,7 +3,7 @@
 
 using System;
 
-namespace Fabron.Grains.TransientJob
+namespace Fabron.Grains.Job
 {
 
     public class JobCommand
@@ -80,4 +80,6 @@ namespace Fabron.Grains.TransientJob
             Reason = exception.ToString();
         }
     }
+
+    public record OnJobStateChanged(string eTag, JobState state);
 }

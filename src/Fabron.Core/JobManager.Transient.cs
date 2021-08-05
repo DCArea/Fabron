@@ -6,7 +6,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 
 using Fabron.Contracts;
-using Fabron.Grains.TransientJob;
+using Fabron.Grains.Job;
 using Fabron.Mando;
 
 using Microsoft.Extensions.Logging;

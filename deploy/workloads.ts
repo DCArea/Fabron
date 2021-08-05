@@ -7,15 +7,18 @@ import { Role, RoleBinding } from "@pulumi/kubernetes/rbac/v1";
 import { ServiceAccount } from "@pulumi/kubernetes/core/v1";
 import { PgSQLConfig } from "./pgsql";
 import { Ingress } from "@pulumi/kubernetes/networking/v1beta1";
+import { ElasticSearchConfig } from "./elasticsearch";
 
 const image_version = process.env["IMAGE_VERSION"];
 if (!image_version) { throw "missing IMAGE_VERSION" };
 const image = `${image_repo_api}:${image_version}`;
 
-export function deploy(redis_config: RedisConfig, pgsql_config: PgSQLConfig) {
+export function deploy(redis_config: RedisConfig,
+    pgsql_config: PgSQLConfig,
+    es_config: ElasticSearchConfig) {
     const sa = deploy_rbac();
     const secret = deploy_secret(redis_config, pgsql_config);
-    const configmap = deploy_configmap();
+    const configmap = deploy_configmap(es_config);
     const { deployment, service } = deploy_app(app_name_api, image, configmap, secret, sa);
     deploy_ingress(service);
     return { deployment, service }
@@ -75,7 +78,7 @@ function deploy_secret(redis_config: RedisConfig, pgsql_config: PgSQLConfig) {
     return secret;
 }
 
-function deploy_configmap() {
+function deploy_configmap(es_config: ElasticSearchConfig) {
     const configmap = new ConfigMap(service_name, {
         metadata: {
             namespace: namespace_name,
@@ -83,6 +86,8 @@ function deploy_configmap() {
             labels: shared_labels
         },
         data: {
+            "Reporters__ElasticSearch__Server": pulumi.interpolate`http://${es_config.host}:${es_config.port}`,
+            "Reporters__ElasticSearch__JobIndexName": "jobs",
         }
     });
     return configmap;

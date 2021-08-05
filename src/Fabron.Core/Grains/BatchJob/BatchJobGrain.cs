@@ -7,7 +7,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-using Fabron.Grains.TransientJob;
+using Fabron.Grains.Job;
 using Fabron.Mando;
 
 using Microsoft.Extensions.Logging;

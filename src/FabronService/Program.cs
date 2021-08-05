@@ -68,7 +68,8 @@ static void ConfigureServices(WebHostBuilderContext context, IServiceCollection 
     services.ConfigureFramework()
         .AddApiKeyAuth(context.Configuration["ApiKey"])
         .AddSwagger();
-    services.RegisterJobCommandHandlers();
+    services.RegisterJobCommandHandlers()
+        .AddElasticSearchJobReporter(context.Configuration.GetSection("Reporters:ElasticSearch"));
 }
 
 static void ConfigureWebApplication(IApplicationBuilder app)

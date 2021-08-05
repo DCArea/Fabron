@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 using Fabron.Core.Test.Grains;
 using Fabron.Grains;
-using Fabron.Grains.TransientJob;
+using Fabron.Grains.Job;
 using Fabron.Mando;
 
 using FluentAssertions;
