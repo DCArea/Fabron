@@ -5,16 +5,16 @@ import { base_url } from './constants';
 
 
 export let options: Options = {
-    vus: 200,
-    duration: '120s'
+    vus: 100,
+    duration: '60s'
 };
 
 
 export var create_reminder = () => {
-    const url = `${base_url}/APIReminders`
+    const url = `${base_url}/HttpReminders`
     const req_body = {
-        "name": `TEST0010.${__VU}.${__ITER}`,
-        "schedule": "2021-08-02T07:20:00.000Z",
+        "name": `TEST0011.${__VU}.${__ITER}`,
+        "schedule": "2021-08-05T06:40:00.000Z",
         "command": {
             "url": "http://stub.dca.svc.cluster.local/wait/200",
             "httpMethod": "GET"

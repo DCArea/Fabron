@@ -17,6 +17,17 @@ export function deploy(namespace_name: string): ElasticSearchConfig {
         namespace: namespace_name,
         values: {
             image: "dcarea/elasticsearch",
+            esJavaOpts: "-Xmx256m -Xms256m",
+            resources: {
+                requests: {
+                    cpu: "300m",
+                    memory: "512M"
+                },
+                limits: {
+                    cpu: "1000m",
+                    memory: "1024M"
+                }
+            },
             volumeClaimTemplate: {
                 storageClassName: "alicloud-disk-ssd",
                 resources: {
