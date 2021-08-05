@@ -24,6 +24,7 @@ namespace FabronService.FunctionalTests
                 options.ResponseTimeout = TimeSpan.FromSeconds(5);
             });
             siloBuilder.UseInMemoryJobStore();
+            siloBuilder.ConfigureServices(services => services.AddJobReporter<TestJobReporter>());
             siloBuilder.ConfigureServices(ConfigureServices);
             siloBuilder.AddFabron();
         }

@@ -13,7 +13,7 @@ using Orleans;
 using Orleans.Concurrency;
 using Orleans.Runtime;
 
-namespace Fabron.Grains.TransientJob
+namespace Fabron.Grains.Job
 {
 
     public interface IJobGrain : IGrainWithStringKey
@@ -67,7 +67,7 @@ namespace Fabron.Grains.TransientJob
             }
 
             _job.State.Cancel(reason);
-            await _job.WriteStateAsync();
+            await SaveJobStateAsync();
             MetricsHelper.JobCount_Canceled.Inc();
         }
 
@@ -76,7 +76,7 @@ namespace Fabron.Grains.TransientJob
             if (!_job.RecordExists)
             {
                 _job.State = new JobState(command, scheduledAt);
-                await _job.WriteStateAsync();
+                await SaveJobStateAsync();
                 MetricsHelper.JobCount_Created.Inc();
                 _logger.LogDebug($"Created Job");
             }
@@ -120,7 +120,7 @@ namespace Fabron.Grains.TransientJob
             await CheckAfter(dueTime);
 
             _job.State.Status = JobStatus.Scheduled;
-            await _job.WriteStateAsync();
+            await SaveJobStateAsync();
             MetricsHelper.JobCount_Scheduled.Inc();
         }
 
@@ -129,7 +129,7 @@ namespace Fabron.Grains.TransientJob
             _timer?.Dispose();
 
             _job.State.Start();
-            await _job.WriteStateAsync();
+            await SaveJobStateAsync();
 
             MetricsHelper.JobCount_Running.Inc();
             MetricsHelper.JobScheduleTardiness.Observe(_job.State.Tardiness.TotalSeconds);
@@ -143,7 +143,6 @@ namespace Fabron.Grains.TransientJob
             {
                 string? result = await _mediator.Handle(_job.State.Command.Name, _job.State.Command.Data, _cancellationTokenSource.Token);
                 _job.State.Complete(result);
-                await _job.WriteStateAsync();
                 MetricsHelper.JobCount_RanToCompletion.Inc();
             }
             catch (Exception e)
@@ -151,9 +150,12 @@ namespace Fabron.Grains.TransientJob
                 if (e is not TaskCanceledException || _job.State.Status != JobStatus.Canceled)
                 {
                     _job.State.Fault(e);
-                    await _job.WriteStateAsync();
                     MetricsHelper.JobCount_Faulted.Inc();
                 }
+            }
+            finally
+            {
+                await SaveJobStateAsync();
             }
             _logger.LogDebug($"Job Finished: {_job.State.Status}");
         }
@@ -173,7 +175,7 @@ namespace Fabron.Grains.TransientJob
             }
 
             _job.State.Finalized = true;
-            await _job.WriteStateAsync();
+            await SaveJobStateAsync();
             DeactivateOnIdle();
         }
 
@@ -199,6 +201,15 @@ namespace Fabron.Grains.TransientJob
             _timer?.Dispose();
             _timer = RegisterTimer(_ => Start(), null, dueTime, TimeSpan.MaxValue);
             _logger.LogDebug($"Set Job Timer with, dueTime={dueTime}");
+        }
+
+        private async Task SaveJobStateAsync()
+        {
+            await _job.WriteStateAsync();
+
+            _ = long.TryParse(_job.Etag, out long version);
+            await GrainFactory.GetGrain<IJobReporterGrain>(this.GetPrimaryKeyString())
+                .OnJobStateChanged(version, _job.State);
         }
 
         Task IRemindable.ReceiveReminder(string reminderName, TickStatus status)

@@ -15,6 +15,7 @@
     <PackageReference Include="Microsoft.Orleans.OrleansProviders" Version="$(OrleansVersion)" />
     <PackageReference Include="Microsoft.Orleans.OrleansRuntime" Version="$(OrleansVersion)" />
     <PackageReference Include="Microsoft.Toolkit.Diagnostics" Version="$(MicrosoftToolkitDiagnostics)" />
+    <PackageReference Include="NEST" Version="7.13.2" />
     <PackageReference Include="prometheus-net" Version="$(PrometheusNetVersion)" />
   </ItemGroup>
 
