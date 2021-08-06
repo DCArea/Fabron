@@ -31,9 +31,9 @@ namespace Fabron.Test.Grains.Job
             await Schedule();
 
             JobState state = MockState.Object.State;
-            Assert.Equal(Command.Name, state.Command.Name);
-            Assert.Equal(Command.Data, state.Command.Data);
-            Assert.Equal(state.CreatedAt, state.ScheduledAt);
+            Assert.Equal(Command.Name, state.Spec.CommandName);
+            Assert.Equal(Command.Data, state.Spec.CommandData);
+            Assert.Equal(state.CreatedAt, state.Spec.Schedule);
 
             Silo.TimerRegistry.Mock.VerifyNoOtherCalls();
             Silo.ReminderRegistry.Mock
@@ -48,9 +48,9 @@ namespace Fabron.Test.Grains.Job
             (JobGrain _, DateTime? scheduledAt) = await Schedule(TimeSpan.FromSeconds(8));
 
             JobState state = MockState.Object.State;
-            Assert.Equal(Command.Name, state.Command.Name);
-            Assert.Equal(Command.Data, state.Command.Data);
-            Assert.Equal(scheduledAt, state.ScheduledAt);
+            Assert.Equal(Command.Name, state.Spec.CommandName);
+            Assert.Equal(Command.Data, state.Spec.CommandData);
+            Assert.Equal(scheduledAt, state.Spec.Schedule);
 
             Silo.TimerRegistry.Mock.VerifyNoOtherCalls();
             Silo.ReminderRegistry.Mock
@@ -64,9 +64,9 @@ namespace Fabron.Test.Grains.Job
             DateTime? scheduledAt = await Schedule(grain, TimeSpan.FromSeconds(15));
 
             JobState state = MockState.Object.State;
-            Assert.Equal(Command.Name, state.Command.Name);
-            Assert.Equal(Command.Data, state.Command.Data);
-            Assert.Equal(scheduledAt, state.ScheduledAt);
+            Assert.Equal(Command.Name, state.Spec.CommandName);
+            Assert.Equal(Command.Data, state.Spec.CommandData);
+            Assert.Equal(scheduledAt, state.Spec.Schedule);
 
             Silo.TimerRegistry.Mock.Verify(t => t.RegisterTimer(grain, It.IsAny<Func<object, Task>>(), null, It.Is<TimeSpan>(ts => ts.Seconds == 14), TimeSpan.MaxValue));
 
@@ -82,7 +82,7 @@ namespace Fabron.Test.Grains.Job
             (JobGrain grain, DateTime? scheduledAt) = await Schedule(TimeSpan.FromMinutes(1));
 
             JobState state = MockState.Object.State;
-            Assert.Equal(scheduledAt, state.ScheduledAt);
+            Assert.Equal(scheduledAt, state.Spec.Schedule);
 
             Silo.TimerRegistry.Mock.Verify(t => t.RegisterTimer(grain, It.IsAny<Func<object, Task>>(), null, It.Is<TimeSpan>(ts => ts.TotalSeconds < 60 && ts.TotalSeconds > 50), TimeSpan.MaxValue));
 
@@ -98,7 +98,7 @@ namespace Fabron.Test.Grains.Job
             (JobGrain _, DateTime? scheduledAt) = await Schedule(TimeSpan.FromMinutes(5.1));
 
             JobState state = MockState.Object.State;
-            Assert.Equal(scheduledAt, state.ScheduledAt);
+            Assert.Equal(scheduledAt, state.Spec.Schedule);
 
             Silo.TimerRegistry.Mock.VerifyNoOtherCalls();
 

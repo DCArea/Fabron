@@ -18,20 +18,20 @@ namespace Fabron.Contracts
         public static Job<TCommand, TResult> Map<TCommand, TResult>(this JobState jobState)
             where TCommand : ICommand<TResult>
         {
-            TCommand? cmdData = JsonSerializer.Deserialize<TCommand>(jobState.Command.Data);
+            TCommand? cmdData = JsonSerializer.Deserialize<TCommand>(jobState.Spec.CommandData);
             if (cmdData is null)
             {
                 throw new Exception();
             }
 
-            TResult? cmdResult = jobState.Command.Result is null
+            TResult? cmdResult = jobState.Result is null
                     ? default
-                    : JsonSerializer.Deserialize<TResult>(jobState.Command.Result);
+                    : JsonSerializer.Deserialize<TResult>(jobState.Result);
 
             Job<TCommand, TResult> job = new(
                 new(cmdData, cmdResult),
                 jobState.CreatedAt,
-                jobState.ScheduledAt,
+                jobState.Spec.Schedule,
                 jobState.StartedAt,
                 jobState.FinishedAt,
                 (JobStatus)((int)jobState.Status - 1),

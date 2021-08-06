@@ -39,7 +39,7 @@ namespace Fabron
 
         public async Task Report(string jobId, long version, JobState jobState)
         {
-            JobDocument doc = new(jobId, jobState.Command.Name, jobState.CreatedAt, jobState.ScheduledAt, jobState.FinishedAt, jobState.Reason, jobState.Status, jobState.Finalized, version);
+            JobDocument doc = new(jobId, jobState.Spec.CommandName, jobState.CreatedAt, jobState.Spec.Schedule, jobState.FinishedAt, jobState.Reason, jobState.Status, jobState.Finalized, version);
             Nest.IndexResponse res = await _esClient.IndexAsync(doc, idx => idx.Index(_options.JobIndexName));
             if (_logger.IsEnabled(LogLevel.Debug))
             {

@@ -24,7 +24,7 @@ namespace Fabron.Grains.Job
         Task<JobState?> GetState();
         [ReadOnly]
         Task<JobStatus> GetStatus();
-        Task Schedule(JobCommandInfo command, DateTime? scheduledAt = null);
+        Task Schedule(JobCommandInfo command, DateTime? schedule = null);
     }
 
     public class JobGrain : Grain, IJobGrain, IRemindable
@@ -66,16 +66,30 @@ namespace Fabron.Grains.Job
                 _cancellationTokenSource.Cancel();
             }
 
-            _job.State.Cancel(reason);
+            _job.State.Status = JobStatus.Canceled;
+            _job.State.FinishedAt = DateTime.UtcNow;
+            _job.State.Reason = reason;
             await SaveJobStateAsync();
             MetricsHelper.JobCount_Canceled.Inc();
         }
 
-        public async Task Schedule(JobCommandInfo command, DateTime? scheduledAt = null)
+        public async Task Schedule(JobCommandInfo command, DateTime? schedule = null)
         {
             if (!_job.RecordExists)
             {
-                _job.State = new JobState(command, scheduledAt);
+
+                DateTime createdAt = DateTime.UtcNow;
+                DateTime schedule_ = schedule is null || schedule.Value < createdAt ? createdAt : (DateTime)schedule;
+                _job.State = new JobState
+                {
+                    Spec = new JobSpec
+                    {
+                        Schedule = schedule_,
+                        CommandName = command.Name,
+                        CommandData = command.Data
+                    },
+                    CreatedAt = createdAt
+                };
                 await SaveJobStateAsync();
                 MetricsHelper.JobCount_Created.Inc();
                 _logger.LogDebug($"Created Job");
@@ -128,7 +142,8 @@ namespace Fabron.Grains.Job
         {
             _timer?.Dispose();
 
-            _job.State.Start();
+            _job.State.StartedAt = DateTime.UtcNow;
+            _job.State.Status = JobStatus.Started;
             await SaveJobStateAsync();
 
             MetricsHelper.JobCount_Running.Inc();
@@ -141,15 +156,19 @@ namespace Fabron.Grains.Job
             _cancellationTokenSource ??= new CancellationTokenSource(TimeSpan.FromMinutes(1));
             try
             {
-                string? result = await _mediator.Handle(_job.State.Command.Name, _job.State.Command.Data, _cancellationTokenSource.Token);
-                _job.State.Complete(result);
+                string? result = await _mediator.Handle(_job.State.Spec.CommandName, _job.State.Spec.CommandData, _cancellationTokenSource.Token);
+                _job.State.Status = JobStatus.Succeed;
+                _job.State.FinishedAt = DateTime.UtcNow;
+                _job.State.Result = result;
                 MetricsHelper.JobCount_RanToCompletion.Inc();
             }
             catch (Exception e)
             {
                 if (e is not TaskCanceledException || _job.State.Status != JobStatus.Canceled)
                 {
-                    _job.State.Fault(e);
+                    _job.State.Status = JobStatus.Faulted;
+                    _job.State.FinishedAt = DateTime.UtcNow;
+                    _job.State.Reason = e.ToString();
                     MetricsHelper.JobCount_Faulted.Inc();
                 }
             }

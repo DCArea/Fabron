@@ -17,8 +17,16 @@ namespace Core.Test.Grains.Job
         public void Schedule20msAgo()
         {
             DateTime now = DateTime.UtcNow;
-            JobState state = new (Command, now.AddMilliseconds(-20));
-
+            JobState state = new()
+            {
+                Spec = new()
+                {
+                    Schedule = now.AddMilliseconds(-20),
+                    CommandName = Command.Name,
+                    CommandData = Command.Data,
+                },
+                CreatedAt = now,
+            };
             Assert.Equal(TimeSpan.Zero, state.DueTime);
         }
 
