@@ -19,12 +19,7 @@ namespace Core.Test.Grains.Job
             DateTime now = DateTime.UtcNow;
             JobState state = new()
             {
-                Spec = new()
-                {
-                    Schedule = now.AddMilliseconds(-20),
-                    CommandName = Command.Name,
-                    CommandData = Command.Data,
-                },
+                Spec = new(now.AddMilliseconds(-20), Command.Name, Command.Data),
                 CreatedAt = now,
             };
             Assert.Equal(TimeSpan.Zero, state.DueTime);

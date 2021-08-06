@@ -25,12 +25,7 @@ namespace Fabron.Test.Grains.JobReporter
             JobState jobState = new()
             {
                 CreatedAt = DateTime.Now,
-                Spec = new JobSpec()
-                {
-                    Schedule = DateTime.Now,
-                    CommandName = "test",
-                    CommandData = "test"
-                }
+                Spec = new JobSpec(DateTime.Now, "test", "test"),
             };
             Mock<IJobReporter>? reporterMock = Silo.AddServiceProbe<IJobReporter>();
             reporterMock.Setup(m => m.Report(jobId, version, jobState))

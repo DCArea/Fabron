@@ -36,11 +36,16 @@ namespace Fabron.Grains.Job
 
     }
 
-    public class JobSpec
-    {
-        public DateTime Schedule { get; init; }
-        public string CommandName { get; init; } = default!;
-        public string CommandData { get; init; } = default!;
-    }
+    //public class JobSpec
+    //{
+    //    public DateTime Schedule { get; init; }
+    //    public string CommandName { get; init; } = default!;
+    //    public string CommandData { get; init; } = default!;
+    //}
+    public record JobSpec(
+        DateTime Schedule,
+        string CommandName,
+        string CommandData
+    );
 
 }

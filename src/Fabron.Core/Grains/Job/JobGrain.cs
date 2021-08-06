@@ -82,12 +82,7 @@ namespace Fabron.Grains.Job
                 DateTime schedule_ = schedule is null || schedule.Value < createdAt ? createdAt : (DateTime)schedule;
                 _job.State = new JobState
                 {
-                    Spec = new JobSpec
-                    {
-                        Schedule = schedule_,
-                        CommandName = command.Name,
-                        CommandData = command.Data
-                    },
+                    Spec = new JobSpec(schedule_, command.Name, command.Data),
                     CreatedAt = createdAt
                 };
                 await SaveJobStateAsync();
