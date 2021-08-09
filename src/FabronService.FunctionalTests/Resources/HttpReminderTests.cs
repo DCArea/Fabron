@@ -25,25 +25,7 @@ namespace FabronService.FunctionalTests.Resources
         public HttpReminderTests(WAF<HttpReminderTestSiloConfigurator> waf) => _waf = waf;
 
         [Fact]
-        public async Task Create()
-        {
-            HttpClient client = _waf.WithTestUser().CreateClient();
-            RegisterHttpReminderRequest request = new(
-                "Test_Create",
-                DateTime.UtcNow.AddDays(1),
-                new("http://llhh", "GET")
-            );
-            HttpResponseMessage response = await client.PostAsJsonAsync(Route, request);
-
-            Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-            Assert.Equal(new Uri(_waf.Server.BaseAddress, $"{Route}/{request.Name}"), response.Headers.Location);
-            HttpReminder? reminder = await response.Content.ReadFromJsonAsync<HttpReminder>(_waf.JsonSerializerOptions);
-            Assert.NotNull(reminder);
-            Assert.Equal(request.Command.Url, reminder!.Command.Data.Url);
-        }
-
-        [Fact]
-        public async Task Get()
+        public async Task Create_Get()
         {
             RegisterHttpReminderRequest request = new(
                 "Test_Get",
@@ -56,7 +38,14 @@ namespace FabronService.FunctionalTests.Resources
                 .ReturnsResponse(HttpStatusCode.OK);
 
             HttpResponseMessage? response = await client.PostAsJsonAsync(Route, request);
-            HttpReminder? reminder = await client.GetFromJsonAsync<HttpReminder>(response.Headers.Location, _waf.JsonSerializerOptions);
+
+            Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+            Assert.Equal(new Uri(_waf.Server.BaseAddress, $"{Route}/{request.Name}"), response.Headers.Location);
+            HttpReminder? reminder = await response.Content.ReadFromJsonAsync<HttpReminder>(_waf.JsonSerializerOptions);
+            Assert.NotNull(reminder);
+            Assert.Equal(request.Command.Url, reminder!.Command.Data.Url);
+
+            reminder = await client.GetFromJsonAsync<HttpReminder>(response.Headers.Location, _waf.JsonSerializerOptions);
 
             Assert.NotNull(reminder);
             Assert.Equal(request.Command.Url, reminder!.Command.Data.Url);

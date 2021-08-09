@@ -16,7 +16,6 @@ namespace Fabron.Grains.Job
         public DateTime CreatedAt { get; set; }
         public JobSpec Spec { get; init; }
         public JobStatus Status { get; set; }
-
         public TimeSpan DueTime
         {
             get

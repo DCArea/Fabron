@@ -87,8 +87,9 @@ namespace Fabron.Grains.Job
                 DateTime schedule_ = schedule is null || schedule.Value < createdAt ? createdAt : (DateTime)schedule;
                 _jobState.State = new JobState
                 {
+                    CreatedAt = createdAt,
                     Spec = new JobSpec(schedule_, command.Name, command.Data),
-                    CreatedAt = createdAt
+                    Status = new JobStatus()
                 };
                 await SaveJobStateAsync();
                 MetricsHelper.JobCount_Created.Inc();
