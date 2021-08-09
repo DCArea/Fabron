@@ -33,7 +33,7 @@ namespace Fabron.Test.Grains.Job
             JobState state = MockState.Object.State;
             Assert.Equal(Command.Name, state.Spec.CommandName);
             Assert.Equal(Command.Data, state.Spec.CommandData);
-            Assert.Equal(state.CreatedAt, state.Spec.Schedule);
+            Assert.Equal(state.Metadata.CreationTimestamp, state.Spec.Schedule);
 
             Silo.TimerRegistry.Mock.VerifyNoOtherCalls();
             Silo.ReminderRegistry.Mock

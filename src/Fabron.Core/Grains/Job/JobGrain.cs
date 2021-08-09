@@ -87,7 +87,7 @@ namespace Fabron.Grains.Job
                 DateTime schedule_ = schedule is null || schedule.Value < createdAt ? createdAt : (DateTime)schedule;
                 _jobState.State = new JobState
                 {
-                    CreatedAt = createdAt,
+                    Metadata = new JobMetadata(this.GetPrimaryKeyString(), createdAt, new()),
                     Spec = new JobSpec(schedule_, command.Name, command.Data),
                     Status = new JobStatus()
                 };

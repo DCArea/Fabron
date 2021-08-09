@@ -30,7 +30,7 @@ namespace Fabron.Contracts
 
             Job<TCommand, TResult> job = new(
                 new(cmdData, cmdResult),
-                jobState.CreatedAt,
+                jobState.Metadata.CreationTimestamp,
                 jobState.Spec.Schedule,
                 jobState.Status.StartedAt,
                 jobState.Status.FinishedAt,

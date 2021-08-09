@@ -2,20 +2,20 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System;
+using System.Collections.Generic;
 
 namespace Fabron.Grains.Job
 {
-
-
     public class JobState
     {
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         public JobState() { }
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
-        public DateTime CreatedAt { get; set; }
+        public JobMetadata Metadata { get; set; }
         public JobSpec Spec { get; init; }
         public JobStatus Status { get; set; }
+
         public TimeSpan DueTime
         {
             get
@@ -30,17 +30,18 @@ namespace Fabron.Grains.Job
 
     }
 
-    //public class JobSpec
-    //{
-    //    public DateTime Schedule { get; init; }
-    //    public string CommandName { get; init; } = default!;
-    //    public string CommandData { get; init; } = default!;
-    //}
+    public record JobMetadata(
+        string Uid,
+        DateTime CreationTimestamp,
+        Dictionary<string, string> Labels
+    );
+
     public record JobSpec(
         DateTime Schedule,
         string CommandName,
         string CommandData
     );
+
     public record JobStatus(
         ExecutionStatus ExecutionStatus = ExecutionStatus.Created,
         DateTime? StartedAt = null,
@@ -49,5 +50,4 @@ namespace Fabron.Grains.Job
         string? Reason = null,
         bool Finalized = false
     );
-
 }

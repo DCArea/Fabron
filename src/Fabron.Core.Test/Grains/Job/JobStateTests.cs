@@ -19,8 +19,8 @@ namespace Core.Test.Grains.Job
             DateTime now = DateTime.UtcNow;
             JobState state = new()
             {
+                Metadata = new JobMetadata("test", now, new()),
                 Spec = new(now.AddMilliseconds(-20), Command.Name, Command.Data),
-                CreatedAt = now,
             };
             Assert.Equal(TimeSpan.Zero, state.DueTime);
         }

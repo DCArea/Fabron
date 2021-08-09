@@ -98,7 +98,7 @@ namespace Fabron
                 childState.Id,
                 result,
                 (Contracts.JobStatus)(int)jobState.Status.ExecutionStatus,
-                jobState.CreatedAt,
+                jobState.Metadata.CreationTimestamp,
                 jobState.Spec.Schedule,
                 jobState.Status.StartedAt,
                 jobState.Status.FinishedAt);
