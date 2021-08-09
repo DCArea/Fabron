@@ -23,14 +23,14 @@ namespace Fabron.Grains.Job
         [ReadOnly]
         Task<JobState?> GetState();
         [ReadOnly]
-        Task<JobStatus> GetStatus();
-        Task Schedule(JobCommandInfo command, DateTime? scheduledAt = null);
+        Task<ExecutionStatus> GetStatus();
+        Task Schedule(JobCommandInfo command, DateTime? schedule = null);
     }
 
     public class JobGrain : Grain, IJobGrain, IRemindable
     {
         private readonly ILogger _logger;
-        private readonly IPersistentState<JobState> _job;
+        private readonly IPersistentState<JobState> _jobState;
         private readonly IMediator _mediator;
         private IDisposable? _timer;
         private IGrainReminder? _reminder;
@@ -38,21 +38,23 @@ namespace Fabron.Grains.Job
 
         public JobGrain(
             ILogger<JobGrain> logger,
-            [PersistentState("Job", "JobStore")] IPersistentState<JobState> job,
+            [PersistentState("Job", "JobStore")] IPersistentState<JobState> jobState,
             IMediator mediator)
         {
             _logger = logger;
-            _job = job;
+            _jobState = jobState;
             _mediator = mediator;
         }
 
+        private JobState Job => _jobState.State;
+
         public Task<JobState?> GetState()
         {
-            JobState? state = _job.RecordExists ? _job.State : null;
+            JobState? state = _jobState.RecordExists ? _jobState.State : null;
             return Task.FromResult(state);
         }
 
-        public Task<JobStatus> GetStatus() => Task.FromResult(_job.State.Status);
+        public Task<ExecutionStatus> GetStatus() => Task.FromResult(Job.Status.ExecutionStatus);
 
         public async Task Cancel(string reason)
         {
@@ -66,16 +68,29 @@ namespace Fabron.Grains.Job
                 _cancellationTokenSource.Cancel();
             }
 
-            _job.State.Cancel(reason);
+            Job.Status = Job.Status with
+            {
+                ExecutionStatus = ExecutionStatus.Canceled,
+                FinishedAt = DateTime.UtcNow,
+                Reason = reason,
+            };
             await SaveJobStateAsync();
             MetricsHelper.JobCount_Canceled.Inc();
         }
 
-        public async Task Schedule(JobCommandInfo command, DateTime? scheduledAt = null)
+        public async Task Schedule(JobCommandInfo command, DateTime? schedule = null)
         {
-            if (!_job.RecordExists)
+            if (!_jobState.RecordExists)
             {
-                _job.State = new JobState(command, scheduledAt);
+
+                DateTime createdAt = DateTime.UtcNow;
+                DateTime schedule_ = schedule is null || schedule.Value < createdAt ? createdAt : (DateTime)schedule;
+                _jobState.State = new JobState
+                {
+                    Metadata = new JobMetadata(this.GetPrimaryKeyString(), createdAt, new()),
+                    Spec = new JobSpec(schedule_, command.Name, command.Data),
+                    Status = new JobStatus()
+                };
                 await SaveJobStateAsync();
                 MetricsHelper.JobCount_Created.Inc();
                 _logger.LogDebug($"Created Job");
@@ -88,26 +103,27 @@ namespace Fabron.Grains.Job
         {
             while (true)
             {
-                if (_job.State.Finalized)
+                if (Job.Status.Finalized)
                 {
                     return;
                 }
-                if (_job.State is { Status: JobStatus.Scheduled, DueTime.TotalSeconds: > 2 * 60 })
+                var dueTime = Job.DueTime;
+                if (Job.Status is { ExecutionStatus: ExecutionStatus.Scheduled } && dueTime is { TotalSeconds: >= 2 * 60 })
                 {
                     return;
                 }
-                if (_job.State is { Status: JobStatus.Scheduled, DueTime.TotalSeconds: > 10 and < 2 * 60 })
+                if (Job.Status is { ExecutionStatus: ExecutionStatus.Scheduled } && dueTime is { TotalSeconds: > 10 and < 2 * 60 })
                 {
-                    StartAfter(_job.State.DueTime);
+                    StartAfter(_jobState.State.DueTime);
                     return;
                 }
 
-                Task next = _job.State switch
+                Task next = Job.Status switch
                 {
-                    { Status: JobStatus.Created } => Schedule(),
-                    { Status: JobStatus.Scheduled, DueTime.TotalSeconds: < 10 } => Start(),
-                    { Status: JobStatus.Started } => Execute(),
-                    { Status: JobStatus.Succeed or JobStatus.Canceled or JobStatus.Faulted } => Cleanup(),
+                    { ExecutionStatus: ExecutionStatus.Created } => Schedule(),
+                    { ExecutionStatus: ExecutionStatus.Scheduled } => Start(),
+                    { ExecutionStatus: ExecutionStatus.Started } => Execute(),
+                    { ExecutionStatus: ExecutionStatus.Succeed or ExecutionStatus.Canceled or ExecutionStatus.Faulted } => Cleanup(),
                     _ => throw new InvalidOperationException()
                 };
                 await next;
@@ -116,10 +132,13 @@ namespace Fabron.Grains.Job
 
         private async Task Schedule()
         {
-            TimeSpan dueTime = _job.State.DueTime;
+            TimeSpan dueTime = _jobState.State.DueTime;
             await CheckAfter(dueTime);
 
-            _job.State.Status = JobStatus.Scheduled;
+            Job.Status = Job.Status with
+            {
+                ExecutionStatus = ExecutionStatus.Scheduled
+            };
             await SaveJobStateAsync();
             MetricsHelper.JobCount_Scheduled.Inc();
         }
@@ -128,11 +147,15 @@ namespace Fabron.Grains.Job
         {
             _timer?.Dispose();
 
-            _job.State.Start();
+            Job.Status = Job.Status with
+            {
+                StartedAt = DateTime.UtcNow,
+                ExecutionStatus = ExecutionStatus.Started,
+            };
             await SaveJobStateAsync();
 
             MetricsHelper.JobCount_Running.Inc();
-            MetricsHelper.JobScheduleTardiness.Observe(_job.State.Tardiness.TotalSeconds);
+            MetricsHelper.JobScheduleTardiness.Observe(_jobState.State.Tardiness.TotalSeconds);
         }
 
         private async Task Execute()
@@ -141,15 +164,25 @@ namespace Fabron.Grains.Job
             _cancellationTokenSource ??= new CancellationTokenSource(TimeSpan.FromMinutes(1));
             try
             {
-                string? result = await _mediator.Handle(_job.State.Command.Name, _job.State.Command.Data, _cancellationTokenSource.Token);
-                _job.State.Complete(result);
+                string? result = await _mediator.Handle(_jobState.State.Spec.CommandName, _jobState.State.Spec.CommandData, _cancellationTokenSource.Token);
+                Job.Status = Job.Status with
+                {
+                    ExecutionStatus = ExecutionStatus.Succeed,
+                    FinishedAt = DateTime.UtcNow,
+                    Result = result,
+                };
                 MetricsHelper.JobCount_RanToCompletion.Inc();
             }
             catch (Exception e)
             {
-                if (e is not TaskCanceledException || _job.State.Status != JobStatus.Canceled)
+                if (e is not TaskCanceledException || Job.Status.ExecutionStatus != ExecutionStatus.Canceled)
                 {
-                    _job.State.Fault(e);
+                    Job.Status = Job.Status with
+                    {
+                        ExecutionStatus = ExecutionStatus.Faulted,
+                        FinishedAt = DateTime.UtcNow,
+                        Reason = e.ToString(),
+                    };
                     MetricsHelper.JobCount_Faulted.Inc();
                 }
             }
@@ -157,7 +190,7 @@ namespace Fabron.Grains.Job
             {
                 await SaveJobStateAsync();
             }
-            _logger.LogDebug($"Job Finished: {_job.State.Status}");
+            _logger.LogDebug($"Job Finished: {Job.Status.ExecutionStatus}");
         }
 
         private async Task Cleanup()
@@ -174,7 +207,10 @@ namespace Fabron.Grains.Job
                 _logger.LogDebug($"Job Reminder Unregistered");
             }
 
-            _job.State.Finalized = true;
+            Job.Status = Job.Status with
+            {
+                Finalized = true
+            };
             await SaveJobStateAsync();
             DeactivateOnIdle();
         }
@@ -205,11 +241,11 @@ namespace Fabron.Grains.Job
 
         private async Task SaveJobStateAsync()
         {
-            await _job.WriteStateAsync();
+            await _jobState.WriteStateAsync();
 
-            _ = long.TryParse(_job.Etag, out long version);
+            _ = long.TryParse(_jobState.Etag, out long version);
             await GrainFactory.GetGrain<IJobReporterGrain>(this.GetPrimaryKeyString())
-                .OnJobStateChanged(version, _job.State);
+                .OnJobStateChanged(version, _jobState.State);
         }
 
         Task IRemindable.ReceiveReminder(string reminderName, TickStatus status)

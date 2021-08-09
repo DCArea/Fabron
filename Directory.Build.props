@@ -13,9 +13,9 @@
 
   <!-- framework versions -->
   <PropertyGroup>
-    <AspNetCoreVersion>6.0.0-preview.5.21301.17</AspNetCoreVersion>
-    <MEXVersion>6.0.0-preview.5.21301.5</MEXVersion>
-    <OrleansVersion>3.4.2</OrleansVersion>
+    <AspNetCoreVersion>6.0.0-preview.6.21355.2</AspNetCoreVersion>
+    <MEXVersion>6.0.0-preview.6.21352.12</MEXVersion>
+    <OrleansVersion>3.4.3</OrleansVersion>
   </PropertyGroup>
 
   <!-- library versions -->
@@ -32,14 +32,14 @@
 
   <!-- test pkgs -->
   <PropertyGroup>
-    <CoverletCollectorVersion>3.0.3</CoverletCollectorVersion>
+    <CoverletCollectorVersion>3.1.0</CoverletCollectorVersion>
     <FakeItEasyVersion>7.1.0</FakeItEasyVersion>
-    <FluentAssertionsVersion>6.0.0-beta0001</FluentAssertionsVersion>
+    <FluentAssertionsVersion>6.0.0-beta0002</FluentAssertionsVersion>
     <MartinCostelloLoggingXUnitVersion>0.1.0</MartinCostelloLoggingXUnitVersion>
     <MicrosoftTestSdkVersion>16.10.0</MicrosoftTestSdkVersion>
     <MoqContribHttpClientVersion>1.3.0</MoqContribHttpClientVersion>
     <MoqVersion>4.16.1</MoqVersion>
-    <OrleansTestKitVersion>3.1.5</OrleansTestKitVersion>
+    <OrleansTestKitVersion>3.1.6</OrleansTestKitVersion>
     <xUnitRunnerVisualStudio>2.4.3</xUnitRunnerVisualStudio>
     <xUnitVersion>2.4.1</xUnitVersion>
   </PropertyGroup>

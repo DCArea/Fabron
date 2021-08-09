@@ -3,7 +3,7 @@
 
 namespace Fabron.Grains
 {
-    public enum JobStatus
+    public enum ExecutionStatus
     {
         Created,
         Scheduled,

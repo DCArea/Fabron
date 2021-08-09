@@ -32,7 +32,8 @@ namespace Fabron
             await grain.Schedule(command, scheduledAt);
             _logger.LogInformation($"Job[{jobId}] Created");
 
-            return new JobState(command, scheduledAt);
+            JobState? state = await grain.GetState();
+            return state!;
         }
 
         public async Task<Job<TJobCommand, TResult>?> GetJobById<TJobCommand, TResult>(string jobId)

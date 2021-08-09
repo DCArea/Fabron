@@ -80,7 +80,7 @@ namespace Fabron
                 cmdData,
                 pendingJobs,
                 finishedJobs,
-                (JobStatus)(int)jobState.Status,
+                (Contracts.JobStatus)(int)jobState.Status,
                 jobState.Reason);
         }
 
@@ -92,16 +92,16 @@ namespace Fabron
                 throw new Exception();
             }
 
-            object? result = jobState.Command.Result is null ? null : JsonSerializer.Deserialize(jobState.Command.Result, _registry.ResultTypeRegistrations[jobState.Command.Name])!;
+            object? result = jobState.Status.Result is null ? null : JsonSerializer.Deserialize(jobState.Status.Result, _registry.ResultTypeRegistrations[jobState.Spec.CommandName])!;
 
             return new CronChildJobDetail(
                 childState.Id,
                 result,
-                (JobStatus)(int)jobState.Status,
-                jobState.CreatedAt,
-                jobState.ScheduledAt,
-                jobState.StartedAt,
-                jobState.FinishedAt);
+                (Contracts.JobStatus)(int)jobState.Status.ExecutionStatus,
+                jobState.Metadata.CreationTimestamp,
+                jobState.Spec.Schedule,
+                jobState.Status.StartedAt,
+                jobState.Status.FinishedAt);
         }
     }
 }
