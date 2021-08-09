@@ -39,7 +39,7 @@ namespace Fabron.Test.Grains.Job
             Silo.ReminderRegistry.Mock
                 .Verify(m => m.RegisterOrUpdateReminder("Check", TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(2)));
 
-            await WaitUntil(state => state.Status == JobStatus.Succeed, TimeSpan.FromSeconds(1));
+            await WaitUntil(state => state.Status.ExecutionStatus == ExecutionStatus.Succeed, TimeSpan.FromSeconds(1));
         }
 
         [Fact]

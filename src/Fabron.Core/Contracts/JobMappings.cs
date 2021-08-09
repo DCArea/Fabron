@@ -24,18 +24,18 @@ namespace Fabron.Contracts
                 throw new Exception();
             }
 
-            TResult? cmdResult = jobState.Result is null
+            TResult? cmdResult = jobState.Status.Result is null
                     ? default
-                    : JsonSerializer.Deserialize<TResult>(jobState.Result);
+                    : JsonSerializer.Deserialize<TResult>(jobState.Status.Result);
 
             Job<TCommand, TResult> job = new(
                 new(cmdData, cmdResult),
                 jobState.CreatedAt,
                 jobState.Spec.Schedule,
-                jobState.StartedAt,
-                jobState.FinishedAt,
-                (JobStatus)((int)jobState.Status - 1),
-                jobState.Reason
+                jobState.Status.StartedAt,
+                jobState.Status.FinishedAt,
+                (JobStatus)((int)jobState.Status.ExecutionStatus - 1),
+                jobState.Status.Reason
             );
             return job;
         }

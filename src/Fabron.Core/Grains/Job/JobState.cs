@@ -13,14 +13,9 @@ namespace Fabron.Grains.Job
         public JobState() { }
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
-        public JobSpec Spec { get; init; }
         public DateTime CreatedAt { get; set; }
-        public DateTime? StartedAt { get; set; } = null;
-        public DateTime? FinishedAt { get; set; } = null;
-        public string? Result { get; set; } = null;
-        public string? Reason { get; set; } = null;
-        public JobStatus Status { get; set; } = JobStatus.Created;
-        public bool Finalized { get; set; } = false;
+        public JobSpec Spec { get; init; }
+        public JobStatus Status { get; set; }
 
         public TimeSpan DueTime
         {
@@ -32,7 +27,7 @@ namespace Fabron.Grains.Job
         }
 
         public TimeSpan Tardiness
-            => StartedAt is null || StartedAt < Spec.Schedule ? TimeSpan.Zero : StartedAt.Value.Subtract(Spec.Schedule);
+            => Status.StartedAt is null || Status.StartedAt < Spec.Schedule ? TimeSpan.Zero : Status.StartedAt.Value.Subtract(Spec.Schedule);
 
     }
 
@@ -46,6 +41,14 @@ namespace Fabron.Grains.Job
         DateTime Schedule,
         string CommandName,
         string CommandData
+    );
+    public record JobStatus(
+        ExecutionStatus ExecutionStatus = ExecutionStatus.Created,
+        DateTime? StartedAt = null,
+        DateTime? FinishedAt = null,
+        string? Result = null,
+        string? Reason = null,
+        bool Finalized = false
     );
 
 }

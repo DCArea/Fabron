@@ -149,11 +149,11 @@ namespace Fabron.Grains.BatchJob
             IJobGrain grain = GrainFactory.GetGrain<IJobGrain>(job.Id);
             job.Status = await grain.GetStatus() switch
             {
-                JobStatus.Created => ChildJobStatus.WaitToSchedule,
-                JobStatus.Scheduled or JobStatus.Started => ChildJobStatus.Scheduled,
-                JobStatus.Succeed => ChildJobStatus.RanToCompletion,
-                JobStatus.Canceled => ChildJobStatus.Canceled,
-                JobStatus.Faulted => ChildJobStatus.Faulted,
+                ExecutionStatus.Created => ChildJobStatus.WaitToSchedule,
+                ExecutionStatus.Scheduled or ExecutionStatus.Started => ChildJobStatus.Scheduled,
+                ExecutionStatus.Succeed => ChildJobStatus.RanToCompletion,
+                ExecutionStatus.Canceled => ChildJobStatus.Canceled,
+                ExecutionStatus.Faulted => ChildJobStatus.Faulted,
                 _ => throw new InvalidOperationException("invalid child job state")
             };
         }
