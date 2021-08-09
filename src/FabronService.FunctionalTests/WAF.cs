@@ -32,13 +32,7 @@ namespace FabronService.FunctionalTests
 
         public async Task InitializeAsync() => TestCluster = await CreateTestClusterAsync();
 
-        public override async ValueTask DisposeAsync()
-        {
-            await TestCluster.StopAllSilosAsync();
-            await base.DisposeAsync();
-        }
-
-        Task IAsyncLifetime.DisposeAsync() => Task.CompletedTask;
+        Task IAsyncLifetime.DisposeAsync() => TestCluster.StopAllSilosAsync();
 
         protected override IHostBuilder CreateHostBuilder()
         {
