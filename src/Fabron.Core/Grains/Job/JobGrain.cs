@@ -244,8 +244,8 @@ namespace Fabron.Grains.Job
             await _jobState.WriteStateAsync();
 
             _ = long.TryParse(_jobState.Etag, out long version);
-            await GrainFactory.GetGrain<IJobReporterGrain>(this.GetPrimaryKeyString())
-                .OnJobStateChanged(version, _jobState.State);
+            // await GrainFactory.GetGrain<IJobReporterGrain>(this.GetPrimaryKeyString())
+            //     .OnJobStateChanged(version, _jobState.State);
         }
 
         Task IRemindable.ReceiveReminder(string reminderName, TickStatus status)

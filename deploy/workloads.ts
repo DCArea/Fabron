@@ -72,7 +72,7 @@ function deploy_secret(redis_config: RedisConfig, mongodb_config: MongoDbConfig)
         type: "Opaque",
         stringData: {
             "RedisConnectionString": pulumi.interpolate`${redis_config.host}:${redis_config.port},password=${redis_config.password}`,
-            "MongoDbConnectionString": pulumi.interpolate`mongodb://${mongodb_config.host}`,
+            "MongoDbConnectionString": pulumi.interpolate`mongodb://${mongodb_config.host}/?maxPoolSize=300`,
         }
     });
     return secret;
