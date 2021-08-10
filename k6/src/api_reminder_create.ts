@@ -5,18 +5,27 @@ import { base_url } from './constants';
 
 
 export let options: Options = {
-    vus: 100,
-    duration: '60s'
+    // vus: 200,
+    // duration: '60s',
+    discardResponseBodies: true,
+    scenarios: {
+        contacts: {
+            executor: 'shared-iterations',
+            vus: 300,
+            iterations: 6000,
+            maxDuration: '100s',
+        },
+    },
 };
 
 
 export var create_reminder = () => {
     const url = `${base_url}/HttpReminders`
     const req_body = {
-        "name": `TEST0011.${__VU}.${__ITER}`,
-        "schedule": "2021-08-05T06:40:00.000Z",
+        "name": `TEST0023.${__VU}.${__ITER}`,
+        "schedule": "2021-08-10T08:10:00.000Z",
         "command": {
-            "url": "http://stub.dca.svc.cluster.local/wait/200",
+            "url": "http://stub.dca.svc.cluster.local/noop",
             "httpMethod": "GET"
         }
     };

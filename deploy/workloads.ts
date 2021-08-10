@@ -5,16 +5,16 @@ import { service_name, namespace_name, shared_labels, app_name_api, image_repo_a
 import { Deployment } from "@pulumi/kubernetes/apps/v1";
 import { Role, RoleBinding } from "@pulumi/kubernetes/rbac/v1";
 import { ServiceAccount } from "@pulumi/kubernetes/core/v1";
-import { PgSQLConfig } from "./pgsql";
 import { Ingress } from "@pulumi/kubernetes/networking/v1beta1";
 import { ElasticSearchConfig } from "./elasticsearch";
+import { MongoDbConfig } from "./mongodb";
 
 const image_version = process.env["IMAGE_VERSION"];
 if (!image_version) { throw "missing IMAGE_VERSION" };
 const image = `${image_repo_api}:${image_version}`;
 
 export function deploy(redis_config: RedisConfig,
-    pgsql_config: PgSQLConfig,
+    pgsql_config: MongoDbConfig,
     es_config: ElasticSearchConfig) {
     const sa = deploy_rbac();
     const secret = deploy_secret(redis_config, pgsql_config);
@@ -62,7 +62,7 @@ function deploy_rbac() {
 }
 
 
-function deploy_secret(redis_config: RedisConfig, pgsql_config: PgSQLConfig) {
+function deploy_secret(redis_config: RedisConfig, mongodb_config: MongoDbConfig) {
     const secret = new Secret(service_name, {
         metadata: {
             namespace: namespace_name,
@@ -72,7 +72,7 @@ function deploy_secret(redis_config: RedisConfig, pgsql_config: PgSQLConfig) {
         type: "Opaque",
         stringData: {
             "RedisConnectionString": pulumi.interpolate`${redis_config.host}:${redis_config.port},password=${redis_config.password}`,
-            "PgSQLConnectionString": pulumi.interpolate`Host=${pgsql_config.host};Port=${pgsql_config.port};Database=fabron;Username=postgres;password=${pgsql_config.password};Maximum Pool Size=300`,
+            "MongoDbConnectionString": pulumi.interpolate`mongodb://${mongodb_config.host}`,
         }
     });
     return secret;
@@ -136,15 +136,15 @@ function deploy_app(app_name: string, image_name: string, configmap: ConfigMap, 
                                 port: 80
                             },
                             failureThreshold: 10,
-                            timeoutSeconds: 5,
+                            timeoutSeconds: 30,
                         },
                         readinessProbe: {
                             httpGet: {
                                 path: "/health",
                                 port: 80
                             },
-                            failureThreshold: 3,
-                            timeoutSeconds: 3,
+                            failureThreshold: 10,
+                            timeoutSeconds: 30,
                         },
                         env: [{
                             name: "ASPNETCORE_ENVIRONMENT",

@@ -14,10 +14,10 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
-
+using Newtonsoft.Json;
 using Orleans.Configuration;
 using Orleans.Hosting;
-
+using Orleans.Providers.MongoDB.Configuration;
 using Prometheus;
 
 IHostBuilder hostBuilder = Host.CreateDefaultBuilder(args)
@@ -36,20 +36,25 @@ IHostBuilder hostBuilder = Host.CreateDefaultBuilder(args)
         else
         {
             siloBuilder.UseKubernetesHosting()
-                .UseRedisClustering(options =>
+                .UseMongoDBClient(ctx.Configuration["MongoDbConnectionString"])
+                .UseMongoDBClustering(options =>
                 {
-                    options.ConnectionString = ctx.Configuration["RedisConnectionString"];
-                    options.Database = 0;
+                    options.DatabaseName = "Fabron";
+                    options.Strategy = MongoDBMembershipStrategy.SingleDocument;
                 })
-                .AddAdoNetGrainStorage("JobStore", options =>
+                .UseMongoDBReminders(options =>
                 {
-                    options.Invariant = "Npgsql";
-                    options.ConnectionString = ctx.Configuration["PgSQLConnectionString"];
+                    options.DatabaseName = "Fabron";
                 })
-                .UseRedisReminderService(options =>
+                .AddMongoDBGrainStorage("JobStore", options =>
                 {
-                    options.ConnectionString = ctx.Configuration["RedisConnectionString"];
-                    options.DatabaseNumber = 2;
+                    options.DatabaseName = "Fabron";
+                    options.ConfigureJsonSerializerSettings = settings =>
+                    {
+                        settings.NullValueHandling = NullValueHandling.Include;
+                        settings.ObjectCreationHandling = ObjectCreationHandling.Replace;
+                        settings.DefaultValueHandling = DefaultValueHandling.Populate;
+                    };
                 });
         }
     })

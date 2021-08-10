@@ -13,7 +13,7 @@ export function deploy(namespace_name: string): PgSQLConfig {
         length: 8,
         special: false
     });
-    const redis = new k8s.helm.v3.Chart(name, {
+    const pgsql = new k8s.helm.v3.Chart(name, {
         chart: "postgresql",
         fetchOpts: {
             repo: "https://charts.bitnami.com/bitnami"
@@ -33,7 +33,7 @@ export function deploy(namespace_name: string): PgSQLConfig {
             postgresqlMaxConnections: "2000"
         }
     });
-    const pgsql_svc = redis.getResource("v1/Service", namespace_name, "pgsql-postgresql");
+    const pgsql_svc = pgsql.getResource("v1/Service", namespace_name, "pgsql-postgresql");
     return {
         host: pulumi.interpolate`${pgsql_svc.metadata.name}.${namespace_name}.svc.cluster.local`,
         port: pgsql_svc.spec.ports[0].port,
