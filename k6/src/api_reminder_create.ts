@@ -11,8 +11,8 @@ export let options: Options = {
     scenarios: {
         contacts: {
             executor: 'shared-iterations',
-            vus: 300,
-            iterations: 6000,
+            vus: 200,
+            iterations: 10000,
             maxDuration: '100s',
         },
     },
@@ -22,8 +22,9 @@ export let options: Options = {
 export var create_reminder = () => {
     const url = `${base_url}/HttpReminders`
     const req_body = {
-        "name": `TEST0023.${__VU}.${__ITER}`,
-        "schedule": "2021-08-10T08:10:00.000Z",
+        "name": `TEST0029.${__VU}.${__ITER}`,
+        "schedule": new Date(Date.now() + 6*60000).toISOString(),
+        // "schedule": "2021-08-10T16:10:00.000Z",
         "command": {
             "url": "http://stub.dca.svc.cluster.local/noop",
             "httpMethod": "GET"

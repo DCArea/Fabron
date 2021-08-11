@@ -82,7 +82,6 @@ namespace Fabron.Grains.Job
         {
             if (!_jobState.RecordExists)
             {
-
                 DateTime createdAt = DateTime.UtcNow;
                 DateTime schedule_ = schedule is null || schedule.Value < createdAt ? createdAt : (DateTime)schedule;
                 _jobState.State = new JobState
@@ -112,7 +111,7 @@ namespace Fabron.Grains.Job
                 {
                     return;
                 }
-                if (Job.Status is { ExecutionStatus: ExecutionStatus.Scheduled } && dueTime is { TotalSeconds: > 10 and < 2 * 60 })
+                if (Job.Status is { ExecutionStatus: ExecutionStatus.Scheduled } && dueTime is { TotalMilliseconds: > 15 and < 2 * 60 * 1_000 })
                 {
                     StartAfter(_jobState.State.DueTime);
                     return;
@@ -235,7 +234,7 @@ namespace Fabron.Grains.Job
         private void StartAfter(TimeSpan dueTime)
         {
             _timer?.Dispose();
-            _timer = RegisterTimer(_ => Start(), null, dueTime, TimeSpan.MaxValue);
+            _timer = RegisterTimer(_ => Start(), null, dueTime, TimeSpan.FromMilliseconds(-1));
             _logger.LogDebug($"Set Job Timer with, dueTime={dueTime}");
         }
 

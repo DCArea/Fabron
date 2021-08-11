@@ -21,7 +21,7 @@ namespace Fabron.Grains.Job
             get
             {
                 DateTime utcNow = DateTime.UtcNow;
-                return Spec.Schedule < utcNow ? TimeSpan.Zero : Spec.Schedule - utcNow;
+                return Spec.Schedule <= utcNow ? TimeSpan.Zero : Spec.Schedule - utcNow;
             }
         }
 

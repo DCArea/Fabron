@@ -45,14 +45,15 @@ namespace Fabron.Test.Grains.Job
         [Fact]
         public async Task Create_10sDelay()
         {
-            (JobGrain _, DateTime? scheduledAt) = await Schedule(TimeSpan.FromSeconds(8));
+            (JobGrain grain, DateTime? scheduledAt) = await Schedule(TimeSpan.FromSeconds(8));
 
             JobState state = MockState.Object.State;
             Assert.Equal(Command.Name, state.Spec.CommandName);
             Assert.Equal(Command.Data, state.Spec.CommandData);
             Assert.Equal(scheduledAt, state.Spec.Schedule);
 
-            Silo.TimerRegistry.Mock.VerifyNoOtherCalls();
+            Silo.TimerRegistry.Mock
+                .Verify(m => m.RegisterTimer(grain, It.IsAny<Func<object, Task>>(), null, It.IsAny<TimeSpan>(), TimeSpan.FromMilliseconds(-1)));
             Silo.ReminderRegistry.Mock
                 .Verify(m => m.RegisterOrUpdateReminder("Check", TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(2)));
         }
@@ -68,7 +69,7 @@ namespace Fabron.Test.Grains.Job
             Assert.Equal(Command.Data, state.Spec.CommandData);
             Assert.Equal(scheduledAt, state.Spec.Schedule);
 
-            Silo.TimerRegistry.Mock.Verify(t => t.RegisterTimer(grain, It.IsAny<Func<object, Task>>(), null, It.Is<TimeSpan>(ts => ts.Seconds == 14), TimeSpan.MaxValue));
+            Silo.TimerRegistry.Mock.Verify(t => t.RegisterTimer(grain, It.IsAny<Func<object, Task>>(), null, It.Is<TimeSpan>(ts => ts.Seconds == 14), TimeSpan.FromMilliseconds(-1)));
 
             TestReminder? reminder = (TestReminder)await Silo.ReminderRegistry.GetReminder("Check");
             Assert.NotNull(reminder);
@@ -84,7 +85,7 @@ namespace Fabron.Test.Grains.Job
             JobState state = MockState.Object.State;
             Assert.Equal(scheduledAt, state.Spec.Schedule);
 
-            Silo.TimerRegistry.Mock.Verify(t => t.RegisterTimer(grain, It.IsAny<Func<object, Task>>(), null, It.Is<TimeSpan>(ts => ts.TotalSeconds < 60 && ts.TotalSeconds > 50), TimeSpan.MaxValue));
+            Silo.TimerRegistry.Mock.Verify(t => t.RegisterTimer(grain, It.IsAny<Func<object, Task>>(), null, It.Is<TimeSpan>(ts => ts.TotalSeconds < 60 && ts.TotalSeconds > 50), TimeSpan.FromMilliseconds(-1)));
 
             TestReminder? reminder = (TestReminder)await Silo.ReminderRegistry.GetReminder("Check");
             Assert.NotNull(reminder);
