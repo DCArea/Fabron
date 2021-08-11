@@ -19,11 +19,11 @@ RUN dotnet restore
 
 # copy everything else and build app
 COPY . .
-WORKDIR /source/src/FabronService
+WORKDIR /source/src/QzTester
 RUN dotnet publish -c release -o /app --no-restore
 
 # final stage/image
 FROM mcr.microsoft.com/dotnet/aspnet:6.0.0-preview.6
 WORKDIR /app
 COPY --from=build /app ./
-ENTRYPOINT ["dotnet", "FabronService.dll"]
+ENTRYPOINT ["dotnet", "QzTester.dll"]
