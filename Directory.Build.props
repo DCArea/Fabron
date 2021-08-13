@@ -25,9 +25,11 @@
     <MicrosoftToolkitDiagnostics>7.0.2</MicrosoftToolkitDiagnostics>
     <NpgsqlVersion>5.0.7</NpgsqlVersion>
     <OrleansClusteringRedisVersion>3.1.1</OrleansClusteringRedisVersion>
+    <OrleansProvidersMongoDBVersion>3.3.1</OrleansProvidersMongoDBVersion>
     <PrometheusNetVersion>4.2.0</PrometheusNetVersion>
     <StyleCopAnalyzersVersion>1.0.0</StyleCopAnalyzersVersion>
     <SwashbuckleAspNetCoreVersion>6.1.4</SwashbuckleAspNetCoreVersion>
+    <NESTVersion>7.13.2</NESTVersion>
   </PropertyGroup>
 
   <!-- test pkgs -->

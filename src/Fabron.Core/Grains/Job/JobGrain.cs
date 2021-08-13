@@ -210,6 +210,9 @@ namespace Fabron.Grains.Job
             {
                 Finalized = true
             };
+
+            await GrainFactory.GetGrain<IJobReporterGrain>(this.GetPrimaryKeyString())
+                 .OnJobFinalized(_jobState.State);
             await SaveJobStateAsync();
             DeactivateOnIdle();
         }
@@ -240,11 +243,17 @@ namespace Fabron.Grains.Job
 
         private async Task SaveJobStateAsync()
         {
+            Job.Metadata = Job.Metadata with
+            {
+                ResourceVersion = Job.Metadata.ResourceVersion + 1
+            };
             await _jobState.WriteStateAsync();
 
-            _ = long.TryParse(_jobState.Etag, out long version);
-            // await GrainFactory.GetGrain<IJobReporterGrain>(this.GetPrimaryKeyString())
-            //     .OnJobStateChanged(version, _jobState.State);
+            if (!Job.Status.Finalized)
+            {
+                await GrainFactory.GetGrain<IJobReporterGrain>(this.GetPrimaryKeyString())
+                    .OnJobStateChanged(Job);
+            }
         }
 
         Task IRemindable.ReceiveReminder(string reminderName, TickStatus status)

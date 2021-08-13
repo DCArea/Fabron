@@ -6,12 +6,16 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
 using Orleans;
+using Orleans.Concurrency;
 
 namespace Fabron.Grains.Job
 {
     public interface IJobReporterGrain : IGrainWithStringKey
     {
-        Task OnJobStateChanged(long version, JobState jobState);
+        [OneWay]
+        Task OnJobStateChanged(JobState jobState);
+
+        Task OnJobFinalized(JobState jobState);
     }
 
     public class JobReporterGrain : Grain, IJobReporterGrain
@@ -25,10 +29,15 @@ namespace Fabron.Grains.Job
             _reporter = reporter;
         }
 
-        public async Task OnJobStateChanged(long version, JobState jobState)
+        public async Task OnJobStateChanged(JobState jobState)
         {
-            _logger.LogInformation("Report job state");
-            await _reporter.Report(this.GetPrimaryKeyString(), version, jobState);
+            await _reporter.Report(this.GetPrimaryKeyString(), jobState.Metadata.ResourceVersion, jobState);
+            return;
+        }
+
+        public async Task OnJobFinalized(JobState jobState)
+        {
+            await _reporter.Report(this.GetPrimaryKeyString(), jobState.Metadata.ResourceVersion, jobState);
             return;
         }
     }

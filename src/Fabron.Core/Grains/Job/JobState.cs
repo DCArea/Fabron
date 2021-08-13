@@ -33,7 +33,8 @@ namespace Fabron.Grains.Job
     public record JobMetadata(
         string Uid,
         DateTime CreationTimestamp,
-        Dictionary<string, string> Labels
+        Dictionary<string, string> Labels,
+        long ResourceVersion = 0
     );
 
     public record JobSpec(

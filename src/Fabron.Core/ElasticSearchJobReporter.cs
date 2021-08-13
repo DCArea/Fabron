@@ -47,7 +47,7 @@ namespace Fabron
             }
             if (res.Result == Nest.Result.Error)
             {
-                _logger.LogWarning($"Failed to index doc: {res.DebugInformation}");
+                _logger.LogError($"Failed to index doc: {res.DebugInformation}");
             }
         }
     }

@@ -12,7 +12,7 @@
     <PackageReference Include="Npgsql" Version="$(NpgsqlVersion)" />
     <PackageReference Include="Orleans.Clustering.Redis" Version="$(OrleansClusteringRedisVersion)" />
     <PackageReference Include="Microsoft.Orleans.Persistence.AdoNet" Version="$(OrleansVersion)" />
-    <PackageReference Include="Orleans.Providers.MongoDB" Version="3.3.1" />
+    <PackageReference Include="Orleans.Providers.MongoDB" Version="$(OrleansProvidersMongoDBVersion)" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="$(SwashbuckleAspNetCoreVersion)" />
     <PackageReference Include="prometheus-net.AspNetCore" Version="$(PrometheusNetVersion)" />
   </ItemGroup>
