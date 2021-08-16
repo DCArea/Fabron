@@ -22,9 +22,9 @@ namespace FabronService.FunctionalTests
         protected override Task<AuthenticateResult> HandleAuthenticateAsync()
         {
             Claim[]? claims = new[] { new Claim(ClaimTypes.Name, "Test user") };
-            ClaimsIdentity? identity = new ClaimsIdentity(claims, "Test");
-            ClaimsPrincipal? principal = new ClaimsPrincipal(identity);
-            AuthenticationTicket? ticket = new AuthenticationTicket(principal, "Test");
+            ClaimsIdentity? identity = new(claims, "Test");
+            ClaimsPrincipal? principal = new(identity);
+            AuthenticationTicket? ticket = new(principal, "Test");
 
             AuthenticateResult? result = AuthenticateResult.Success(ticket);
 

@@ -58,7 +58,7 @@ namespace Fabron.Grains.CronJob
                 return;
             }
 
-            CronJobStateChild? nextJob = new CronJobStateChild(nextSchedule.Value);
+            CronJobStateChild? nextJob = new(nextSchedule.Value);
             _childJobs.Add(nextJob);
 
             if (nextSchedule < toTime)

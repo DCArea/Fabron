@@ -27,7 +27,7 @@ namespace Core.Test.Grains.CronJob
         {
             DateTime now = DateTime.UtcNow;
             string cronExp = $"0 0 * {now.AddMonths(1).Month} *";
-            CronJobState state = new CronJobState(cronExp, Command);
+            CronJobState state = new(cronExp, Command);
 
             DateTime toTime = DateTime.UtcNow.AddMinutes(20);
             state.Schedule(toTime);
@@ -40,7 +40,7 @@ namespace Core.Test.Grains.CronJob
         public void ScheduleEveryMinute()
         {
             string cronExp = "* * * * *";
-            CronJobState state = new CronJobState(cronExp, Command);
+            CronJobState state = new(cronExp, Command);
 
             DateTime toTime = DateTime.UtcNow.AddMinutes(20);
             state.Schedule(toTime);

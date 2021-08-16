@@ -22,7 +22,7 @@ export let options: Options = {
 export var create_reminder = () => {
     const url = `${base_url}/HttpReminders`
     const req_body = {
-        "name": `TEST0029.${__VU}.${__ITER}`,
+        "name": `TEST0050.${__VU}.${__ITER}`,
         "schedule": new Date(Date.now() + 6*60000).toISOString(),
         // "schedule": "2021-08-10T16:10:00.000Z",
         "command": {

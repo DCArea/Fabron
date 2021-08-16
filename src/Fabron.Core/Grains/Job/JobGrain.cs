@@ -212,7 +212,7 @@ namespace Fabron.Grains.Job
             };
 
             await GrainFactory.GetGrain<IJobReporterGrain>(this.GetPrimaryKeyString())
-                 .OnJobFinalized(_jobState.State);
+                .OnJobFinalized(_jobState.State);
             await SaveJobStateAsync();
             DeactivateOnIdle();
         }

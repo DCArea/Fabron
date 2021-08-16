@@ -28,7 +28,7 @@ namespace Orleans.TelemetryConsumers.Prometheus
         {
             LabelNames = s_eventMetricsLabelNames
         });
-        private static readonly Counter _exceptionCounter = Metrics.CreateCounter("orleans_exceptions_total", "Total count of exceptions", new CounterConfiguration
+        private static readonly Counter s_exceptionCounter = Metrics.CreateCounter("orleans_exceptions_total", "Total count of exceptions", new CounterConfiguration
         {
             LabelNames = s_exceptionMetricsLabelNames
         });
@@ -47,7 +47,7 @@ namespace Orleans.TelemetryConsumers.Prometheus
                 .WithLabels(dependencyName, commandName, success.ToString());
 
         public static Histogram.Child GetRequestHistogram(string requestName, string responseCode, bool success)
-            => s_dependencyHistogram
+            => s_requestHistogram
                 .WithLabels(requestName, responseCode, success.ToString());
 
         public static Counter.Child GetEventCounter(string eventName)
@@ -60,7 +60,7 @@ namespace Orleans.TelemetryConsumers.Prometheus
                 .WithLabels(eventName);
 
         public static Counter.Child GetExceptionCounter(string exceptionName)
-            => _exceptionCounter.WithLabels(exceptionName);
+            => s_exceptionCounter.WithLabels(exceptionName);
         public static Gauge.Child GetExceptionGauge(string metricName, string exceptionName)
             => s_gauges.GetOrAdd(metricName, key => Metrics.CreateGauge(FormatExceptionMetricName(key), "Exception Gauge for " + key, new GaugeConfiguration
             {
