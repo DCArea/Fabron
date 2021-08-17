@@ -133,7 +133,7 @@ namespace Fabron.Test.Grains.Job
                 scheduledAt = utcNow.Add(scheduledAfter.Value);
             }
 
-            await grain.Schedule(Command, scheduledAt);
+            await grain.Schedule(Command.Name, Command.Data, scheduledAt);
             return scheduledAt;
         }
 

@@ -8,16 +8,21 @@ using System.Threading.Tasks;
 
 using AspNetCore.Authentication.ApiKey;
 
+using FabronService.Services;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+
 using Newtonsoft.Json;
+
 using Orleans.Configuration;
 using Orleans.Hosting;
 using Orleans.Providers.MongoDB.Configuration;
+
 using Prometheus;
 
 IHostBuilder hostBuilder = Host.CreateDefaultBuilder(args)
@@ -31,6 +36,7 @@ IHostBuilder hostBuilder = Host.CreateDefaultBuilder(args)
         if (ctx.HostingEnvironment.IsEnvironment("Localhost"))
         {
             siloBuilder.UseLocalhostClustering()
+                .AddMemoryGrainStorageAsDefault()
                 .UseInMemoryJobStore();
         }
         else
@@ -46,15 +52,31 @@ IHostBuilder hostBuilder = Host.CreateDefaultBuilder(args)
                 {
                     options.DatabaseName = "Fabron";
                 })
-                .AddMongoDBGrainStorage("JobStore", options =>
+                .AddMongoDBGrainStorage("JobStore", configure =>
                 {
-                    options.DatabaseName = "Fabron";
-                    options.ConfigureJsonSerializerSettings = settings =>
+                    configure.Configure(options =>
                     {
-                        settings.NullValueHandling = NullValueHandling.Include;
-                        settings.ObjectCreationHandling = ObjectCreationHandling.Replace;
-                        settings.DefaultValueHandling = DefaultValueHandling.Populate;
-                    };
+                        options.DatabaseName = "Fabron";
+                        options.ConfigureJsonSerializerSettings = settings =>
+                        {
+                            settings.NullValueHandling = NullValueHandling.Include;
+                            settings.ObjectCreationHandling = ObjectCreationHandling.Replace;
+                            settings.DefaultValueHandling = DefaultValueHandling.Populate;
+                        };
+                    });
+                })
+                .AddMongoDBGrainStorageAsDefault(configure =>
+                {
+                    configure.Configure(options =>
+                    {
+                        options.DatabaseName = "Fabron";
+                        options.ConfigureJsonSerializerSettings = settings =>
+                        {
+                            settings.NullValueHandling = NullValueHandling.Include;
+                            settings.ObjectCreationHandling = ObjectCreationHandling.Replace;
+                            settings.DefaultValueHandling = DefaultValueHandling.Populate;
+                        };
+                    });
                 });
         }
     })
@@ -80,13 +102,16 @@ static void ConfigureServices(WebHostBuilderContext context, IServiceCollection 
 static void ConfigureWebApplication(IApplicationBuilder app)
 {
     app.UseCustomSwagger()
-        .UseAuthentication()
         .UseRouting()
+        .UseAuthentication()
+        .UseAuthorization()
         .UseEndpoints(endpoints =>
         {
-            endpoints.MapHealthChecks("/health").AllowAnonymous();
+            endpoints.MapHealthChecks("/health")
+                .AllowAnonymous();
             endpoints.MapMetrics();
-            endpoints.MapControllers();
+            endpoints.MapControllers()
+                .RequireAuthorization();
         });
 }
 
@@ -109,6 +134,7 @@ public static class AppConfigureExtensions
         });
         services.AddHttpClient();
         services.AddHealthChecks();
+        services.AddSingleton<IResourceLocator, ResourceLocator>();
         return services;
     }
 

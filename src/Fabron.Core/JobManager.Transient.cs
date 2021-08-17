@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System;
+using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -15,21 +16,21 @@ namespace Fabron
 {
     public partial class JobManager
     {
-        public async Task<Job<TCommand, TResult>> Schedule<TCommand, TResult>(string jobId, TCommand command, DateTime? scheduledAt = null)
+        public async Task<Job<TCommand, TResult>> Schedule<TCommand, TResult>(string jobId, TCommand command, DateTime? scheduledAt = null, Dictionary<string,string>? labels = null)
             where TCommand : ICommand<TResult>
         {
             string commandName = _registry.CommandNameRegistrations[typeof(TCommand)];
             string commandData = JsonSerializer.Serialize(command);
 
-            JobState state = await Schedule(jobId, new(commandName, commandData), scheduledAt);
+            JobState state = await Schedule(jobId, commandName, commandData, scheduledAt, labels);
             return state.Map<TCommand, TResult>();
         }
 
-        private async Task<JobState> Schedule(string jobId, Grains.JobCommandInfo command, DateTime? scheduledAt)
+        private async Task<JobState> Schedule(string jobId, string commandName, string commandData, DateTime? scheduledAt, Dictionary<string,string>? labels = null)
         {
             _logger.LogInformation($"Creating Job[{jobId}]");
             IJobGrain grain = _client.GetGrain<IJobGrain>(jobId);
-            await grain.Schedule(command, scheduledAt);
+            await grain.Schedule(commandName, commandData, scheduledAt, labels);
             _logger.LogInformation($"Job[{jobId}] Created");
 
             JobState? state = await grain.GetState();

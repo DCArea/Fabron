@@ -11,6 +11,10 @@
     <PackageReference Include="Microsoft.Orleans.Hosting.Kubernetes" Version="$(OrleansVersion)" />
     <PackageReference Include="Npgsql" Version="$(NpgsqlVersion)" />
     <PackageReference Include="Orleans.Clustering.Redis" Version="$(OrleansClusteringRedisVersion)" />
+    <PackageReference Include="Microsoft.Orleans.CodeGenerator.MSBuild" Version="$(OrleansVersion)">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="Microsoft.Orleans.Persistence.AdoNet" Version="$(OrleansVersion)" />
     <PackageReference Include="Orleans.Providers.MongoDB" Version="$(OrleansProvidersMongoDBVersion)" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="$(SwashbuckleAspNetCoreVersion)" />

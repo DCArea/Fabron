@@ -159,7 +159,7 @@ namespace Fabron.Grains.CronJob
         private async Task CreateChildJob(CronJobStateChild job)
         {
             IJobGrain grain = GrainFactory.GetGrain<IJobGrain>(job.Id);
-            await grain.Schedule(_job.State.Command, job.ScheduledAt);
+            await grain.Schedule(_job.State.Command.Name, _job.State.Command.Data, job.ScheduledAt);
             job.Status = CronChildJobStatus.WaitToSchedule;
         }
 

@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System;
+using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -9,6 +10,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
@@ -40,6 +42,10 @@ namespace FabronService.FunctionalTests
             string settingSuffix = assemblyName.ToUpperInvariant().Replace(".", "_");
             string envName = $"ASPNETCORE_TEST_CONTENTROOT_{settingSuffix}";
             return Host.CreateDefaultBuilder()
+                .ConfigureAppConfiguration(config =>
+                {
+                    config.AddInMemoryCollection(new Dictionary<string, string> { { "ApiKey", "debug" } });
+                })
                 .ConfigureServices((ctx, services) =>
                 {
                     services.AddFabronCore();

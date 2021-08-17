@@ -12,6 +12,7 @@ import { MongoDbConfig } from "./mongodb";
 const image_version = process.env["IMAGE_VERSION"];
 if (!image_version) { throw "missing IMAGE_VERSION" };
 const image = `${image_repo_api}:${image_version}`;
+const config = new pulumi.Config();
 
 export function deploy(redis_config: RedisConfig,
     pgsql_config: MongoDbConfig,
@@ -71,6 +72,7 @@ function deploy_secret(redis_config: RedisConfig, mongodb_config: MongoDbConfig)
         },
         type: "Opaque",
         stringData: {
+            "ApiKey": config.requireSecret("ApiKey"),
             "RedisConnectionString": pulumi.interpolate`${redis_config.host}:${redis_config.port},password=${redis_config.password}`,
             "MongoDbConnectionString": pulumi.interpolate`mongodb://${mongodb_config.host}/?maxPoolSize=300`,
         }

@@ -24,12 +24,14 @@ namespace FabronService.FunctionalTests
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
             => app.UseCustomSwagger()
-                .UseAuthentication()
                 .UseRouting()
+                .UseAuthentication()
+                .UseAuthorization()
                 .UseEndpoints(endpoints =>
                 {
                     endpoints.MapHealthChecks("/health").AllowAnonymous();
-                    endpoints.MapControllers();
+                    endpoints.MapControllers()
+                        .RequireAuthorization();
                 });
     }
 }

@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -24,7 +25,7 @@ namespace Fabron.Grains.Job
         Task<JobState?> GetState();
         [ReadOnly]
         Task<ExecutionStatus> GetStatus();
-        Task Schedule(JobCommandInfo command, DateTime? schedule = null);
+        Task Schedule(string commandName, string commandData, DateTime? schedule = null, Dictionary<string, string>? labels = null);
     }
 
     public class JobGrain : Grain, IJobGrain, IRemindable
@@ -78,7 +79,7 @@ namespace Fabron.Grains.Job
             MetricsHelper.JobCount_Canceled.Inc();
         }
 
-        public async Task Schedule(JobCommandInfo command, DateTime? schedule = null)
+        public async Task Schedule(string commandName, string commandData, DateTime? schedule = null, Dictionary<string, string>? labels = null)
         {
             if (!_jobState.RecordExists)
             {
@@ -86,8 +87,8 @@ namespace Fabron.Grains.Job
                 DateTime schedule_ = schedule is null || schedule.Value < createdAt ? createdAt : (DateTime)schedule;
                 _jobState.State = new JobState
                 {
-                    Metadata = new JobMetadata(this.GetPrimaryKeyString(), createdAt, new()),
-                    Spec = new JobSpec(schedule_, command.Name, command.Data),
+                    Metadata = new JobMetadata(this.GetPrimaryKeyString(), createdAt, labels ?? new()),
+                    Spec = new JobSpec(schedule_, commandName, commandData),
                     Status = new JobStatus()
                 };
                 await SaveJobStateAsync();
