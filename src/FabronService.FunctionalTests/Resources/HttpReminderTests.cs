@@ -4,12 +4,17 @@
 using System;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
+
+using AspNetCore.Authentication.ApiKey;
 
 using Fabron.Contracts;
 
 using FabronService.Resources.HttpReminders;
+
+using Microsoft.AspNetCore.Mvc.Testing;
 
 using Moq;
 using Moq.Contrib.HttpClient;
@@ -32,7 +37,8 @@ namespace FabronService.FunctionalTests.Resources
                 DateTime.UtcNow,
                 new("http://llhh", "GET")
             );
-            HttpClient client = _waf.WithTestUser().CreateClient();
+            HttpClient client = _waf.CreateClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(ApiKeyDefaults.AuthenticationScheme, "debug");
             Mock<HttpMessageHandler> handler = _waf.GetSiloService<Mock<HttpMessageHandler>>();
             handler.SetupRequest(HttpMethod.Get, request.Command.Url)
                 .ReturnsResponse(HttpStatusCode.OK);

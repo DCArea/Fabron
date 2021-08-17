@@ -140,7 +140,7 @@ namespace Fabron.Grains.BatchJob
         private async Task CreateChildJob(BatchJobStateChild job)
         {
             IJobGrain grain = GrainFactory.GetGrain<IJobGrain>(job.Id);
-            await grain.Schedule(job.Command);
+            await grain.Schedule(job.Command.Name, job.Command.Data);
             job.Status = ChildJobStatus.WaitToSchedule;
         }
 

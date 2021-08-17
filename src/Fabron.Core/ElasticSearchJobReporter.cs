@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 using Fabron.Grains;
@@ -15,6 +16,7 @@ namespace Fabron
     public record JobDocument(
         string Id,
         string CommandName,
+        Dictionary<string, string> labels,
         DateTime CreatedAt,
         DateTime Schedule,
         DateTime? FinishedAt,
@@ -39,7 +41,7 @@ namespace Fabron
 
         public async Task Report(string jobId, long version, JobState jobState)
         {
-            JobDocument doc = new(jobId, jobState.Spec.CommandName, jobState.Metadata.CreationTimestamp, jobState.Spec.Schedule, jobState.Status.FinishedAt, jobState.Status.Reason, jobState.Status.ExecutionStatus, jobState.Status.Finalized, version);
+            JobDocument doc = new(jobId, jobState.Spec.CommandName, jobState.Metadata.Labels, jobState.Metadata.CreationTimestamp, jobState.Spec.Schedule, jobState.Status.FinishedAt, jobState.Status.Reason, jobState.Status.ExecutionStatus, jobState.Status.Finalized, version);
             Nest.IndexResponse res = await _esClient.IndexAsync(doc, idx => idx.Index(_options.JobIndexName));
             if (_logger.IsEnabled(LogLevel.Debug))
             {

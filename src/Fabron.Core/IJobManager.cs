@@ -12,7 +12,7 @@ namespace Fabron
 {
     public interface IJobManager
     {
-        Task<Job<TCommand, TResult>> Schedule<TCommand, TResult>(string jobId, TCommand command, DateTime? scheduledAt = null) where TCommand : ICommand<TResult>;
+        Task<Job<TCommand, TResult>> Schedule<TCommand, TResult>(string jobId, TCommand command, DateTime? scheduledAt = null, Dictionary<string, string>? labels = null) where TCommand : ICommand<TResult>;
         Task Schedule(string jobId, IEnumerable<ICommand> commands);
         Task<CronJob> Schedule<TCommand>(string jobId, string cronExp, TCommand command) where TCommand : ICommand;
 
