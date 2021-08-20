@@ -18,28 +18,29 @@ namespace Fabron
 {
     public partial class JobManager
     {
-        public async Task<CronJob> Schedule<TCommand>(string jobId, string cronExp, TCommand command)
+        public async Task<CronJob<TCommand>> Schedule<TCommand>(string jobId, string cronExp, TCommand command, Dictionary<string, string>? labels)
             where TCommand : ICommand
         {
             string commandName = _registry.CommandNameRegistrations[typeof(TCommand)];
             string commandData = JsonSerializer.Serialize(command);
 
-            CronJobState state = await Schedule(jobId, cronExp, new(commandName, commandData));
+            CronJobState state = await Schedule(jobId, cronExp, commandName, commandData, labels);
             return state.Map<TCommand>();
         }
 
-        private async Task<CronJobState> Schedule(string jobId, string cronExp, Grains.JobCommandInfo command)
+        private async Task<CronJobState> Schedule(string jobId, string cronExp, string commandName, string commandData, Dictionary<string, string>? labels)
         {
-            _logger.LogInformation($"Creating Job[{jobId}]");
+            _logger.LogInformation($"Creating CronJob[{jobId}]");
             ICronJobGrain grain = _client.GetGrain<ICronJobGrain>(jobId);
-            await grain.Create(cronExp, command);
-            _logger.LogInformation($"Job[{jobId}] Created");
+            await grain.Schedule(cronExp, commandName, commandData, labels);
+            _logger.LogInformation($"CronJob[{jobId}] Created");
 
-            return new CronJobState(cronExp, command);
+            return await grain.GetState();
         }
 
 
-        public async Task<CronJob?> GetCronJob(string jobId)
+        public async Task<CronJob<TCommand>?> GetCronJob<TCommand>(string jobId)
+            where TCommand : ICommand
         {
             ICronJobGrain grain = _client.GetGrain<ICronJobGrain>(jobId);
             CronJobState? jobState = await grain.GetState();
@@ -48,7 +49,7 @@ namespace Fabron
                 return null;
             }
 
-            return jobState.Map(_registry);
+            return jobState.Map<TCommand>();
         }
 
         public async Task<CronJobDetail?> GetCronJobDetail(string jobId)
@@ -65,28 +66,22 @@ namespace Fabron
 
         private async Task<CronJobDetail> GetCronJobDetail(CronJobState jobState)
         {
-            string cmdName = jobState.Command.Name;
-            ICommand cmdData = (ICommand)JsonSerializer.Deserialize(jobState.Command.Data, _registry.CommandTypeRegistrations[cmdName])!;
+            string cmdName = jobState.Spec.CommandName;
+            ICommand cmdData = (ICommand)JsonSerializer.Deserialize(jobState.Spec.CommandData, _registry.CommandTypeRegistrations[cmdName])!;
 
-            IEnumerable<Task<CronChildJobDetail>> getCreatedJobTasks = jobState.ScheduledJobs.Select(job => GetCreatedChildJobDetail(job));
+            IEnumerable<Task<CronChildJobDetail>> getCreatedJobTasks = jobState.Status.Jobs.Select(job => GetCreatedChildJobDetail(job));
             CronChildJobDetail[] createdJobs = await Task.WhenAll(getCreatedJobTasks);
 
-            IEnumerable<CronChildJobDetail> pendingJobs = createdJobs.Where(job => job.IsPending());
-            IEnumerable<CronChildJobDetail> finishedJobs = createdJobs.Where(job => job.IsFinished());
-
-
             return new CronJobDetail(
-                jobState.CronExp,
+                jobState.Spec.Schedule,
                 cmdData,
-                pendingJobs,
-                finishedJobs,
-                (Contracts.JobStatus)(int)jobState.Status,
-                jobState.Reason);
+                createdJobs,
+                jobState.Status.Reason);
         }
 
-        private async Task<CronChildJobDetail> GetCreatedChildJobDetail(CronJobStateChild childState)
+        private async Task<CronChildJobDetail> GetCreatedChildJobDetail(JobItem childState)
         {
-            JobState? jobState = await GetTransientJobState(childState.Id);
+            JobState? jobState = await GetTransientJobState(childState.Uid);
             if (jobState is null)
             {
                 throw new Exception();
@@ -95,9 +90,9 @@ namespace Fabron
             object? result = jobState.Status.Result is null ? null : JsonSerializer.Deserialize(jobState.Status.Result, _registry.ResultTypeRegistrations[jobState.Spec.CommandName])!;
 
             return new CronChildJobDetail(
-                childState.Id,
+                childState.Uid,
                 result,
-                (Contracts.JobStatus)(int)jobState.Status.ExecutionStatus,
+                jobState.Status.ExecutionStatus,
                 jobState.Metadata.CreationTimestamp,
                 jobState.Spec.Schedule,
                 jobState.Status.StartedAt,

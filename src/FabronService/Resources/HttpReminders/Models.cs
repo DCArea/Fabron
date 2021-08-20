@@ -7,7 +7,7 @@ using Fabron.Contracts;
 
 using FabronService.Commands;
 
-namespace FabronService.Resources.HttpReminders
+namespace FabronService.Resources.HttpReminders.Models
 {
     public record HttpReminder
     (

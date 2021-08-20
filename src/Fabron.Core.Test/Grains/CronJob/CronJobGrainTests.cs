@@ -2,12 +2,12 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 
 using Fabron.Core.Test.Grains;
 using Fabron.Grains;
 using Fabron.Grains.CronJob;
+using Fabron.Grains.Job;
 
 using Microsoft.Extensions.Logging;
 
@@ -21,45 +21,18 @@ namespace Fabron.Test.Grains.CronJob
     public class CronJobGrainTests : GrainTestBase<CronJobState>
     {
         [Fact]
-        public async Task Create()
+        public async Task Schedule_Simple()
         {
-            string cronExp = "0 0 * 11 *";
-
-            await Schedule(cronExp);
+            var now = DateTime.UtcNow;
+            string cronExp = $"{now.AddMinutes(10).Minute} * * * *";
+            var cronJobId = Guid.NewGuid().ToString();
+            var cronJobGrain = await Silo.CreateGrainAsync<CronJobGrain>(cronJobId);
+            await Schedule(cronJobGrain, cronExp);
 
             CronJobState state = MockState.Object.State;
-            Assert.Equal(cronExp, state.CronExp);
-            Assert.Equal(Command.Name, state.Command.Name);
-            Assert.Equal(Command.Data, state.Command.Data);
-        }
-
-
-        [Fact]
-        public async Task CreateLongSchedule()
-        {
-            string cronExp = "0 0 * 11 *";
-
-            await Schedule(cronExp);
-
-            CronJobState state = MockState.Object.State;
-            Assert.Equal(cronExp, state.CronExp);
-            Assert.Equal(Command.Name, state.Command.Name);
-            Assert.Equal(Command.Data, state.Command.Data);
-            await WaitUntil(j => j.PendingJobs.Count() == 1, TimeSpan.FromMilliseconds(1000));
-        }
-
-        [Fact]
-        public async Task CreateShortSchedule()
-        {
-            string cronExp = "* * * * *";
-
-            await Schedule(cronExp);
-
-            CronJobState state = MockState.Object.State;
-            Assert.Equal(cronExp, state.CronExp);
-            Assert.Equal(Command.Name, state.Command.Name);
-            Assert.Equal(Command.Data, state.Command.Data);
-            await WaitUntil(j => j.PendingJobs.Count() == 20, TimeSpan.FromMilliseconds(1000));
+            Assert.Equal(cronExp, state.Spec.Schedule);
+            Assert.Equal(Command.Name, state.Spec.CommandName);
+            Assert.Equal(Command.Data, state.Spec.CommandData);
         }
 
 
@@ -74,7 +47,7 @@ namespace Fabron.Test.Grains.CronJob
             return grain;
         }
 
-        private async Task Schedule(CronJobGrain grain, string cronExp) => await grain.Create(cronExp, Command);
+        private async Task Schedule(CronJobGrain grain, string cronExp) => await grain.Schedule(cronExp, Command.Name, Command.Data);
     }
 }
 

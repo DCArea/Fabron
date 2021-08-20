@@ -25,7 +25,7 @@ namespace Fabron.Grains.Job
         Task<JobState?> GetState();
         [ReadOnly]
         Task<ExecutionStatus> GetStatus();
-        Task Schedule(string commandName, string commandData, DateTime? schedule = null, Dictionary<string, string>? labels = null);
+        Task<JobState> Schedule(string commandName, string commandData, DateTime? schedule = null, Dictionary<string, string>? labels = null);
     }
 
     public class JobGrain : Grain, IJobGrain, IRemindable
@@ -79,7 +79,7 @@ namespace Fabron.Grains.Job
             MetricsHelper.JobCount_Canceled.Inc();
         }
 
-        public async Task Schedule(string commandName, string commandData, DateTime? schedule = null, Dictionary<string, string>? labels = null)
+        public async Task<JobState> Schedule(string commandName, string commandData, DateTime? schedule = null, Dictionary<string, string>? labels = null)
         {
             if (!_jobState.RecordExists)
             {
@@ -97,6 +97,8 @@ namespace Fabron.Grains.Job
             }
 
             await Next();
+
+            return Job;
         }
 
         private async Task Next()
@@ -120,10 +122,10 @@ namespace Fabron.Grains.Job
 
                 Task next = Job.Status switch
                 {
-                    { ExecutionStatus: ExecutionStatus.Created } => Schedule(),
+                    { ExecutionStatus: ExecutionStatus.NotScheduled } => Schedule(),
                     { ExecutionStatus: ExecutionStatus.Scheduled } => Start(),
                     { ExecutionStatus: ExecutionStatus.Started } => Execute(),
-                    { ExecutionStatus: ExecutionStatus.Succeed or ExecutionStatus.Canceled or ExecutionStatus.Faulted } => Cleanup(),
+                    { ExecutionStatus: ExecutionStatus.Succeed or ExecutionStatus.Faulted } => Cleanup(),
                     _ => throw new InvalidOperationException()
                 };
                 await next;

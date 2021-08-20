@@ -4,6 +4,8 @@
 using System.Collections.Generic;
 using System.Reflection;
 
+using Fabron;
+
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Orleans.Hosting
@@ -21,6 +23,7 @@ namespace Orleans.Hosting
             siloBuilder.ConfigureServices((ctx, services) =>
             {
                 services.RegisterJobCommandHandlers(commandAssemblies);
+                services.AddSingleton<IJobReporter, NoopJobReporter>();
             });
 
             return siloBuilder;

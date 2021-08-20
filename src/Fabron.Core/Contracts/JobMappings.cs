@@ -7,7 +7,6 @@ using System.Text.Json;
 
 using Fabron.Grains.BatchJob;
 using Fabron.Grains.CronJob;
-//using Fabron.Grains.CronJob;
 using Fabron.Grains.Job;
 using Fabron.Mando;
 
@@ -58,21 +57,21 @@ namespace Fabron.Contracts
             return childJob;
         }
 
-        public static CronJob Map<TCommand>(this CronJobState jobState)
+        public static CronJob<TCommand> Map<TCommand>(this CronJobState jobState)
             where TCommand : ICommand
         {
-            TCommand? cmdData = JsonSerializer.Deserialize<TCommand>(jobState.Command.Data);
+            TCommand? cmdData = JsonSerializer.Deserialize<TCommand>(jobState.Spec.CommandData);
             if (cmdData is null)
             {
-                throw new Exception();
+                throw new InvalidOperationException();
             }
 
-            return jobState.Map(cmdData);
+            return jobState.Map<TCommand>(cmdData);
         }
         public static CronJob Map(this CronJobState jobState, CommandRegistry registry)
         {
-            string cmdName = jobState.Command.Name;
-            ICommand cmdData = (ICommand)JsonSerializer.Deserialize(jobState.Command.Data, registry.CommandTypeRegistrations[cmdName])!;
+            string cmdName = jobState.Spec.CommandName;
+            ICommand cmdData = (ICommand)JsonSerializer.Deserialize(jobState.Spec.CommandData, registry.CommandTypeRegistrations[cmdName])!;
             if (cmdData is null)
             {
                 throw new InvalidOperationException();
@@ -81,26 +80,35 @@ namespace Fabron.Contracts
             return jobState.Map(cmdData);
         }
 
-        private static CronJob Map(this CronJobState jobState, ICommand cmd)
+        private static CronJob<TCommand> Map<TCommand>(this CronJobState jobState, TCommand cmd)
+            where TCommand : ICommand
         {
-            CronJob job = new(
-                jobState.CronExp,
+            CronJob<TCommand> job = new(
+                jobState.Spec.Schedule,
                 cmd,
-                jobState.PendingJobs.Select(job => job.To()),
-                jobState.ScheduledJobs.Select(job => job.To()),
-                jobState.FinishedJobs.Select(job => job.To()),
-                (JobStatus)(int)jobState.Status,
-                jobState.Reason
+                jobState.Status.Jobs.Select(job => job.To()),
+                jobState.Status.Reason
             );
             return job;
         }
 
-        public static CronChildJob To(this CronJobStateChild childJobState)
+        private static CronJob Map(this CronJobState jobState, ICommand cmd)
+        {
+            CronJob job = new(
+                jobState.Spec.Schedule,
+                cmd,
+                jobState.Status.Jobs.Select(job => job.To()),
+                jobState.Status.Reason
+            );
+            return job;
+        }
+
+        public static CronChildJob To(this JobItem childJobState)
         {
             CronChildJob childJob = new(
-                childJobState.Id,
-                (JobStatus)(int)childJobState.Status,
-                childJobState.ScheduledAt
+                childJobState.Uid,
+                childJobState.Status,
+                childJobState.Schedule
             );
             return childJob;
         }

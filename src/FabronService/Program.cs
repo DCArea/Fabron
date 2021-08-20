@@ -77,7 +77,11 @@ IHostBuilder hostBuilder = Host.CreateDefaultBuilder(args)
                             settings.DefaultValueHandling = DefaultValueHandling.Populate;
                         };
                     });
-                });
+                })
+                .ConfigureServices(services =>
+                {
+                    services.AddElasticSearchJobReporter(ctx.Configuration.GetSection("Reporters:ElasticSearch"));
+                }); ;
         }
     })
     .ConfigureWebHostDefaults(builder =>
@@ -95,8 +99,7 @@ static void ConfigureServices(WebHostBuilderContext context, IServiceCollection 
     services.ConfigureFramework()
         .AddApiKeyAuth(context.Configuration["ApiKey"])
         .AddSwagger();
-    services.RegisterJobCommandHandlers()
-        .AddElasticSearchJobReporter(context.Configuration.GetSection("Reporters:ElasticSearch"));
+    services.RegisterJobCommandHandlers();
 }
 
 static void ConfigureWebApplication(IApplicationBuilder app)

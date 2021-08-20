@@ -5,7 +5,7 @@ namespace Fabron.Grains
 {
     public enum ExecutionStatus
     {
-        Created,
+        NotScheduled,
         Scheduled,
         Started,
         Succeed,

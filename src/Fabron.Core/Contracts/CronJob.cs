@@ -4,21 +4,14 @@
 using System;
 using System.Collections.Generic;
 
+using Fabron.Grains;
+using Fabron.Mando;
+
 namespace Fabron.Contracts
 {
     public record CronJobBase
     (
-        string CronExp,
-        IEnumerable<CronChildJob> PendingJobs,
-        IEnumerable<CronChildJob> ScheduledJobs,
-        IEnumerable<CronChildJob> FinishedJobs,
-        JobStatus Status,
-        string? Reason
-    );
-    public record CronJob
-    (
-        string CronExp,
-        object Command,
+        string Schedule,
         IEnumerable<CronChildJob> PendingJobs,
         IEnumerable<CronChildJob> ScheduledJobs,
         IEnumerable<CronChildJob> FinishedJobs,
@@ -26,20 +19,34 @@ namespace Fabron.Contracts
         string? Reason
     );
 
+    public record CronJob<TCommand>
+    (
+        string Schedule,
+        TCommand Command,
+        IEnumerable<CronChildJob> ScheduledJobs,
+        string? Reason
+    ) where TCommand : ICommand;
+
+    public record CronJob
+    (
+        string Schedule,
+        ICommand Command,
+        IEnumerable<CronChildJob> ScheduledJobs,
+        string? Reason
+    );
+
     public record CronJobDetail
     (
-        string CronExp,
+        string Schedule,
         object Command,
-        IEnumerable<CronChildJobDetail> PendingJobs,
-        IEnumerable<CronChildJobDetail> FinishedJobs,
-        JobStatus Status,
+        IEnumerable<CronChildJobDetail> ScheduledJobs,
         string? Reason
     );
 
     public record CronChildJob
     (
         string JobId,
-        JobStatus Status,
+        ExecutionStatus Status,
         DateTime ScheduledAt
     );
 
@@ -47,7 +54,7 @@ namespace Fabron.Contracts
     (
         string JobId,
         object? Result,
-        JobStatus Status,
+        ExecutionStatus Status,
         DateTime? CreatedAt,
         DateTime? ScheduledAt,
         DateTime? StartedAt,
@@ -57,9 +64,9 @@ namespace Fabron.Contracts
     public static class CronJobExtensions
     {
         public static bool IsPending(this CronChildJobDetail job)
-            => job.Status is JobStatus.Scheduled or JobStatus.Started;
+            => job.Status is ExecutionStatus.NotScheduled or ExecutionStatus.Scheduled or ExecutionStatus.Started;
 
         public static bool IsFinished(this CronChildJobDetail job)
-            => job.Status is JobStatus.Succeed or JobStatus.Canceled or JobStatus.Faulted;
+            => job.Status is ExecutionStatus.Succeed or ExecutionStatus.Canceled or ExecutionStatus.Faulted;
     }
 }

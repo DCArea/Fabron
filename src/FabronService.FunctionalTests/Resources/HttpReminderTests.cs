@@ -12,7 +12,7 @@ using AspNetCore.Authentication.ApiKey;
 
 using Fabron.Contracts;
 
-using FabronService.Resources.HttpReminders;
+using FabronService.Resources.HttpReminders.Models;
 
 using Microsoft.AspNetCore.Mvc.Testing;
 

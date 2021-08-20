@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 
 using Fabron.Grains.Job;
@@ -20,11 +19,11 @@ namespace Fabron.Grains.CronJob
 {
     public interface ICronJobGrain : IGrainWithStringKey
     {
-        [AlwaysInterleave]
-        Task Cancel(string reason);
+        //[AlwaysInterleave]
+        //Task Cancel(string reason);
         [ReadOnly]
         Task<CronJobState> GetState();
-        Task Create(string cronExp, JobCommandInfo commands);
+        Task Schedule(string cronExp, string commandName, string commandData, Dictionary<string, string>? labels = null);
     }
 
     public class CronJobGrain : Grain, ICronJobGrain, IRemindable
@@ -32,10 +31,11 @@ namespace Fabron.Grains.CronJob
         private readonly ILogger _logger;
         private readonly IPersistentState<CronJobState> _job;
         private IGrainReminder? _reminder;
-        private CancellationTokenSource? _cancellationTokenSource;
+        private IDisposable? _timer;
+        private IDisposable? _probeTimer;
 
         public CronJobGrain(
-            ILogger<JobGrain> logger,
+            ILogger<CronJobGrain> logger,
             [PersistentState("CronJob", "JobStore")] IPersistentState<CronJobState> job,
             IMediator mediator)
         {
@@ -43,168 +43,175 @@ namespace Fabron.Grains.CronJob
             _job = job;
         }
 
+        private CronJobState Job => _job.State;
+
         public Task<CronJobState> GetState() => Task.FromResult(_job.State);
 
-        public async Task Create(string cronExp, JobCommandInfo commands)
+        public async Task Schedule(string cronExp, string commandName, string commandData, Dictionary<string, string>? labels = null)
         {
             if (!_job.RecordExists)
             {
-                _job.State = new(cronExp, commands);
+                var now = DateTime.UtcNow;
+                _job.State = new CronJobState
+                {
+                    Metadata = new CronJobMetadata(this.GetPrimaryKeyString(), now, labels ?? new()),
+                    Spec = new CronJobSpec(cronExp,
+                        commandName,
+                        commandData,
+                        now,
+                        DateTime.MaxValue),
+                    Status = new CronJobStatus(new List<JobItem>())
+                };
                 await _job.WriteStateAsync();
-                _logger.LogInformation($"Created Job");
+                _logger.LogDebug($"CronJob[{Job.Metadata.Uid}]: Created");
             }
 
-            _reminder = await RegisterOrUpdateReminder("Check", TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(10));
-            _logger.LogInformation($"Job Reminder Registered");
-            _ = Go();
+            _reminder = await RegisterOrUpdateReminder("Check", TimeSpan.FromMinutes(3), TimeSpan.FromMinutes(2));
+            _logger.LogDebug($"CronJob[{Job.Metadata.Uid}]: reminder(Check) registered");
+            await Schedule();
         }
 
-        public async Task Cancel(string reason)
+        private async Task Schedule()
         {
-            if (_cancellationTokenSource is null)
+            var hasRunningJobs = Job.HasRunningJobs;
+            if (hasRunningJobs)
             {
-                throw new InvalidOperationException();
-            }
-
-            if (!_cancellationTokenSource.IsCancellationRequested)
-            {
-                _cancellationTokenSource.Cancel();
-            }
-
-            _job.State.Cancel(reason);
-            await _job.WriteStateAsync();
-        }
-
-        private async Task Start()
-        {
-            _logger.LogInformation($"Start Job");
-            _job.State.Start();
-            await _job.WriteStateAsync();
-            _logger.LogInformation($"Job Started");
-            await Run();
-        }
-
-
-        private async Task Run()
-        {
-            _logger.LogInformation($"Run CronJob");
-            _cancellationTokenSource ??= new CancellationTokenSource();
-
-            await Task.WhenAll(ScheduleChildJobs(), CheckPendingJobs());
-
-
-            CronJobStateChild? firstUnfinishedJob = _job.State.ChildJobs.Where(cj => !cj.IsFinished).FirstOrDefault();
-            if (firstUnfinishedJob is null)
-            {
-                _job.State.Complete();
-                _logger.LogInformation($"CronJob Finished: {_job.State.Status}");
-                await Cleanup();
+                EnsureProbeTimer();
+                _logger.LogDebug($"CronJob[{Job.Metadata.Uid}]: There're running jobs, ensure probe timer registered");
             }
             else
             {
-                DateTime now = DateTime.UtcNow;
-                DateTime after5Min = DateTime.UtcNow.AddMinutes(5);
-                DateTime nextSchedule = firstUnfinishedJob.ScheduledAt;
-                if (firstUnfinishedJob.ScheduledAt < after5Min)
+                StopProbeTimer();
+            }
+            while (true)
+            {
+                var nextSchedule = Job.GetNextSchedule();
+                if (nextSchedule is not null)
                 {
-                    await SetJobReminder(TimeSpan.FromMinutes(5));
+                    var now = DateTime.UtcNow;
+                    _logger.LogDebug($"CronJob[{Job.Metadata.Uid}]: next schedule({nextSchedule}, now({now})");
+                    var dueTime = nextSchedule.Value >= now.AddSeconds(5) ? nextSchedule.Value.Subtract(now) : TimeSpan.Zero;
+                    if (dueTime > TimeSpan.Zero)
+                    {
+                        await ScheduleAfter(dueTime);
+                        return;
+                    }
+                    else
+                    {
+                        await ScheduleNextJob();
+                    }
                 }
-                else
+                else if (!hasRunningJobs)
                 {
-                    await SetJobReminder(nextSchedule - now);
+                    await Complete();
+                    _logger.LogDebug($"CronJob[{Job.Metadata.Uid}]: Completed");
+                    return;
                 }
             }
         }
 
-        private async Task ScheduleChildJobs()
+        private async Task UpdateJobStatus()
         {
-            DateTime utcNow = DateTime.UtcNow;
-            DateTime toTime = utcNow.AddMinutes(20);
-            _job.State.Schedule(toTime);
-            List<CronJobStateChild> jobsToBeScheduled = _job.State.PendingJobs.ToList();
-
-            if (jobsToBeScheduled.Count == 0)
+            IEnumerable<Task<JobItem>> checkJobStatusTasks = Job.Status.Jobs
+                .Select(job => CheckJobStatus(job));
+            var jobItems = (await Task.WhenAll(checkJobStatusTasks)).ToList();
+            Job.Status = Job.Status with
             {
-                // TODO: check when to schedule the next child job
-                return;
-            }
-
-            IEnumerable<Task> enqueueChildJobTasks = jobsToBeScheduled
-                .Select(job => CreateChildJob(job));
-            await Task.WhenAll(enqueueChildJobTasks);
-            //IEnumerable<Task> checkJobStatusTasks = jobsToBeScheduled
-            //    .Select(job => CheckChildJobStatus(job));
-            //await Task.WhenAll(checkJobStatusTasks);
+                Jobs = jobItems.TakeLast(10).ToList()
+            };
             await _job.WriteStateAsync();
         }
 
-        // private async Task Check
-
-        private async Task CheckPendingJobs()
+        private async Task<JobItem> ScheduleChildJob(uint index)
         {
-            DateTime utcNow = DateTime.UtcNow;
-            List<CronJobStateChild> jobsToBeChecked = _job.State.ScheduledJobs.Where(job => job.ScheduledAt < utcNow).ToList();
-            if (jobsToBeChecked.Count == 0)
+            var jobId = GetChildJobIdByIndex(index);
+            IJobGrain grain = GrainFactory.GetGrain<IJobGrain>(jobId);
+            var labels = new Dictionary<string, string>
             {
-                return;
+                {"owner_id", Job.Metadata.Uid },
+                {"owner_type" ,"cronjob"},
+                {"cron_index", index.ToString() }
+            };
+            var jobState = await grain.Schedule(Job.Spec.CommandName, Job.Spec.CommandData, null, labels);
+            return new JobItem(index, jobId, DateTime.UtcNow, jobState.Status.ExecutionStatus);
+        }
+
+        private async Task<JobItem> CheckJobStatus(JobItem job)
+        {
+            if (job.Status is ExecutionStatus.Succeed or ExecutionStatus.Faulted)
+            {
+                return job;
             }
-
-            IEnumerable<Task> checkJobStatusTasks = jobsToBeChecked
-                .Select(job => CheckChildJobStatus(job));
-
-            await Task.WhenAll(checkJobStatusTasks);
-            await _job.WriteStateAsync();
-        }
-
-        private async Task CreateChildJob(CronJobStateChild job)
-        {
-            IJobGrain grain = GrainFactory.GetGrain<IJobGrain>(job.Id);
-            await grain.Schedule(_job.State.Command.Name, _job.State.Command.Data, job.ScheduledAt);
-            job.Status = CronChildJobStatus.WaitToSchedule;
-        }
-
-        private async Task CheckChildJobStatus(CronJobStateChild job)
-        {
-            IJobGrain grain = GrainFactory.GetGrain<IJobGrain>(job.Id);
-            job.Status = await grain.GetStatus() switch
+            var jobId = GetChildJobIdByIndex(job.Index);
+            var grain = GrainFactory.GetGrain<IJobGrain>(jobId);
+            var status = await grain.GetStatus();
+            return job with
             {
-                ExecutionStatus.Created => CronChildJobStatus.WaitToSchedule,
-                ExecutionStatus.Scheduled or ExecutionStatus.Started => CronChildJobStatus.Scheduled,
-                ExecutionStatus.Succeed => CronChildJobStatus.RanToCompletion,
-                ExecutionStatus.Canceled => CronChildJobStatus.Canceled,
-                ExecutionStatus.Faulted => CronChildJobStatus.Faulted,
-                _ => throw new InvalidOperationException("invalid child job state")
+                Status = status
             };
         }
 
-        private async Task Cleanup()
+        private string GetChildJobIdByIndex(uint index) => $"cron/{Job.Metadata.Uid}/{index}";
+
+        private async Task Complete()
         {
-            _logger.LogInformation($"Cleanup Job");
+            Job.Status = Job.Status with
+            {
+                CompletionTimestamp = DateTime.UtcNow,
+            };
+            await _job.WriteStateAsync();
             if (_reminder is null)
             {
                 _reminder = await GetReminder("Check");
             }
-
             if (_reminder is not null)
             {
                 await UnregisterReminder(_reminder);
-                _logger.LogInformation($"Job Reminder Unregistered");
             }
-            DeactivateOnIdle();
+            return;
         }
 
-        private Task Go() => _job.State.Status switch
+        private async Task ScheduleNextJob()
         {
-            CronJobStatus.Created => Start(),
-            CronJobStatus.Running => Run(),
-            _ => Cleanup()
-        };
-
-        Task IRemindable.ReceiveReminder(string reminderName, TickStatus status) => Go();
-        private async Task SetJobReminder(TimeSpan dueTime)
-        {
-            _reminder = await RegisterOrUpdateReminder("Check", dueTime, TimeSpan.FromMinutes(2));
-            _logger.LogInformation($"Job Reminder Registered, dueTime={dueTime}");
+            var latestJob = Job.LatestItem;
+            var latestIndex = latestJob is null ? 0 : latestJob.Index;
+            var jobItem = await ScheduleChildJob(latestIndex + 1);
+            var items = Job.Status.Jobs;
+            items.Add(jobItem);
+            Job.Status = Job.Status with
+            {
+                Jobs = items.TakeLast(10).ToList()
+            };
+            await _job.WriteStateAsync();
+            EnsureProbeTimer();
+            _logger.LogDebug($"CronJob[{Job.Metadata.Uid}]: Scheduled job-{jobItem.Index}");
         }
+
+
+        private async Task ScheduleAfter(TimeSpan dueTime)
+        {
+            _timer?.Dispose();
+            if (dueTime.TotalMinutes < 2)
+            {
+                _timer = RegisterTimer(_ => Schedule(), null, dueTime, TimeSpan.FromMilliseconds(-1));
+            }
+            else
+            {
+                _reminder = await RegisterOrUpdateReminder("Check", dueTime, TimeSpan.FromMinutes(2));
+            }
+            _logger.LogDebug($"CronJob[{Job.Metadata.Uid}]: Scheduled After {dueTime}");
+        }
+
+        private void EnsureProbeTimer()
+        {
+            if (_probeTimer is null)
+                _probeTimer = RegisterTimer(_ => UpdateJobStatus(), null, TimeSpan.FromSeconds(20), TimeSpan.FromSeconds(20));
+        }
+        private void StopProbeTimer()
+        {
+            _probeTimer?.Dispose();
+        }
+
+        Task IRemindable.ReceiveReminder(string reminderName, TickStatus status) => Schedule();
     }
 }

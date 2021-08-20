@@ -8,13 +8,9 @@ namespace Fabron.Grains.Job
 {
     public class JobState
     {
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-        public JobState() { }
-#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-
-        public JobMetadata Metadata { get; set; }
-        public JobSpec Spec { get; init; }
-        public JobStatus Status { get; set; }
+        public JobMetadata Metadata { get; set; } = default!;
+        public JobSpec Spec { get; init; } = default!;
+        public JobStatus Status { get; set; } = default!;
 
         public TimeSpan DueTime
         {
@@ -44,7 +40,7 @@ namespace Fabron.Grains.Job
     );
 
     public record JobStatus(
-        ExecutionStatus ExecutionStatus = ExecutionStatus.Created,
+        ExecutionStatus ExecutionStatus = ExecutionStatus.NotScheduled,
         DateTime? StartedAt = null,
         DateTime? FinishedAt = null,
         string? Result = null,

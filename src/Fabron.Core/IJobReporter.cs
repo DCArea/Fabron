@@ -11,4 +11,9 @@ namespace Fabron
     {
         Task Report(string jobId, long version, JobState jobState);
     }
+
+    public class NoopJobReporter : IJobReporter
+    {
+        public Task Report(string jobId, long version, JobState jobState) => Task.CompletedTask;
+    }
 }

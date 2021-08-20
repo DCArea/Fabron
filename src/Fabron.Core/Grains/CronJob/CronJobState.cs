@@ -7,68 +7,69 @@ using System.Linq;
 
 namespace Fabron.Grains.CronJob
 {
-    public enum CronJobStatus
-    {
-        Created,
-        Running,
-        RanToCompletion,
-        Canceled,
-    }
+    //public enum CronJobStatus
+    //{
+    //    Created,
+    //    Running,
+    //    RanToCompletion,
+    //    Canceled,
+    //}
+
+    public record JobItem(
+        uint Index,
+        string Uid,
+        DateTime Schedule,
+        ExecutionStatus Status
+    );
+
+    public record CronJobMetadata(
+        string Uid,
+        DateTime CreationTimestamp,
+        Dictionary<string, string> Labels
+    );
+
+    public record CronJobSpec(
+        string Schedule,
+        string CommandName,
+        string CommandData,
+        DateTime StartTimestamp,
+        DateTime EndTimeStamp
+    );
+
+    public record CronJobStatus(
+        List<JobItem> Jobs,
+        uint LatestScheduleIndex = 0,
+        DateTime? CompletionTimestamp = null,
+        string? Reason = null,
+        bool Finalized = false
+    );
 
     public class CronJobState
     {
-#nullable disable
-        public CronJobState() { }
-#nullable enable
-        public CronJobState(string cronExp, JobCommandInfo command)
+        public CronJobMetadata Metadata { get; init; } = default!;
+        public CronJobSpec Spec { get; init; } = default!;
+        public CronJobStatus Status { get; set; } = default!;
+
+        public IEnumerable<JobItem> RunningJobs => Status.Jobs.Where(item => item.Status == ExecutionStatus.Scheduled);
+        public IEnumerable<JobItem> FinishedJobs => Status.Jobs.Where(item => item.Status is ExecutionStatus.Succeed or ExecutionStatus.Faulted);
+
+        public JobItem? LatestItem => Status.Jobs.LastOrDefault();
+
+        public bool HasRunningJobs => Status.Jobs.Any(item => item.Status == ExecutionStatus.Scheduled);
+
+        public DateTime? GetNextSchedule()
         {
-            CronExp = cronExp;
-            Command = command;
-        }
-
-        public string CronExp { get; }
-        public JobCommandInfo Command { get; }
-        private readonly List<CronJobStateChild> _childJobs = new();
-        public CronJobStateChild? LatestJob => _childJobs.LastOrDefault();
-        public IReadOnlyCollection<CronJobStateChild> ChildJobs => _childJobs.AsReadOnly();
-        public IEnumerable<CronJobStateChild> PendingJobs => _childJobs.Where(job => job.Status == CronChildJobStatus.WaitToSchedule);
-        public IEnumerable<CronJobStateChild> ScheduledJobs => _childJobs.Where(job => job.Status == CronChildJobStatus.Scheduled);
-        public IEnumerable<CronJobStateChild> FinishedJobs => _childJobs.Where(job => job.IsFinished);
-        public string? Reason { get; private set; }
-        public CronJobStatus Status { get; private set; }
-
-        public void Start() => Status = CronJobStatus.Running;
-
-        public void Complete() => Status = CronJobStatus.RanToCompletion;
-
-        public void Cancel(string reason)
-        {
-            Status = CronJobStatus.Canceled;
-            Reason = reason;
-        }
-
-        public void Schedule(DateTime toTime)
-        {
-            Cronos.CronExpression cron = Cronos.CronExpression.Parse(CronExp);
-            CronJobStateChild? lastedJob = LatestJob;
-            DateTime lastestScheduledAt = lastedJob is null ? DateTime.UtcNow : lastedJob.ScheduledAt;
-            DateTime? nextSchedule = cron.GetNextOccurrence(lastestScheduledAt);
-            if (nextSchedule is null)
+            Cronos.CronExpression cron = Cronos.CronExpression.Parse(Spec.Schedule);
+            var lastedJob = LatestItem;
+            DateTime lastestScheduledAt = lastedJob is null ? Spec.StartTimestamp : lastedJob.Schedule;
+            DateTime? nextSchedule = cron.GetNextOccurrence(lastestScheduledAt, true);
+            if (nextSchedule is null || nextSchedule.Value > Spec.EndTimeStamp)
             {
-                return;
+                return null;
             }
-
-            CronJobStateChild? nextJob = new(nextSchedule.Value);
-            _childJobs.Add(nextJob);
-
-            if (nextSchedule < toTime)
-            {
-                IEnumerable<DateTime> occurrences = cron.GetOccurrences(nextSchedule.Value, toTime, false);
-                IEnumerable<CronJobStateChild> jobsToSchedule = occurrences
-                    .Select(occ => new CronJobStateChild(occ));
-                _childJobs.AddRange(jobsToSchedule);
-            }
+            return nextSchedule;
         }
 
+        public string GetChildJobIdByIndex(uint index) => Metadata.Uid + "-" + index;
     }
 }
