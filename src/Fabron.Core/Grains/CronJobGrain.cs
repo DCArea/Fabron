@@ -6,53 +6,50 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-using Fabron.Grains.Job;
 using Fabron.Mando;
-
+using Fabron.Models;
 using Microsoft.Extensions.Logging;
 
 using Orleans;
 using Orleans.Concurrency;
 using Orleans.Runtime;
 
-namespace Fabron.Grains.CronJob
+namespace Fabron.Grains
 {
     public interface ICronJobGrain : IGrainWithStringKey
     {
-        //[AlwaysInterleave]
-        //Task Cancel(string reason);
         [ReadOnly]
-        Task<CronJobState> GetState();
+        Task<CronJob> GetState();
         Task Schedule(string cronExp, string commandName, string commandData, Dictionary<string, string>? labels = null);
     }
 
     public class CronJobGrain : Grain, ICronJobGrain, IRemindable
     {
         private readonly ILogger _logger;
-        private readonly IPersistentState<CronJobState> _job;
+        private readonly IPersistentState<CronJob> _job;
         private IGrainReminder? _reminder;
         private IDisposable? _timer;
         private IDisposable? _probeTimer;
 
         public CronJobGrain(
             ILogger<CronJobGrain> logger,
-            [PersistentState("CronJob", "JobStore")] IPersistentState<CronJobState> job,
+            [PersistentState("CronJob", "JobStore")] IPersistentState<CronJob> job,
             IMediator mediator)
         {
             _logger = logger;
             _job = job;
         }
 
-        private CronJobState Job => _job.State;
+        private CronJob Job => _job.State;
 
-        public Task<CronJobState> GetState() => Task.FromResult(_job.State);
+        public Task<CronJob> GetState() => Task.FromResult(_job.State);
 
         public async Task Schedule(string cronExp, string commandName, string commandData, Dictionary<string, string>? labels = null)
         {
             if (!_job.RecordExists)
             {
-                var now = DateTime.UtcNow;
-                _job.State = new CronJobState
+                DateTime now = DateTime.UtcNow;
+                _job.State = new CronJob
                 {
                     Metadata = new CronJobMetadata(this.GetPrimaryKeyString(), now, labels ?? new()),
                     Spec = new CronJobSpec(cronExp,
@@ -73,7 +70,7 @@ namespace Fabron.Grains.CronJob
 
         private async Task Schedule()
         {
-            var hasRunningJobs = Job.HasRunningJobs;
+            bool hasRunningJobs = Job.HasRunningJobs;
             if (hasRunningJobs)
             {
                 EnsureProbeTimer();
@@ -85,12 +82,12 @@ namespace Fabron.Grains.CronJob
             }
             while (true)
             {
-                var nextSchedule = Job.GetNextSchedule();
+                DateTime? nextSchedule = Job.GetNextSchedule();
                 if (nextSchedule is not null)
                 {
-                    var now = DateTime.UtcNow;
+                    DateTime now = DateTime.UtcNow;
                     _logger.LogDebug($"CronJob[{Job.Metadata.Uid}]: next schedule({nextSchedule}, now({now})");
-                    var dueTime = nextSchedule.Value >= now.AddSeconds(5) ? nextSchedule.Value.Subtract(now) : TimeSpan.Zero;
+                    TimeSpan dueTime = nextSchedule.Value >= now.AddSeconds(5) ? nextSchedule.Value.Subtract(now) : TimeSpan.Zero;
                     if (dueTime > TimeSpan.Zero)
                     {
                         await ScheduleAfter(dueTime);
@@ -114,7 +111,7 @@ namespace Fabron.Grains.CronJob
         {
             IEnumerable<Task<JobItem>> checkJobStatusTasks = Job.Status.Jobs
                 .Select(job => CheckJobStatus(job));
-            var jobItems = (await Task.WhenAll(checkJobStatusTasks)).ToList();
+            List<JobItem>? jobItems = (await Task.WhenAll(checkJobStatusTasks)).ToList();
             Job.Status = Job.Status with
             {
                 Jobs = jobItems.TakeLast(10).ToList()
@@ -124,15 +121,15 @@ namespace Fabron.Grains.CronJob
 
         private async Task<JobItem> ScheduleChildJob(uint index)
         {
-            var jobId = GetChildJobIdByIndex(index);
+            string? jobId = GetChildJobIdByIndex(index);
             IJobGrain grain = GrainFactory.GetGrain<IJobGrain>(jobId);
-            var labels = new Dictionary<string, string>
+            Dictionary<string, string>? labels = new Dictionary<string, string>
             {
                 {"owner_id", Job.Metadata.Uid },
                 {"owner_type" ,"cronjob"},
                 {"cron_index", index.ToString() }
             };
-            var jobState = await grain.Schedule(Job.Spec.CommandName, Job.Spec.CommandData, null, labels);
+            Job? jobState = await grain.Schedule(Job.Spec.CommandName, Job.Spec.CommandData, null, labels);
             return new JobItem(index, jobId, DateTime.UtcNow, jobState.Status.ExecutionStatus);
         }
 
@@ -142,9 +139,9 @@ namespace Fabron.Grains.CronJob
             {
                 return job;
             }
-            var jobId = GetChildJobIdByIndex(job.Index);
-            var grain = GrainFactory.GetGrain<IJobGrain>(jobId);
-            var status = await grain.GetStatus();
+            string? jobId = GetChildJobIdByIndex(job.Index);
+            IJobGrain? grain = GrainFactory.GetGrain<IJobGrain>(jobId);
+            ExecutionStatus status = await grain.GetStatus();
             return job with
             {
                 Status = status
@@ -173,10 +170,10 @@ namespace Fabron.Grains.CronJob
 
         private async Task ScheduleNextJob()
         {
-            var latestJob = Job.LatestItem;
-            var latestIndex = latestJob is null ? 0 : latestJob.Index;
-            var jobItem = await ScheduleChildJob(latestIndex + 1);
-            var items = Job.Status.Jobs;
+            JobItem? latestJob = Job.LatestItem;
+            uint latestIndex = latestJob is null ? 0 : latestJob.Index;
+            JobItem? jobItem = await ScheduleChildJob(latestIndex + 1);
+            List<JobItem>? items = Job.Status.Jobs;
             items.Add(jobItem);
             Job.Status = Job.Status with
             {
@@ -205,12 +202,11 @@ namespace Fabron.Grains.CronJob
         private void EnsureProbeTimer()
         {
             if (_probeTimer is null)
+            {
                 _probeTimer = RegisterTimer(_ => UpdateJobStatus(), null, TimeSpan.FromSeconds(20), TimeSpan.FromSeconds(20));
+            }
         }
-        private void StopProbeTimer()
-        {
-            _probeTimer?.Dispose();
-        }
+        private void StopProbeTimer() => _probeTimer?.Dispose();
 
         Task IRemindable.ReceiveReminder(string reminderName, TickStatus status) => Schedule();
     }

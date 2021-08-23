@@ -2,36 +2,30 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System;
-
 using Fabron.Mando;
+using Fabron.Models;
 
 namespace Fabron.Contracts
 {
-    public record JobCommand<TCommand, TResult>(
-        TCommand Data,
-        TResult? Result
-    ) where TCommand : ICommand<TResult>;
+    public record TypedJobSpec<TCommand>(
+        DateTime Schedule,
+        string CommandName,
+        TCommand CommandData
+    ) where TCommand : ICommand;
 
-    public record JobCommand(
-        object Data,
-        object? Result
+    public record TypedJobStatus<TResult>(
+        ExecutionStatus ExecutionStatus,
+        DateTime? StartedAt,
+        DateTime? FinishedAt,
+        TResult? Result,
+        string? Reason,
+        bool Finalized
     );
-
-    public record JobCommandRaw(
-        string Name,
-        string Data,
-        string Result
-    ) : JobCommandRawInfo(Name, Data);
 
     public record Job<TCommand, TResult>
     (
-        JobCommand<TCommand, TResult> Command,
-        DateTime CreatedAt,
-        DateTime? ScheduledAt,
-        DateTime? StartedAt,
-        DateTime? FinishedAt,
-        JobStatus Status,
-        string? Reason
+        JobMetadata Metadata,
+        TypedJobSpec<TCommand> Spec,
+        TypedJobStatus<TResult> Status
     ) where TCommand : ICommand<TResult>;
-
 }

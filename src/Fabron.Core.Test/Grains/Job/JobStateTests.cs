@@ -2,10 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System;
-
-using Fabron.Grains;
-using Fabron.Grains.Job;
-using Fabron.Test.Grains;
+using Fabron.Models;
 
 using Xunit;
 
@@ -17,14 +14,12 @@ namespace Core.Test.Grains.Job
         public void Schedule20msAgo()
         {
             DateTime now = DateTime.UtcNow;
-            JobState state = new()
+            Fabron.Models.Job state = new()
             {
                 Metadata = new JobMetadata("test", now, new()),
-                Spec = new(now.AddMilliseconds(-20), Command.Name, Command.Data),
+                Spec = new(now.AddMilliseconds(-20), "test", "123"),
             };
             Assert.Equal(TimeSpan.Zero, state.DueTime);
         }
-
-        public JobCommandInfo Command { get; private set; } = new TestCommand(Guid.NewGuid().ToString()).ToRaw();
     }
 }

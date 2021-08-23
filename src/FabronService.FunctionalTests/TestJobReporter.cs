@@ -4,12 +4,12 @@
 using System.Threading.Tasks;
 
 using Fabron;
-using Fabron.Grains.Job;
+using Fabron.Models;
 
 namespace FabronService.FunctionalTests
 {
     public class TestJobReporter : IJobReporter
     {
-        public Task Report(string jobId, long version, JobState jobState) => Task.CompletedTask;
+        public Task Report(string jobId, long version, Job jobState) => Task.CompletedTask;
     }
 }

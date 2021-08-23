@@ -6,9 +6,7 @@ using System.Threading.Tasks;
 
 using Fabron.Core.Test.Grains;
 using Fabron.Grains;
-using Fabron.Grains.CronJob;
-using Fabron.Grains.Job;
-
+using Fabron.Models;
 using Microsoft.Extensions.Logging;
 
 using Orleans.TestKit;
@@ -18,18 +16,18 @@ using Xunit;
 namespace Fabron.Test.Grains.CronJob
 {
 
-    public class CronJobGrainTests : GrainTestBase<CronJobState>
+    public class CronJobGrainTests : GrainTestBase<Models.CronJob>
     {
         [Fact]
         public async Task Schedule_Simple()
         {
-            var now = DateTime.UtcNow;
+            DateTime now = DateTime.UtcNow;
             string cronExp = $"{now.AddMinutes(10).Minute} * * * *";
-            var cronJobId = Guid.NewGuid().ToString();
-            var cronJobGrain = await Silo.CreateGrainAsync<CronJobGrain>(cronJobId);
+            string? cronJobId = Guid.NewGuid().ToString();
+            CronJobGrain? cronJobGrain = await Silo.CreateGrainAsync<CronJobGrain>(cronJobId);
             await Schedule(cronJobGrain, cronExp);
 
-            CronJobState state = MockState.Object.State;
+            Models.CronJob state = MockState.Object.State;
             Assert.Equal(cronExp, state.Spec.Schedule);
             Assert.Equal(Command.Name, state.Spec.CommandName);
             Assert.Equal(Command.Data, state.Spec.CommandData);
@@ -38,7 +36,7 @@ namespace Fabron.Test.Grains.CronJob
 
         protected override void SetupServices() => Silo.AddServiceProbe<ILogger<CronJobGrain>>();
 
-        public JobCommandInfo Command { get; private set; } = new TestCommand(Guid.NewGuid().ToString()).ToRaw();
+        public (string Name, string Data) Command { get; private set; } = (Guid.NewGuid().ToString(), "{}");
 
         private async Task<CronJobGrain> Schedule(string cronExp)
         {

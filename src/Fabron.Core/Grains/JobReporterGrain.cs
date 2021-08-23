@@ -2,20 +2,20 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System.Threading.Tasks;
-
+using Fabron.Models;
 using Microsoft.Extensions.Logging;
 
 using Orleans;
 using Orleans.Concurrency;
 
-namespace Fabron.Grains.Job
+namespace Fabron.Grains
 {
     public interface IJobReporterGrain : IGrainWithStringKey
     {
         [OneWay]
-        Task OnJobStateChanged(JobState jobState);
+        Task OnJobStateChanged(Job jobState);
 
-        Task OnJobFinalized(JobState jobState);
+        Task OnJobFinalized(Job jobState);
     }
 
     public class JobReporterGrain : Grain, IJobReporterGrain
@@ -29,13 +29,13 @@ namespace Fabron.Grains.Job
             _reporter = reporter;
         }
 
-        public async Task OnJobStateChanged(JobState jobState)
+        public async Task OnJobStateChanged(Job jobState)
         {
             await _reporter.Report(this.GetPrimaryKeyString(), jobState.Metadata.ResourceVersion, jobState);
             return;
         }
 
-        public async Task OnJobFinalized(JobState jobState)
+        public async Task OnJobFinalized(Job jobState)
         {
             await _reporter.Report(this.GetPrimaryKeyString(), jobState.Metadata.ResourceVersion, jobState);
             return;

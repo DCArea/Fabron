@@ -7,40 +7,40 @@ using System.Text.Json;
 using System.Threading.Tasks;
 
 using Fabron.Contracts;
-using Fabron.Grains.Job;
+using Fabron.Grains;
 using Fabron.Mando;
-
+using Fabron.Models;
 using Microsoft.Extensions.Logging;
 
 namespace Fabron
 {
     public partial class JobManager
     {
-        public async Task<Job<TCommand, TResult>> Schedule<TCommand, TResult>(string jobId, TCommand command, DateTime? scheduledAt = null, Dictionary<string,string>? labels = null)
+        public async Task<Job<TCommand, TResult>> Schedule<TCommand, TResult>(string jobId, TCommand command, DateTime? scheduledAt = null, Dictionary<string, string>? labels = null)
             where TCommand : ICommand<TResult>
         {
             string commandName = _registry.CommandNameRegistrations[typeof(TCommand)];
             string commandData = JsonSerializer.Serialize(command);
 
-            JobState state = await Schedule(jobId, commandName, commandData, scheduledAt, labels);
+            Job state = await Schedule(jobId, commandName, commandData, scheduledAt, labels);
             return state.Map<TCommand, TResult>();
         }
 
-        private async Task<JobState> Schedule(string jobId, string commandName, string commandData, DateTime? scheduledAt, Dictionary<string,string>? labels = null)
+        private async Task<Job> Schedule(string jobId, string commandName, string commandData, DateTime? scheduledAt, Dictionary<string, string>? labels = null)
         {
             _logger.LogInformation($"Creating Job[{jobId}]");
             IJobGrain grain = _client.GetGrain<IJobGrain>(jobId);
             await grain.Schedule(commandName, commandData, scheduledAt, labels);
             _logger.LogInformation($"Job[{jobId}] Created");
 
-            JobState? state = await grain.GetState();
+            Job? state = await grain.GetState();
             return state!;
         }
 
         public async Task<Job<TJobCommand, TResult>?> GetJobById<TJobCommand, TResult>(string jobId)
             where TJobCommand : ICommand<TResult>
         {
-            JobState? jobState = await GetTransientJobState(jobId);
+            Job? jobState = await GetTransientJobState(jobId);
             if (jobState is null)
             {
                 return null;
@@ -49,7 +49,7 @@ namespace Fabron
             return jobState.Map<TJobCommand, TResult>();
         }
 
-        private async Task<JobState?> GetTransientJobState(string jobId)
+        private async Task<Job?> GetTransientJobState(string jobId)
         {
             IJobGrain grain = _client.GetGrain<IJobGrain>(jobId);
             return await grain.GetState();

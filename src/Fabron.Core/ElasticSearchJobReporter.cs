@@ -4,10 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-
-using Fabron.Grains;
-using Fabron.Grains.Job;
-
+using Fabron.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -39,7 +36,7 @@ namespace Fabron
             _esClient = esClient;
         }
 
-        public async Task Report(string jobId, long version, JobState jobState)
+        public async Task Report(string jobId, long version, Job jobState)
         {
             JobDocument doc = new(jobId, jobState.Spec.CommandName, jobState.Metadata.Labels, jobState.Metadata.CreationTimestamp, jobState.Spec.Schedule, jobState.Status.FinishedAt, jobState.Status.Reason, jobState.Status.ExecutionStatus, jobState.Status.Finalized, version);
             Nest.IndexResponse res = await _esClient.IndexAsync(doc, idx => idx.Index(_options.JobIndexName));

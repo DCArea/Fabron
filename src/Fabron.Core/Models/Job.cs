@@ -4,9 +4,9 @@
 using System;
 using System.Collections.Generic;
 
-namespace Fabron.Grains.Job
+namespace Fabron.Models
 {
-    public class JobState
+    public class Job
     {
         public JobMetadata Metadata { get; set; } = default!;
         public JobSpec Spec { get; init; } = default!;

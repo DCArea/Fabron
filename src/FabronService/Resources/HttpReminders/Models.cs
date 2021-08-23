@@ -4,7 +4,7 @@
 using System;
 
 using Fabron.Contracts;
-
+using Fabron.Models;
 using FabronService.Commands;
 
 namespace FabronService.Resources.HttpReminders.Models
@@ -12,12 +12,13 @@ namespace FabronService.Resources.HttpReminders.Models
     public record HttpReminder
     (
         string Name,
-        JobCommand<RequestWebAPI, int> Command,
+        RequestWebAPI Command,
+        int? Result,
         DateTime CreatedAt,
         DateTime Schedule,
         DateTime? StartedAt,
         DateTime? FinishedAt,
-        JobStatus Status,
+        ExecutionStatus Status,
         string? Reason
     );
 
@@ -33,13 +34,14 @@ namespace FabronService.Resources.HttpReminders.Models
         public static HttpReminder ToResource(this Job<RequestWebAPI, int> job, string reminderName)
             => new(
                 reminderName,
-                job.Command,
-                job.CreatedAt,
-                job.ScheduledAt!.Value,
-                job.StartedAt,
-                job.FinishedAt,
-                job.Status,
-                job.Reason
+                job.Spec.CommandData,
+                job.Status.Result,
+                job.Metadata.CreationTimestamp,
+                job.Spec.Schedule,
+                job.Status.StartedAt,
+                job.Status.FinishedAt,
+                job.Status.ExecutionStatus,
+                job.Status.Reason
             );
     }
 }

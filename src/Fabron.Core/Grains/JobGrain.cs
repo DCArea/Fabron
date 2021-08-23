@@ -7,31 +7,30 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Fabron.Mando;
-
+using Fabron.Models;
 using Microsoft.Extensions.Logging;
 
 using Orleans;
 using Orleans.Concurrency;
 using Orleans.Runtime;
 
-namespace Fabron.Grains.Job
+namespace Fabron.Grains
 {
-
     public interface IJobGrain : IGrainWithStringKey
     {
         [AlwaysInterleave]
         Task Cancel(string reason);
         [ReadOnly]
-        Task<JobState?> GetState();
+        Task<Job?> GetState();
         [ReadOnly]
         Task<ExecutionStatus> GetStatus();
-        Task<JobState> Schedule(string commandName, string commandData, DateTime? schedule = null, Dictionary<string, string>? labels = null);
+        Task<Job> Schedule(string commandName, string commandData, DateTime? schedule = null, Dictionary<string, string>? labels = null);
     }
 
     public class JobGrain : Grain, IJobGrain, IRemindable
     {
         private readonly ILogger _logger;
-        private readonly IPersistentState<JobState> _jobState;
+        private readonly IPersistentState<Job> _jobState;
         private readonly IMediator _mediator;
         private IDisposable? _timer;
         private IGrainReminder? _reminder;
@@ -39,7 +38,7 @@ namespace Fabron.Grains.Job
 
         public JobGrain(
             ILogger<JobGrain> logger,
-            [PersistentState("Job", "JobStore")] IPersistentState<JobState> jobState,
+            [PersistentState("Job", "JobStore")] IPersistentState<Job> jobState,
             IMediator mediator)
         {
             _logger = logger;
@@ -47,11 +46,11 @@ namespace Fabron.Grains.Job
             _mediator = mediator;
         }
 
-        private JobState Job => _jobState.State;
+        private Job Job => _jobState.State;
 
-        public Task<JobState?> GetState()
+        public Task<Job?> GetState()
         {
-            JobState? state = _jobState.RecordExists ? _jobState.State : null;
+            Job? state = _jobState.RecordExists ? _jobState.State : null;
             return Task.FromResult(state);
         }
 
@@ -79,13 +78,13 @@ namespace Fabron.Grains.Job
             MetricsHelper.JobCount_Canceled.Inc();
         }
 
-        public async Task<JobState> Schedule(string commandName, string commandData, DateTime? schedule = null, Dictionary<string, string>? labels = null)
+        public async Task<Job> Schedule(string commandName, string commandData, DateTime? schedule = null, Dictionary<string, string>? labels = null)
         {
             if (!_jobState.RecordExists)
             {
                 DateTime createdAt = DateTime.UtcNow;
                 DateTime schedule_ = schedule is null || schedule.Value < createdAt ? createdAt : (DateTime)schedule;
-                _jobState.State = new JobState
+                _jobState.State = new Job
                 {
                     Metadata = new JobMetadata(this.GetPrimaryKeyString(), createdAt, labels ?? new()),
                     Spec = new JobSpec(schedule_, commandName, commandData),
@@ -109,7 +108,7 @@ namespace Fabron.Grains.Job
                 {
                     return;
                 }
-                var dueTime = Job.DueTime;
+                TimeSpan dueTime = Job.DueTime;
                 if (Job.Status is { ExecutionStatus: ExecutionStatus.Scheduled } && dueTime is { TotalSeconds: >= 2 * 60 })
                 {
                     return;

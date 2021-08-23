@@ -3,9 +3,8 @@
 
 using System;
 using System.Threading.Tasks;
-
-using Fabron.Grains.Job;
-
+using Fabron.Grains;
+using Fabron.Models;
 using Moq;
 
 using Orleans.TestKit;
@@ -21,7 +20,7 @@ namespace Fabron.Test.Grains.JobReporter
         public async Task Report()
         {
             string jobId = "test_job";
-            JobState jobState = new()
+            Models.Job jobState = new()
             {
                 Metadata = new JobMetadata(jobId, DateTime.Now, new()),
                 Spec = new JobSpec(DateTime.Now, "test", "test"),

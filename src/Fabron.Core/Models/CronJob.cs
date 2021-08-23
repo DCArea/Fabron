@@ -5,16 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Fabron.Grains.CronJob
+namespace Fabron.Models
 {
-    //public enum CronJobStatus
-    //{
-    //    Created,
-    //    Running,
-    //    RanToCompletion,
-    //    Canceled,
-    //}
-
     public record JobItem(
         uint Index,
         string Uid,
@@ -44,7 +36,7 @@ namespace Fabron.Grains.CronJob
         bool Finalized = false
     );
 
-    public class CronJobState
+    public class CronJob
     {
         public CronJobMetadata Metadata { get; init; } = default!;
         public CronJobSpec Spec { get; init; } = default!;
@@ -60,7 +52,7 @@ namespace Fabron.Grains.CronJob
         public DateTime? GetNextSchedule()
         {
             Cronos.CronExpression cron = Cronos.CronExpression.Parse(Spec.Schedule);
-            var lastedJob = LatestItem;
+            JobItem? lastedJob = LatestItem;
             DateTime lastestScheduledAt = lastedJob is null ? Spec.StartTimestamp : lastedJob.Schedule;
             DateTime? nextSchedule = cron.GetNextOccurrence(lastestScheduledAt, true);
             if (nextSchedule is null || nextSchedule.Value > Spec.EndTimeStamp)

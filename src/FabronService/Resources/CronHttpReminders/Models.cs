@@ -4,7 +4,7 @@
 using System.Collections.Generic;
 
 using Fabron.Contracts;
-
+using Fabron.Models;
 using FabronService.Commands;
 
 namespace FabronService.Resources.CronHttpReminders.Models
@@ -14,7 +14,7 @@ namespace FabronService.Resources.CronHttpReminders.Models
         string Name,
         string Schedule,
         RequestWebAPI Command,
-        IEnumerable<CronChildJob> ScheduledJobs,
+        IEnumerable<JobItem> ScheduledJobs,
         string? Reason
     );
 
@@ -27,13 +27,13 @@ namespace FabronService.Resources.CronHttpReminders.Models
 
     public static class HttpReminderExtensions
     {
-        public static CronHttpReminder ToResource(this CronJob<RequestWebAPI> job, string reminderName)
+        public static CronHttpReminder ToResource(this CronJob<RequestWebAPI> cronJob, string reminderName)
             => new(
                 reminderName,
-                job.Schedule,
-                job.Command,
-                job.ScheduledJobs,
-                job.Reason
+                cronJob.Spec.Schedule,
+                cronJob.Spec.CommandData,
+                cronJob.Status.Jobs,
+                cronJob.Status.Reason
             );
     }
 }

@@ -2,71 +2,23 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System;
-using System.Collections.Generic;
-
-using Fabron.Grains;
 using Fabron.Mando;
+using Fabron.Models;
 
 namespace Fabron.Contracts
 {
-    public record CronJobBase
-    (
+    public record TypedCronJobSpec<TCommand>(
         string Schedule,
-        IEnumerable<CronChildJob> PendingJobs,
-        IEnumerable<CronChildJob> ScheduledJobs,
-        IEnumerable<CronChildJob> FinishedJobs,
-        JobStatus Status,
-        string? Reason
+        string CommandName,
+        TCommand CommandData,
+        DateTime StartTimestamp,
+        DateTime EndTimeStamp
     );
 
     public record CronJob<TCommand>
     (
-        string Schedule,
-        TCommand Command,
-        IEnumerable<CronChildJob> ScheduledJobs,
-        string? Reason
+        CronJobMetadata Metadata,
+        TypedCronJobSpec<TCommand> Spec,
+        CronJobStatus Status
     ) where TCommand : ICommand;
-
-    public record CronJob
-    (
-        string Schedule,
-        ICommand Command,
-        IEnumerable<CronChildJob> ScheduledJobs,
-        string? Reason
-    );
-
-    public record CronJobDetail
-    (
-        string Schedule,
-        object Command,
-        IEnumerable<CronChildJobDetail> ScheduledJobs,
-        string? Reason
-    );
-
-    public record CronChildJob
-    (
-        string JobId,
-        ExecutionStatus Status,
-        DateTime ScheduledAt
-    );
-
-    public record CronChildJobDetail
-    (
-        string JobId,
-        object? Result,
-        ExecutionStatus Status,
-        DateTime? CreatedAt,
-        DateTime? ScheduledAt,
-        DateTime? StartedAt,
-        DateTime? FinishedAt
-    );
-
-    public static class CronJobExtensions
-    {
-        public static bool IsPending(this CronChildJobDetail job)
-            => job.Status is ExecutionStatus.NotScheduled or ExecutionStatus.Scheduled or ExecutionStatus.Started;
-
-        public static bool IsFinished(this CronChildJobDetail job)
-            => job.Status is ExecutionStatus.Succeed or ExecutionStatus.Canceled or ExecutionStatus.Faulted;
-    }
 }

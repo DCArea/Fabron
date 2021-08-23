@@ -9,12 +9,8 @@ using System.Net.Http.Json;
 using System.Threading.Tasks;
 
 using AspNetCore.Authentication.ApiKey;
-
-using Fabron.Contracts;
-
+using Fabron.Models;
 using FabronService.Resources.HttpReminders.Models;
-
-using Microsoft.AspNetCore.Mvc.Testing;
 
 using Moq;
 using Moq.Contrib.HttpClient;
@@ -49,14 +45,14 @@ namespace FabronService.FunctionalTests.Resources
             Assert.Equal(new Uri(_waf.Server.BaseAddress, $"{Route}/{request.Name}"), response.Headers.Location);
             HttpReminder? reminder = await response.Content.ReadFromJsonAsync<HttpReminder>(_waf.JsonSerializerOptions);
             Assert.NotNull(reminder);
-            Assert.Equal(request.Command.Url, reminder!.Command.Data.Url);
+            Assert.Equal(request.Command.Url, reminder!.Command.Url);
 
             reminder = await client.GetFromJsonAsync<HttpReminder>(response.Headers.Location, _waf.JsonSerializerOptions);
 
             Assert.NotNull(reminder);
-            Assert.Equal(request.Command.Url, reminder!.Command.Data.Url);
-            Assert.Equal(JobStatus.Succeed, reminder!.Status);
-            Assert.Equal(200, reminder!.Command.Result);
+            Assert.Equal(request.Command.Url, reminder!.Command.Url);
+            Assert.Equal(ExecutionStatus.Succeed, reminder!.Status);
+            Assert.Equal(200, reminder!.Result);
         }
     }
 }
