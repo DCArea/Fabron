@@ -26,7 +26,7 @@ namespace Fabron.Test.Grains.JobReporter
                 Spec = new JobSpec(DateTime.Now, "test", "test"),
             };
             Mock<IJobReporter>? reporterMock = Silo.AddServiceProbe<IJobReporter>();
-            reporterMock.Setup(m => m.Report(jobId, jobState.Metadata.ResourceVersion, jobState))
+            reporterMock.Setup(m => m.Report(jobId, jobState.Version, jobState))
                 .Returns(Task.CompletedTask)
                 .Verifiable();
 

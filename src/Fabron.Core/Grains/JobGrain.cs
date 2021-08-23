@@ -32,6 +32,7 @@ namespace Fabron.Grains
         private readonly ILogger _logger;
         private readonly IPersistentState<Job> _jobState;
         private readonly IMediator _mediator;
+        private readonly IJobEventBus _bus;
         private IDisposable? _timer;
         private IGrainReminder? _reminder;
         private CancellationTokenSource? _cancellationTokenSource;
@@ -39,11 +40,13 @@ namespace Fabron.Grains
         public JobGrain(
             ILogger<JobGrain> logger,
             [PersistentState("Job", "JobStore")] IPersistentState<Job> jobState,
-            IMediator mediator)
+            IMediator mediator,
+            IJobEventBus bus)
         {
             _logger = logger;
             _jobState = jobState;
             _mediator = mediator;
+            _bus = bus;
         }
 
         private Job Job => _jobState.State;
@@ -212,9 +215,7 @@ namespace Fabron.Grains
             {
                 Finalized = true
             };
-
-            await GrainFactory.GetGrain<IJobReporterGrain>(this.GetPrimaryKeyString())
-                .OnJobFinalized(_jobState.State);
+            await _bus.OnJobFinalized(Job);
             await SaveJobStateAsync();
             DeactivateOnIdle();
         }
@@ -245,16 +246,12 @@ namespace Fabron.Grains
 
         private async Task SaveJobStateAsync()
         {
-            Job.Metadata = Job.Metadata with
-            {
-                ResourceVersion = Job.Metadata.ResourceVersion + 1
-            };
+            Job.Version += 1;
             await _jobState.WriteStateAsync();
 
             if (!Job.Status.Finalized)
             {
-                await GrainFactory.GetGrain<IJobReporterGrain>(this.GetPrimaryKeyString())
-                    .OnJobStateChanged(Job);
+                await _bus.OnJobStateChanged(Job);
             }
         }
 

@@ -8,11 +8,13 @@ namespace Fabron
 {
     public interface IJobReporter
     {
-        Task Report(string jobId, long version, Job job);
+        Task Report(string jobId, ulong version, Job job);
+        Task Report(string jobId, ulong version, CronJob job);
     }
 
     public class NoopJobReporter : IJobReporter
     {
-        public Task Report(string jobId, long version, Job job) => Task.CompletedTask;
+        public Task Report(string jobId, ulong version, Job job) => Task.CompletedTask;
+        public Task Report(string jobId, ulong version, CronJob job) => Task.CompletedTask;
     }
 }

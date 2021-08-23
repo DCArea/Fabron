@@ -11,8 +11,8 @@ namespace Fabron.Contracts
         string Schedule,
         string CommandName,
         TCommand CommandData,
-        DateTime StartTimestamp,
-        DateTime EndTimeStamp
+        DateTime? NotBefore,
+        DateTime? ExpirationTime
     );
 
     public record CronJob<TCommand>

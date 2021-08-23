@@ -5,8 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-
-using Fabron.Mando;
 using Fabron.Models;
 using Microsoft.Extensions.Logging;
 
@@ -20,13 +18,14 @@ namespace Fabron.Grains
     {
         [ReadOnly]
         Task<CronJob> GetState();
-        Task Schedule(string cronExp, string commandName, string commandData, Dictionary<string, string>? labels = null);
+        Task Schedule(string cronExp, string commandName, string commandData, DateTime? start, DateTime? end, Dictionary<string, string>? labels);
     }
 
     public class CronJobGrain : Grain, ICronJobGrain, IRemindable
     {
         private readonly ILogger _logger;
         private readonly IPersistentState<CronJob> _job;
+        private readonly IJobEventBus _bus;
         private IGrainReminder? _reminder;
         private IDisposable? _timer;
         private IDisposable? _probeTimer;
@@ -34,17 +33,18 @@ namespace Fabron.Grains
         public CronJobGrain(
             ILogger<CronJobGrain> logger,
             [PersistentState("CronJob", "JobStore")] IPersistentState<CronJob> job,
-            IMediator mediator)
+            IJobEventBus bus)
         {
             _logger = logger;
             _job = job;
+            _bus = bus;
         }
 
         private CronJob Job => _job.State;
 
         public Task<CronJob> GetState() => Task.FromResult(_job.State);
 
-        public async Task Schedule(string cronExp, string commandName, string commandData, Dictionary<string, string>? labels = null)
+        public async Task Schedule(string cronExp, string commandName, string commandData, DateTime? notBefore, DateTime? expirationTime, Dictionary<string, string>? labels)
         {
             if (!_job.RecordExists)
             {
@@ -55,11 +55,11 @@ namespace Fabron.Grains
                     Spec = new CronJobSpec(cronExp,
                         commandName,
                         commandData,
-                        now,
-                        DateTime.MaxValue),
+                        notBefore,
+                        expirationTime),
                     Status = new CronJobStatus(new List<JobItem>())
                 };
-                await _job.WriteStateAsync();
+                await SaveJobStateAsync();
                 _logger.LogDebug($"CronJob[{Job.Metadata.Uid}]: Created");
             }
 
@@ -116,7 +116,7 @@ namespace Fabron.Grains
             {
                 Jobs = jobItems.TakeLast(10).ToList()
             };
-            await _job.WriteStateAsync();
+            await SaveJobStateAsync();
         }
 
         private async Task<JobItem> ScheduleChildJob(uint index)
@@ -152,11 +152,6 @@ namespace Fabron.Grains
 
         private async Task Complete()
         {
-            Job.Status = Job.Status with
-            {
-                CompletionTimestamp = DateTime.UtcNow,
-            };
-            await _job.WriteStateAsync();
             if (_reminder is null)
             {
                 _reminder = await GetReminder("Check");
@@ -165,7 +160,13 @@ namespace Fabron.Grains
             {
                 await UnregisterReminder(_reminder);
             }
-            return;
+
+            Job.Status = Job.Status with
+            {
+                CompletionTimestamp = DateTime.UtcNow,
+            };
+            await _bus.OnCronJobFinalized(Job);
+            await SaveJobStateAsync();
         }
 
         private async Task ScheduleNextJob()
@@ -179,7 +180,7 @@ namespace Fabron.Grains
             {
                 Jobs = items.TakeLast(10).ToList()
             };
-            await _job.WriteStateAsync();
+            await SaveJobStateAsync();
             EnsureProbeTimer();
             _logger.LogDebug($"CronJob[{Job.Metadata.Uid}]: Scheduled job-{jobItem.Index}");
         }
@@ -209,5 +210,17 @@ namespace Fabron.Grains
         private void StopProbeTimer() => _probeTimer?.Dispose();
 
         Task IRemindable.ReceiveReminder(string reminderName, TickStatus status) => Schedule();
+
+
+        private async Task SaveJobStateAsync()
+        {
+            Job.Version += 1;
+            await _job.WriteStateAsync();
+
+            if (!Job.Status.Finalized)
+            {
+                await _bus.OnCronJobStateChanged(Job);
+            }
+        }
     }
 }

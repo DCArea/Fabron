@@ -11,6 +11,7 @@ namespace Fabron.Models
         public JobMetadata Metadata { get; set; } = default!;
         public JobSpec Spec { get; init; } = default!;
         public JobStatus Status { get; set; } = default!;
+        public ulong Version { get; set; }
 
         public TimeSpan DueTime
         {
@@ -29,8 +30,7 @@ namespace Fabron.Models
     public record JobMetadata(
         string Uid,
         DateTime CreationTimestamp,
-        Dictionary<string, string> Labels,
-        long ResourceVersion = 0
+        Dictionary<string, string> Labels
     );
 
     public record JobSpec(
@@ -45,6 +45,7 @@ namespace Fabron.Models
         DateTime? FinishedAt = null,
         string? Result = null,
         string? Reason = null,
-        bool Finalized = false
+        bool Finalized = false,
+        ulong StateVersion = 0
     );
 }

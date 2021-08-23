@@ -30,29 +30,12 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddSingleton<IJobReporter, TJobReporter>();
             return services;
         }
-
-        public static IServiceCollection AddElasticSearchJobReporter(this IServiceCollection services, IConfiguration config)
+        public static IServiceCollection AddJobQuerier<TJobQuerier>(this IServiceCollection services)
+            where TJobQuerier: class, IJobQuerier
         {
-            services.Configure<ElasticSearchJobReporterOptions>(config);
-            return services.AddElasticSearchJobReporter();
-        }
-
-        public static IServiceCollection AddElasticSearchJobReporter(this IServiceCollection services, Action<ElasticSearchJobReporterOptions> configure)
-        {
-            services.Configure<ElasticSearchJobReporterOptions>(configure);
-            return services.AddElasticSearchJobReporter();
-        }
-
-        public static IServiceCollection AddElasticSearchJobReporter(this IServiceCollection services)
-        {
-            services.AddSingleton<IJobReporter, ElasticSearchJobReporter>(sp =>
-            {
-                ElasticSearchJobReporterOptions options = sp.GetRequiredService<IOptions<ElasticSearchJobReporterOptions>>().Value;
-                var settings = new ConnectionSettings(new Uri(options.Server));
-                ElasticClient? client = new(settings);
-                return ActivatorUtilities.CreateInstance<ElasticSearchJobReporter>(sp, client);
-            });
+            services.AddSingleton<IJobQuerier, TJobQuerier>();
             return services;
         }
+
     }
 }

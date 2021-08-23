@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 
 using Fabron.Core.Test.Grains;
 using Fabron.Grains;
-using Fabron.Models;
 using Microsoft.Extensions.Logging;
 
 using Orleans.TestKit;
@@ -45,7 +44,7 @@ namespace Fabron.Test.Grains.CronJob
             return grain;
         }
 
-        private async Task Schedule(CronJobGrain grain, string cronExp) => await grain.Schedule(cronExp, Command.Name, Command.Data);
+        private async Task Schedule(CronJobGrain grain, string cronExp) => await grain.Schedule(cronExp, Command.Name, Command.Data, null, null, null);
     }
 }
 

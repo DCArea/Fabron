@@ -90,6 +90,7 @@ function deploy_configmap(es_config: ElasticSearchConfig) {
         data: {
             "Reporters__ElasticSearch__Server": pulumi.interpolate`http://${es_config.host}:${es_config.port}`,
             "Reporters__ElasticSearch__JobIndexName": "jobs",
+            "Reporters__ElasticSearch__CronJobIndexName": "cronjobs",
         }
     });
     return configmap;

@@ -24,8 +24,8 @@ namespace Fabron.Models
         string Schedule,
         string CommandName,
         string CommandData,
-        DateTime StartTimestamp,
-        DateTime EndTimeStamp
+        DateTime? NotBefore,
+        DateTime? ExpirationTime
     );
 
     public record CronJobStatus(
@@ -41,6 +41,7 @@ namespace Fabron.Models
         public CronJobMetadata Metadata { get; init; } = default!;
         public CronJobSpec Spec { get; init; } = default!;
         public CronJobStatus Status { get; set; } = default!;
+        public ulong Version { get; set; }
 
         public IEnumerable<JobItem> RunningJobs => Status.Jobs.Where(item => item.Status == ExecutionStatus.Scheduled);
         public IEnumerable<JobItem> FinishedJobs => Status.Jobs.Where(item => item.Status is ExecutionStatus.Succeed or ExecutionStatus.Faulted);
@@ -53,9 +54,10 @@ namespace Fabron.Models
         {
             Cronos.CronExpression cron = Cronos.CronExpression.Parse(Spec.Schedule);
             JobItem? lastedJob = LatestItem;
-            DateTime lastestScheduledAt = lastedJob is null ? Spec.StartTimestamp : lastedJob.Schedule;
+            DateTime notBefore = Spec.NotBefore ?? Metadata.CreationTimestamp;
+            DateTime lastestScheduledAt = lastedJob is null ? notBefore : lastedJob.Schedule;
             DateTime? nextSchedule = cron.GetNextOccurrence(lastestScheduledAt, true);
-            if (nextSchedule is null || nextSchedule.Value > Spec.EndTimeStamp)
+            if (nextSchedule is null || nextSchedule.Value > Spec.ExpirationTime)
             {
                 return null;
             }
