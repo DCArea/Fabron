@@ -14,6 +14,33 @@ namespace Microsoft.Extensions.DependencyInjection
 {
     public static class MediatorServiceCollectionExtensions
     {
+        public static IServiceCollection RegisterCommands(this IServiceCollection services, IEnumerable<Assembly>? assemblies = null)
+        {
+            if (assemblies is null || !assemblies.Any())
+            {
+                assemblies = AppDomain.CurrentDomain
+                    .GetAssemblies()
+                    .Where(a => !a.IsDynamic);
+            }
+
+            IEnumerable<Type> assemblyTypes = assemblies.SelectMany(assembly => assembly.GetExportedTypes());
+            IEnumerable<Type> commandTypes = assemblyTypes.Where(t => t.IsClass && !t.IsAbstract && t.GetInterface(typeof(ICommand<>).Name) is not null);
+            IEnumerable<(Type commandType, Type resultType)> tuples = commandTypes.Select(commandType =>
+            {
+                Type resultType = commandType.GetInterface(typeof(ICommand<>).Name)!.GetGenericArguments().Single();
+                return (commandType, resultType);
+            });
+
+            services.Configure<CommandRegistry>(opt =>
+            {
+                foreach ((Type commandType, Type resultType) in tuples){
+                    opt.RegisterCommand(commandType, resultType);
+                }
+            });
+
+            return services;
+        }
+
         public static IServiceCollection RegisterJobCommandHandlers(this IServiceCollection services, IEnumerable<Assembly>? assemblies = null)
         {
             if (assemblies is null || !assemblies.Any())
@@ -38,14 +65,14 @@ namespace Microsoft.Extensions.DependencyInjection
                     .Single(t => t.IsClass && handlerInterfaceType.IsAssignableFrom(t));
 
                 typeof(MediatorServiceCollectionExtensions)
-                    .GetMethod(nameof(RegisterJobCommandHandlerHandler))!
+                    .GetMethod(nameof(RegisterJobCommandHandler))!
                     .MakeGenericMethod(handlerImplemention, commandType, resultType)!
                     .Invoke(null, new[] { services });
             }
             return services;
         }
 
-        public static IServiceCollection RegisterJobCommandHandlerHandler<THandler, TCommand, TResult>(this IServiceCollection services)
+        public static IServiceCollection RegisterJobCommandHandler<THandler, TCommand, TResult>(this IServiceCollection services)
             where THandler : class, ICommandHandler<TCommand, TResult>
             where TCommand : ICommand<TResult>
         {
@@ -55,7 +82,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.TryAddTransient<ICommandHandler<TCommand, TResult>, THandler>();
             services.Configure<CommandRegistry>(opt =>
             {
-                opt.RegisterCommand<TCommand, TResult>();
+                opt.RegisterCommandHandler<TCommand, TResult>();
             });
 
             return services;

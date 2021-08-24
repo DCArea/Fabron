@@ -21,7 +21,7 @@ namespace FabronService.FunctionalTests
             => services.ConfigureFramework()
                 .AddApiKeyAuth(Configuration["ApiKey"])
                 .AddSwagger()
-                .RegisterJobCommandHandlers()
+                .RegisterCommands()
                 .AddJobQuerier<NoopJobQuerier>();
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
