@@ -13,7 +13,6 @@ COPY src/Fabron.Core/*.csproj ./src/Fabron.Core/
 COPY src/Fabron.Core.Test/*.csproj ./src/Fabron.Core.Test/
 COPY src/Fabron.Mando/*.csproj ./src/Fabron.Mando/
 COPY src/Fabron.Server/*.csproj ./src/Fabron.Server/
-COPY src/Orleans.Reminders.Redis/*.csproj ./src/Orleans.Reminders.Redis/
 RUN dotnet restore
 
 # copy everything else and build app

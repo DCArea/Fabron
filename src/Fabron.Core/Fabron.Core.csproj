@@ -3,6 +3,9 @@
   <PropertyGroup>
     <TargetFramework>$(DefaultTargetFramework)</TargetFramework>
     <RootNamespace>Fabron</RootNamespace>
+    <PackageId>Fabron.Core</PackageId>
+    <VersionPrefix>0.0.1</VersionPrefix>
+    <RepositoryUrl>https://github.com/DCArea/Fabron</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
