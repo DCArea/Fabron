@@ -35,7 +35,7 @@ jobs:
     - name: Pack
       run: dotnet pack --configuration Release --no-build --version-suffix dev.${{ github.run_number }} -o nupkgs
     - name: NuGet Push
-      run: Get-Item nupkgs/*.nupkg |% { dotnet nuget push $_ --source https://nuget.pkg.github.com/DCArea/index.json --api-key ${{ secrets.GITHUB_TOKEN }} }
+      run: Get-Item nupkgs/*.nupkg |% { dotnet nuget push $_ --source https://www.myget.org/F/dca/api/v3/index.json --api-key ${{ secrets.MYGET_APIKEY }} }
       shell: pwsh
   publish_image:
     name: Build & Push Container Image
