@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Reflection;
 
 using Fabron;
-
+using Fabron.Mando;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Orleans.Hosting
@@ -17,17 +17,12 @@ namespace Orleans.Hosting
             siloBuilder
                 .ConfigureServices((ctx, services) =>
                 {
-                    services.AddFabronCore();
+                    services.AddScoped<IMediator, Mediator>()
+                        .RegisterJobCommandHandlers(commandAssemblies)
+                        .AddJobReporter<NoopJobReporter>()
+                        .AddJobQuerier<NoopJobQuerier>()
+                        .AddSingleton<IJobEventBus, GrainBasedJobEventBus>();
                 });
-
-            siloBuilder.ConfigureServices((ctx, services) =>
-            {
-                services.RegisterJobCommandHandlers(commandAssemblies);
-                services.AddJobReporter<NoopJobReporter>();
-                services.AddJobQuerier<NoopJobQuerier>();
-                services.AddSingleton<IJobEventBus, GrainBasedJobEventBus>();
-            });
-
             return siloBuilder;
         }
 

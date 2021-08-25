@@ -38,7 +38,7 @@ namespace FabronService.Resources.CronHttpReminders
             string? tenantId = HttpContext.User.Identity!.Name!;
             string? resourceUri = $"tenants/{tenantId}/CronHttpReminders/{req.Name}";
             string? resourceId = await _resourceLocator.GetOrCreateResourceId(resourceUri);
-            Fabron.Contracts.CronJob<RequestWebAPI>? job = await _jobManager.ScheduleCronJob<RequestWebAPI>(resourceId, req.Schedule, req.Command, req.NotBefore, req.ExpirationTime, new Dictionary<string, string> { { "tenant", tenantId } });
+            Fabron.Contracts.CronJob<RequestWebAPI>? job = await _jobManager.ScheduleCronJob<RequestWebAPI>(resourceId, req.Schedule, req.Command, req.NotBefore, req.ExpirationTime, labels: new Dictionary<string, string> { { "tenant", tenantId } });
             CronHttpReminder? reminder = job.ToResource(req.Name);
             return CreatedAtRoute("CronHttpReminders_Get", new { name = reminder.Name }, reminder);
         }

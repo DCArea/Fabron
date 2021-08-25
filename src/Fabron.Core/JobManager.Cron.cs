@@ -11,32 +11,47 @@ using Fabron.Contracts;
 using Fabron.Grains;
 using Fabron.Mando;
 using Fabron.Models;
-using Microsoft.Extensions.Logging;
 
 namespace Fabron
 {
     public partial class JobManager
     {
-        public async Task<CronJob<TCommand>> ScheduleCronJob<TCommand>(string jobId, string cronExp, TCommand command, DateTime? notBefore = null, DateTime? expirationTime = null, Dictionary<string, string>? labels = null)
-            where TCommand : ICommand
+        public async Task<CronJob<TCommand>> ScheduleCronJob<TCommand>(
+            string jobId,
+            string cronExp,
+            TCommand command,
+            DateTime? notBefore = null,
+            DateTime? expirationTime = null,
+            bool suspend = false,
+            Dictionary<string, string>? labels = null) where TCommand : ICommand
         {
             string commandName = _registry.CommandNameRegistrations[typeof(TCommand)];
             string commandData = JsonSerializer.Serialize(command);
 
-            CronJob state = await ScheduleCronJob(jobId, cronExp, commandName, commandData, notBefore, expirationTime, labels);
+            ICronJobGrain grain = _client.GetGrain<ICronJobGrain>(jobId);
+            await grain.Schedule(
+                cronExp,
+                commandName,
+                commandData,
+                notBefore,
+                expirationTime,
+                suspend,
+                labels);
+            CronJob state = await grain.GetState();
             return state.Map<TCommand>();
         }
 
-        private async Task<CronJob> ScheduleCronJob(string jobId, string cronExp, string commandName, string commandData, DateTime? notBefore, DateTime? expirationTime, Dictionary<string, string>? labels)
+        public Task SuspendCronJob(string jobId)
         {
-            _logger.LogDebug($"Creating CronJob[{jobId}]");
             ICronJobGrain grain = _client.GetGrain<ICronJobGrain>(jobId);
-            await grain.Schedule(cronExp, commandName, commandData, notBefore, expirationTime, labels);
-            _logger.LogDebug($"CronJob[{jobId}] Created");
-
-            return await grain.GetState();
+            return grain.Suspend();
         }
 
+        public Task ResumeCronJob(string jobId)
+        {
+            ICronJobGrain grain = _client.GetGrain<ICronJobGrain>(jobId);
+            return grain.Resume();
+        }
 
         public async Task<CronJob<TCommand>?> GetCronJobById<TCommand>(string jobId)
             where TCommand : ICommand
@@ -47,7 +62,6 @@ namespace Fabron
             {
                 return null;
             }
-
             return jobState.Map<TCommand>();
         }
 

@@ -25,8 +25,8 @@ namespace Fabron.Models
         string CommandName,
         string CommandData,
         DateTime? NotBefore,
-        DateTime? ExpirationTime
-    );
+        DateTime? ExpirationTime,
+        bool Suspend);
 
     public record CronJobStatus(
         List<JobItem> Jobs,
@@ -39,7 +39,7 @@ namespace Fabron.Models
     public class CronJob
     {
         public CronJobMetadata Metadata { get; init; } = default!;
-        public CronJobSpec Spec { get; init; } = default!;
+        public CronJobSpec Spec { get; set; } = default!;
         public CronJobStatus Status { get; set; } = default!;
         public ulong Version { get; set; }
 
@@ -50,18 +50,19 @@ namespace Fabron.Models
 
         public bool HasRunningJobs => Status.Jobs.Any(item => item.Status == ExecutionStatus.Scheduled);
 
-        public DateTime? GetNextSchedule()
+        public DateTime? GetNextTick(DateTime notBefore)
         {
             Cronos.CronExpression cron = Cronos.CronExpression.Parse(Spec.Schedule);
             JobItem? lastedJob = LatestItem;
-            DateTime notBefore = Spec.NotBefore ?? Metadata.CreationTimestamp;
-            DateTime lastestScheduledAt = lastedJob is null ? notBefore : lastedJob.Schedule;
-            DateTime? nextSchedule = cron.GetNextOccurrence(lastestScheduledAt, true);
-            if (nextSchedule is null || nextSchedule.Value > Spec.ExpirationTime)
+            DateTime fromUtc = Spec.NotBefore ?? Metadata.CreationTimestamp;
+            fromUtc = lastedJob is null ? fromUtc : lastedJob.Schedule;
+            fromUtc = fromUtc > notBefore ? fromUtc : notBefore;
+            DateTime? nextTick = cron.GetNextOccurrence(fromUtc, true);
+            if (nextTick is null || nextTick.Value > Spec.ExpirationTime)
             {
                 return null;
             }
-            return nextSchedule;
+            return nextTick;
         }
 
         public string GetChildJobIdByIndex(uint index) => Metadata.Uid + "-" + index;
