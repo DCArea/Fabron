@@ -17,9 +17,12 @@ namespace Fabron.Grains
     public interface ICronJobGrain : IGrainWithStringKey
     {
         [ReadOnly]
-        Task<CronJob> GetState();
+        Task<CronJob?> GetState();
 
         Task Schedule(string cronExp, string commandName, string commandData, DateTime? start, DateTime? end, bool suspend, Dictionary<string, string>? labels);
+
+        [AlwaysInterleave]
+        Task Delete();
 
         Task Suspend();
 
@@ -47,7 +50,7 @@ namespace Fabron.Grains
 
         private CronJob Job => _jobState.State;
 
-        public Task<CronJob> GetState() => Task.FromResult(_jobState.State);
+        public Task<CronJob?> GetState() => Task.FromResult(_jobState.RecordExists ? _jobState.State : default);
 
         public async Task Schedule(
             string cronExp,
@@ -81,7 +84,13 @@ namespace Fabron.Grains
             {
                 await ScheduleNextTick();
             }
-            _logger.LogDebug($"CronJob[{Job.Metadata.Uid}]: reminder(Check) registered");
+        }
+
+        public async Task Delete()
+        {
+            await _jobState.ClearStateAsync();
+            await StopTicker();
+            _logger.LogDebug($"CronJob[{Job.Metadata.Uid}]: Deleted");
         }
 
         public async Task Suspend()
@@ -230,15 +239,6 @@ namespace Fabron.Grains
             _logger.LogDebug($"CronJob[{Job.Metadata.Uid}]: Tick After {dueTime}");
         }
 
-        private void EnsureStatusProber()
-        {
-            if (_statusProber is null)
-            {
-                _statusProber = RegisterTimer(_ => CheckJobStatus(), null, TimeSpan.FromSeconds(20), TimeSpan.FromSeconds(20));
-            }
-        }
-        private void StopProbeTimer() => _statusProber?.Dispose();
-
         private async Task StopTicker()
         {
             _tickTimer?.Dispose();
@@ -251,6 +251,15 @@ namespace Fabron.Grains
                 await UnregisterReminder(_tickReminder);
             }
         }
+
+        private void EnsureStatusProber()
+        {
+            if (_statusProber is null)
+            {
+                _statusProber = RegisterTimer(_ => CheckJobStatus(), null, TimeSpan.FromSeconds(20), TimeSpan.FromSeconds(20));
+            }
+        }
+        private void StopProbeTimer() => _statusProber?.Dispose();
 
         Task IRemindable.ReceiveReminder(string reminderName, TickStatus status) => Tick();
 

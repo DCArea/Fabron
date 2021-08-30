@@ -40,7 +40,7 @@ namespace Fabron.Models
     );
 
     public record JobStatus(
-        ExecutionStatus ExecutionStatus = ExecutionStatus.NotScheduled,
+        ExecutionStatus ExecutionStatus = ExecutionStatus.Scheduled,
         DateTime? StartedAt = null,
         DateTime? FinishedAt = null,
         string? Result = null,

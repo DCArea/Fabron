@@ -37,8 +37,8 @@ namespace Fabron
                 expirationTime,
                 suspend,
                 labels);
-            CronJob state = await grain.GetState();
-            return state.Map<TCommand>();
+            CronJob? state = await grain.GetState();
+            return state!.Map<TCommand>();
         }
 
         public Task SuspendCronJob(string jobId)
@@ -63,6 +63,11 @@ namespace Fabron
                 return null;
             }
             return jobState.Map<TCommand>();
+        }
+
+        public Task DeleteCronJobById(string jobId)
+        {
+            return _client.GetGrain<ICronJobGrain>(jobId).Delete();
         }
 
         public async Task<IEnumerable<CronJob<TJobCommand>>> GetCronJobByLabel<TJobCommand>(string labelName, string labelValue)

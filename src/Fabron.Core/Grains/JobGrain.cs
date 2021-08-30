@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
 
 using Fabron.Mando;
@@ -18,13 +17,14 @@ namespace Fabron.Grains
 {
     public interface IJobGrain : IGrainWithStringKey
     {
-        [AlwaysInterleave]
-        Task Cancel(string reason);
         [ReadOnly]
         Task<Job?> GetState();
         [ReadOnly]
         Task<ExecutionStatus> GetStatus();
         Task<Job> Schedule(string commandName, string commandData, DateTime? schedule = null, Dictionary<string, string>? labels = null);
+
+        [AlwaysInterleave]
+        Task Delete();
     }
 
     public class JobGrain : Grain, IJobGrain, IRemindable
@@ -33,9 +33,8 @@ namespace Fabron.Grains
         private readonly IPersistentState<Job> _jobState;
         private readonly IMediator _mediator;
         private readonly IJobEventBus _bus;
-        private IDisposable? _timer;
-        private IGrainReminder? _reminder;
-        private CancellationTokenSource? _cancellationTokenSource;
+        private IGrainReminder? _tickReminder;
+        private IDisposable? _tickTimer;
 
         public JobGrain(
             ILogger<JobGrain> logger,
@@ -59,116 +58,86 @@ namespace Fabron.Grains
 
         public Task<ExecutionStatus> GetStatus() => Task.FromResult(Job.Status.ExecutionStatus);
 
-        public async Task Cancel(string reason)
+        public async Task Delete()
         {
-            if (_cancellationTokenSource is null)
-            {
-                throw new InvalidOperationException();
-            }
-
-            if (!_cancellationTokenSource.IsCancellationRequested)
-            {
-                _cancellationTokenSource.Cancel();
-            }
-
-            Job.Status = Job.Status with
-            {
-                ExecutionStatus = ExecutionStatus.Canceled,
-                FinishedAt = DateTime.UtcNow,
-                Reason = reason,
-            };
-            await SaveJobStateAsync();
-            MetricsHelper.JobCount_Canceled.Inc();
+            await StopTicker();
+            await _jobState.ClearStateAsync();
         }
 
         public async Task<Job> Schedule(string commandName, string commandData, DateTime? schedule = null, Dictionary<string, string>? labels = null)
         {
-            if (!_jobState.RecordExists)
+            DateTime createdAt = DateTime.UtcNow;
+            DateTime schedule_ = schedule is null || schedule.Value < createdAt ? createdAt : (DateTime)schedule;
+            _jobState.State = new Job
             {
-                DateTime createdAt = DateTime.UtcNow;
-                DateTime schedule_ = schedule is null || schedule.Value < createdAt ? createdAt : (DateTime)schedule;
-                _jobState.State = new Job
-                {
-                    Metadata = new JobMetadata(this.GetPrimaryKeyString(), createdAt, labels ?? new()),
-                    Spec = new JobSpec(schedule_, commandName, commandData),
-                    Status = new JobStatus()
-                };
-                await SaveJobStateAsync();
-                MetricsHelper.JobCount_Created.Inc();
-                _logger.LogDebug($"Created Job");
+                Metadata = new JobMetadata(this.GetPrimaryKeyString(), createdAt, labels ?? new()),
+                Spec = new JobSpec(schedule_, commandName, commandData),
+                Status = new JobStatus()
+            };
+            TimeSpan dueTime = Job.DueTime;
+
+            if (dueTime.TotalMinutes < 2)
+            {
+                _tickReminder = await RegisterOrUpdateReminder("Ticker", dueTime.Add(TimeSpan.FromMinutes(2)), TimeSpan.FromMinutes(2));
+            }
+            else
+            {
+                _tickReminder = await RegisterOrUpdateReminder("Ticker", dueTime, TimeSpan.FromMinutes(2));
             }
 
-            await Next();
+            await SaveJobStateAsync();
+            _logger.LogDebug($"Job{Job.Metadata.Uid} Scheduled");
+            MetricsHelper.JobCount_Scheduled.Inc();
+
+            dueTime = Job.DueTime;
+            if (dueTime.TotalMinutes < 2)
+            {
+                _tickTimer = RegisterTimer(_ => Next(), null, dueTime, TimeSpan.FromMilliseconds(-1));
+            }
 
             return Job;
         }
 
         private async Task Next()
         {
-            while (true)
+            _tickTimer?.Dispose();
+            if (Job.Status.Finalized)
             {
-                if (Job.Status.Finalized)
-                {
-                    return;
-                }
-                TimeSpan dueTime = Job.DueTime;
-                if (Job.Status is { ExecutionStatus: ExecutionStatus.Scheduled } && dueTime is { TotalSeconds: >= 2 * 60 })
-                {
-                    return;
-                }
-                if (Job.Status is { ExecutionStatus: ExecutionStatus.Scheduled } && dueTime is { TotalMilliseconds: > 15 and < 2 * 60 * 1_000 })
-                {
-                    StartAfter(_jobState.State.DueTime);
-                    return;
-                }
-
-                Task next = Job.Status switch
-                {
-                    { ExecutionStatus: ExecutionStatus.NotScheduled } => Schedule(),
-                    { ExecutionStatus: ExecutionStatus.Scheduled } => Start(),
-                    { ExecutionStatus: ExecutionStatus.Started } => Execute(),
-                    { ExecutionStatus: ExecutionStatus.Succeed or ExecutionStatus.Faulted } => Cleanup(),
-                    _ => throw new InvalidOperationException()
-                };
-                await next;
+                return;
             }
-        }
 
-        private async Task Schedule()
-        {
-            TimeSpan dueTime = _jobState.State.DueTime;
-            await CheckAfter(dueTime);
-
-            Job.Status = Job.Status with
+            Task next = Job.Status switch
             {
-                ExecutionStatus = ExecutionStatus.Scheduled
+                { ExecutionStatus: ExecutionStatus.Scheduled } => Start(),
+                { ExecutionStatus: ExecutionStatus.Started } => Execute(),
+                { ExecutionStatus: ExecutionStatus.Succeed or ExecutionStatus.Faulted } => Cleanup(),
+                _ => throw new InvalidOperationException()
             };
-            await SaveJobStateAsync();
-            MetricsHelper.JobCount_Scheduled.Inc();
+            await next;
         }
 
         private async Task Start()
         {
-            _timer?.Dispose();
-
+            _logger.LogDebug($"Job{Job.Metadata.Uid} Starting");
             Job.Status = Job.Status with
             {
                 StartedAt = DateTime.UtcNow,
                 ExecutionStatus = ExecutionStatus.Started,
             };
             await SaveJobStateAsync();
-
             MetricsHelper.JobCount_Running.Inc();
             MetricsHelper.JobScheduleTardiness.Observe(_jobState.State.Tardiness.TotalSeconds);
+            _logger.LogDebug($"Job{Job.Metadata.Uid} Started");
+
+            await Next();
         }
 
         private async Task Execute()
         {
-            _logger.LogDebug($"Run Job");
-            _cancellationTokenSource ??= new CancellationTokenSource(TimeSpan.FromMinutes(1));
+            _logger.LogDebug($"Job{Job.Metadata.Uid} Executing");
             try
             {
-                string? result = await _mediator.Handle(_jobState.State.Spec.CommandName, _jobState.State.Spec.CommandData, _cancellationTokenSource.Token);
+                string? result = await _mediator.Handle(_jobState.State.Spec.CommandName, _jobState.State.Spec.CommandData);
                 Job.Status = Job.Status with
                 {
                     ExecutionStatus = ExecutionStatus.Succeed,
@@ -194,54 +163,37 @@ namespace Fabron.Grains
             {
                 await SaveJobStateAsync();
             }
-            _logger.LogDebug($"Job Finished: {Job.Status.ExecutionStatus}");
+            _logger.LogDebug($"Job{Job.Metadata.Uid} Executing completed({Job.Status.ExecutionStatus})");
+
+            await Next();
         }
 
         private async Task Cleanup()
         {
-            if (_reminder is null)
-            {
-                _reminder = await GetReminder("Check");
-            }
-
-            if (_reminder is not null)
-            {
-                await UnregisterReminder(_reminder);
-                _reminder = null;
-                _logger.LogDebug($"Job Reminder Unregistered");
-            }
-
             Job.Status = Job.Status with
             {
                 Finalized = true
             };
             await _bus.OnJobFinalized(Job);
             await SaveJobStateAsync();
+            await StopTicker();
+            _logger.LogDebug($"Job[{Job.Metadata.Uid}]: Finalized");
             DeactivateOnIdle();
         }
 
-        private async Task CheckAfter(TimeSpan dueTime)
-        {
-            if (dueTime < TimeSpan.FromMinutes(2))
-            {
-                await SetReminder(TimeSpan.FromMinutes(2));
-            }
-            else
-            {
-                await SetReminder(dueTime - TimeSpan.FromMinutes(2));
-            }
+        private async Task EnsureTicker() => _tickReminder = await RegisterOrUpdateReminder("Ticker", TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(2));
 
-            async Task SetReminder(TimeSpan dueTime)
-            {
-                _reminder = await RegisterOrUpdateReminder("Check", dueTime, TimeSpan.FromMinutes(2));
-                _logger.LogDebug($"Job Reminder Registered, dueTime={dueTime}");
-            }
-        }
-        private void StartAfter(TimeSpan dueTime)
+        private async Task StopTicker()
         {
-            _timer?.Dispose();
-            _timer = RegisterTimer(_ => Start(), null, dueTime, TimeSpan.FromMilliseconds(-1));
-            _logger.LogDebug($"Set Job Timer with, dueTime={dueTime}");
+            _tickTimer?.Dispose();
+            if (_tickReminder is null)
+            {
+                _tickReminder = await GetReminder("Ticker");
+            }
+            if (_tickReminder is not null)
+            {
+                await UnregisterReminder(_tickReminder);
+            }
         }
 
         private async Task SaveJobStateAsync()
@@ -263,7 +215,7 @@ namespace Fabron.Grains
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error on ReceiveReminder");
+                _logger.LogError(ex, $"Job[{Job.Metadata.Uid}]: Error on ReceiveReminder");
                 throw;
             }
         }

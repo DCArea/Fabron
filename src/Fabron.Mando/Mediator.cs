@@ -11,7 +11,7 @@ namespace Fabron.Mando
 {
     public interface IMediator
     {
-        Task<string?> Handle(string commandName, string commandData, CancellationToken token);
+        Task<string?> Handle(string commandName, string commandData, CancellationToken token = default);
     }
 
     public class Mediator : IMediator

@@ -51,6 +51,11 @@ namespace Fabron
             return jobState.Map<TJobCommand, TResult>();
         }
 
+        public Task DeleteJobById(string jobId)
+        {
+            return _client.GetGrain<IJobGrain>(jobId).Delete();
+        }
+
         public async Task<IEnumerable<Job<TJobCommand, TResult>>> GetJobByLabel<TJobCommand, TResult>(string labelName, string labelValue)
             where TJobCommand : ICommand<TResult>
         {
