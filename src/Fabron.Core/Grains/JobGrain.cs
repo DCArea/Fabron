@@ -154,6 +154,7 @@ namespace Fabron.Grains
                         FinishedAt = DateTime.UtcNow,
                         Reason = e.ToString(),
                     };
+                    await _bus.OnJobExecutionFailed(Job, Job.Status.Reason);
                     MetricsHelper.JobCount_Faulted.Inc();
                 }
             }
