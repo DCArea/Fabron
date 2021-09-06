@@ -32,9 +32,7 @@ namespace Fabron.Mando
 
         public void RegisterCommand<TCommand, TResult>()
             where TCommand : ICommand<TResult>
-        {
-            RegisterCommand(typeof(TCommand), typeof(TResult));
-        }
+            => RegisterCommand(typeof(TCommand), typeof(TResult));
 
         public void RegisterCommandHandler<TCommand, TResult>()
             where TCommand : ICommand<TResult>

@@ -38,9 +38,7 @@ namespace FabronService.Grains
         }
 
         public Task<string?> GetId()
-        {
-            return Task.FromResult(_state.State.Id);
-        }
+            => Task.FromResult(_state.State.Id);
 
         public async Task<string> GetOrCreateId()
         {

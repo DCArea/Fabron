@@ -1,7 +1,4 @@
-﻿
-
-using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
 using FabronService.Grains;
 
@@ -10,24 +7,21 @@ using Orleans;
 namespace FabronService.Services
 {
 
-    public class ResourceLocator: IResourceLocator
+    public class ResourceLocator : IResourceLocator
     {
         private readonly IClusterClient _client;
 
-        public ResourceLocator(IClusterClient client)
-        {
-            _client = client;
-        }
+        public ResourceLocator(IClusterClient client) => _client = client;
 
         public async Task<string> GetOrCreateResourceId(string resourceUri)
         {
-            var id = await _client.GetGrain<IResourceGrain>(resourceUri).GetOrCreateId();
+            string id = await _client.GetGrain<IResourceGrain>(resourceUri).GetOrCreateId();
             return id;
         }
 
         public async Task<string?> GetResourceId(string resourceUri)
         {
-            var id = await _client.GetGrain<IResourceGrain>(resourceUri).GetId();
+            string? id = await _client.GetGrain<IResourceGrain>(resourceUri).GetId();
             return id;
         }
     }

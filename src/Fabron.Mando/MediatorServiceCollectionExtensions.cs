@@ -31,7 +31,8 @@ namespace Microsoft.Extensions.DependencyInjection
 
             services.Configure<CommandRegistry>(opt =>
             {
-                foreach ((Type commandType, Type resultType) in tuples){
+                foreach ((Type commandType, Type resultType) in tuples)
+                {
                     opt.RegisterCommand(commandType, resultType);
                 }
             });

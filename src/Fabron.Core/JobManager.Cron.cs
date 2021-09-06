@@ -64,9 +64,7 @@ namespace Fabron
         }
 
         public Task DeleteCronJobById(string jobId)
-        {
-            return _client.GetGrain<ICronJobGrain>(jobId).Delete();
-        }
+            => _client.GetGrain<ICronJobGrain>(jobId).Delete();
 
         public async Task<IEnumerable<CronJob<TJobCommand>>> GetCronJobByLabel<TJobCommand>(string labelName, string labelValue)
             where TJobCommand : ICommand
