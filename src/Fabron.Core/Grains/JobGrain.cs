@@ -174,7 +174,6 @@ namespace Fabron.Grains
             {
                 Finalized = true
             };
-            await _bus.OnJobFinalized(Job);
             await SaveJobStateAsync();
             await StopTicker();
             _logger.LogDebug($"Job[{Job.Metadata.Uid}]: Finalized");
@@ -201,10 +200,7 @@ namespace Fabron.Grains
             Job.Version += 1;
             await _jobState.WriteStateAsync();
 
-            if (!Job.Status.Finalized)
-            {
-                await _bus.OnJobStateChanged(Job);
-            }
+            await _bus.OnJobStateChanged(Job);
         }
 
         Task IRemindable.ReceiveReminder(string reminderName, TickStatus status)

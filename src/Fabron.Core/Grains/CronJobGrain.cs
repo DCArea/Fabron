@@ -207,7 +207,6 @@ namespace Fabron.Grains
                 CompletionTimestamp = DateTime.UtcNow,
             };
             await SaveJobStateAsync();
-            await _bus.OnCronJobFinalized(Job);
             await StopTicker();
             _logger.LogDebug($"CronJob[{Job.Metadata.Uid}]: Completed");
         }
@@ -268,11 +267,7 @@ namespace Fabron.Grains
         {
             Job.Version += 1;
             await _jobState.WriteStateAsync();
-
-            if (!Job.Status.Finalized)
-            {
-                await _bus.OnCronJobStateChanged(Job);
-            }
+            await _bus.OnCronJobStateChanged(Job);
         }
     }
 }

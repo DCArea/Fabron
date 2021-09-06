@@ -10,10 +10,8 @@ namespace Fabron
     {
         Task OnJobStateChanged(Job jobState);
 
-        Task OnJobFinalized(Job jobState);
-
         Task OnCronJobStateChanged(CronJob jobState);
 
-        Task OnCronJobFinalized(CronJob jobState);
+        Task OnJobExecutionFailed(Job jobState, string reason);
     }
 }

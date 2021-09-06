@@ -21,7 +21,7 @@ namespace Orleans.Hosting
                         .RegisterJobCommandHandlers(commandAssemblies)
                         .AddJobReporter<NoopJobReporter>()
                         .AddJobQuerier<NoopJobQuerier>()
-                        .AddSingleton<IJobEventBus, GrainBasedJobEventBus>();
+                        .AddSingleton<IJobEventBus, DefaultJobEventBus>();
                 });
             return siloBuilder;
         }
