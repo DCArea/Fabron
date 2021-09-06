@@ -1,6 +1,3 @@
-// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-
 using System.Collections.Generic;
 using System.Reflection;
 
@@ -20,8 +17,7 @@ namespace Orleans.Hosting
                     services.AddScoped<IMediator, Mediator>()
                         .RegisterJobCommandHandlers(commandAssemblies)
                         .AddJobReporter<NoopJobReporter>()
-                        .AddJobQuerier<NoopJobQuerier>()
-                        .AddSingleton<IJobEventBus, DefaultJobEventBus>();
+                        .AddDefaultEventBus();
                 });
             return siloBuilder;
         }

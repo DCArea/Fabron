@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Fabron.ElasticSearch;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Orleans;
 using Orleans.Concurrency;
 using Prometheus;
@@ -27,16 +29,18 @@ namespace Fabron.Grains
         private readonly BatchWorkerFromDelegate _worker;
         private readonly List<string> _pendingJobs;
         private readonly List<string> _pendingCronJobs;
+        private readonly ElasticSearchOptions _options;
         private readonly ILogger _logger;
-        private readonly IJobReporter _reporter;
+        private readonly Nest.IElasticClient _esClient;
 
-        public BatchJobReporterWorker(ILogger<BatchJobReporterWorker> logger, IJobReporter reporter)
+        public BatchJobReporterWorker(ILogger<BatchJobReporterWorker> logger, IOptions<ElasticSearchOptions> options, Nest.IElasticClient esClient)
         {
             _worker = new BatchWorkerFromDelegate(Submit);
             _pendingJobs = new List<string>();
             _pendingCronJobs = new List<string>();
+            _options = options.Value;
             _logger = logger;
-            _reporter = reporter;
+            _esClient = esClient;
         }
 
         public Task ReportJob(string jobId)
@@ -62,25 +66,28 @@ namespace Fabron.Grains
                 return;
             }
 
-            string[] currentBatch = _pendingJobs.ToArray();
+            string[]? currentBatch = _pendingJobs.ToArray();
             IEnumerable<string> ids = currentBatch.GroupBy(id => id).Select(g => g.Key);
-            Fabron.Models.Job?[] jobStates = await Task.WhenAll(ids.Select(jobId => GrainFactory.GetGrain<IJobGrain>(jobId).GetState()));
-            List<Models.Job> jobs = jobStates
-                .Where(job => job is not null)
-                .Cast<Fabron.Models.Job>()
-                .ToList();
+            Fabron.Models.Job?[] jobs = await Task.WhenAll(ids.Select(jobId => GrainFactory.GetGrain<IJobGrain>(jobId).GetState()));
 
+            IEnumerable<JobDocument> docs = jobs.Where(job => job is not null).Select(job => new JobDocument(job!.Metadata.Uid,
+                  job.Metadata,
+                  job.Spec,
+                  job.Status));
+            Nest.BulkResponse res;
             using (JobIndexDuration.NewTimer())
             {
-                await _reporter.Report(jobs);
+                res = await Nest.IndexManyExtensions.IndexManyAsync(_esClient, docs, _options.JobIndexName);
+            }
+            _logger.LogDebug($"Indexed: {res.Items.Count}");
+
+            if (res.Errors)
+            {
+                _logger.LogError($"Failed to index docs: {res.ItemsWithErrors}");
             }
 
             _pendingJobs.RemoveRange(0, currentBatch.Length);
-            if (_logger.IsEnabled(LogLevel.Debug))
-            {
-                _logger.LogDebug($"Jobs[Reported]: {jobs.Count}");
-                _logger.LogDebug($"Jobs[Pending]: {_pendingJobs.Count}");
-            }
+            _logger.LogDebug($"Pending: {_pendingJobs.Count}");
         }
 
         private async Task IndexCronJobs()
@@ -92,23 +99,19 @@ namespace Fabron.Grains
 
             string[]? currentBatch = _pendingCronJobs.ToArray();
             IEnumerable<string> ids = currentBatch.GroupBy(id => id).Select(g => g.Key);
-            Fabron.Models.CronJob?[] jobStates = await Task.WhenAll(ids.Select(jobId => GrainFactory.GetGrain<ICronJobGrain>(jobId).GetState()));
-            List<Models.CronJob> jobs = jobStates
-                .Where(job => job is not null)
-                .Cast<Fabron.Models.CronJob>()
-                .ToList();
+            Fabron.Models.CronJob?[] jobs = await Task.WhenAll(ids.Select(jobId => GrainFactory.GetGrain<ICronJobGrain>(jobId).GetState()));
 
-            using (JobIndexDuration.NewTimer())
+            IEnumerable<CronJobDocument> docs = jobs.Where(job => job is not null).Select(job => new CronJobDocument(job!.Metadata.Uid,
+                  job.Metadata,
+                  job.Spec,
+                  job.Status));
+
+            Nest.BulkResponse res = await Nest.IndexManyExtensions.IndexManyAsync(_esClient, docs, _options.CronJobIndexName);
+            if (res.Errors)
             {
-                await _reporter.Report(jobs);
+                _logger.LogError($"Failed to index docs: {res.ItemsWithErrors}");
             }
-
             _pendingCronJobs.RemoveRange(0, currentBatch.Length);
-            if (_logger.IsEnabled(LogLevel.Debug))
-            {
-                _logger.LogDebug($"Jobs[Reported]: {jobs.Count}");
-                _logger.LogDebug($"Jobs[Pending]: {_pendingCronJobs.Count}");
-            }
         }
     }
 }
