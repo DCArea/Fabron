@@ -12,11 +12,12 @@ namespace Core.Test.Grains.Job
         public void Schedule20msAgo()
         {
             DateTime now = DateTime.UtcNow;
-            Fabron.Models.Job state = new()
-            {
-                Metadata = new JobMetadata("test", now, new()),
-                Spec = new(now.AddMilliseconds(-20), "test", "123"),
-            };
+            Fabron.Models.Job state = new(
+                new JobMetadata("test", now, new(), new()),
+                new(now.AddMilliseconds(-20), "test", "123"),
+                JobStatus.Initial,
+                0
+            );
             Assert.Equal(TimeSpan.Zero, state.DueTime);
         }
     }

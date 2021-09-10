@@ -2,7 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-
+using Fabron.Events;
+using Fabron.Stores;
+using Microsoft.Extensions.DependencyInjection;
 using Orleans.Hosting;
 
 namespace Microsoft.Extensions.Hosting
@@ -22,6 +24,11 @@ namespace Microsoft.Extensions.Hosting
             hostBuilder.UseOrleans((ctx, siloBuilder) =>
             {
                 siloBuilder.AddFabron(assemblies);
+                siloBuilder.ConfigureServices(services =>
+                {
+                    services.AddSingleton<IJobEventStore, InMemoryJobEventStore>();
+                    services.AddSingleton<IJobEventListener, ConsoleJobEventListener>();
+                });
                 configureDelegate(ctx, siloBuilder);
             });
 

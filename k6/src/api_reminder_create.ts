@@ -11,19 +11,26 @@ export let options: Options = {
     scenarios: {
         contacts: {
             executor: 'shared-iterations',
-            vus: 200,
-            iterations: 10000,
+            vus: 300,
+            iterations: 8000,
             maxDuration: '100s',
         },
+        // contacts: {
+        //     executor: 'constant-arrival-rate',
+        //     rate: 300, // 200 RPS, since timeUnit is the default 1s
+        //     duration: '20s',
+        //     preAllocatedVUs: 50,
+        //     maxVUs: 1000,
+        // },
     },
 };
 
 
 export var create_reminder = () => {
-    const url = `${base_url}/HttpReminders`
+    const url = `${base_url}/Reminders`
     const req_body = {
-        "name": `TEST0050.${__VU}.${__ITER}`,
-        "schedule": new Date(Date.now() + 6*60000).toISOString(),
+        "name": `${__VU}.${__ITER}`,
+        // "schedule": new Date(Date.now() + 6*60000).toISOString(),
         // "schedule": "2021-08-10T16:10:00.000Z",
         "command": {
             "url": "http://stub.dca.svc.cluster.local/noop",
@@ -32,7 +39,8 @@ export var create_reminder = () => {
     };
     const params = {
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'x-app-id': 'TEST0200'
         }
     };
     const res = http.post(url, JSON.stringify(req_body), params);

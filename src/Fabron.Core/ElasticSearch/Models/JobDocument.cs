@@ -7,5 +7,6 @@ namespace Fabron.ElasticSearch
         string Id,
         JobMetadata Metadata,
         JobSpec Spec,
-        JobStatus Status);
+        JobStatus Status,
+        long Version);
 }

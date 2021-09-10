@@ -46,16 +46,5 @@ namespace Fabron.Core.Test.Grains
 
         protected SemaphoreSlim StateWrote { get; private set; } = new SemaphoreSlim(1);
         protected TGrainState State { get; private set; } = new();
-
-        public async Task WaitUntil(Expression<Func<TGrainState, bool>> condition, TimeSpan timeout)
-        {
-            Func<TGrainState, bool> con = condition.Compile();
-            CancellationTokenSource token = new(timeout);
-            while (!con(State))
-            {
-                await StateWrote.WaitAsync(token.Token);
-            }
-
-        }
     }
 }

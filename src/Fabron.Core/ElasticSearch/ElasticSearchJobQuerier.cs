@@ -23,45 +23,45 @@ namespace Fabron.ElasticSearch
         public async Task<IEnumerable<Models.Job>> GetJobByLabel(string labelName, string labelValue)
         {
             ISearchResponse<JobDocument> res = await SearchByLabelAsync<JobDocument>(_options.JobIndexName, labelName, labelValue);
-            return res.Documents.Select(job => new Models.Job
-            {
-                Metadata = job.Metadata,
-                Spec = job.Spec,
-                Status = job.Status
-            }).ToList();
+            return res.Documents.Select(job => new Models.Job(
+                job.Metadata,
+                job.Spec,
+                job.Status,
+                job.Version
+            )).ToList();
         }
 
         public async Task<IEnumerable<Models.Job>> GetJobByLabels(IEnumerable<(string, string)> labels)
         {
             ISearchResponse<JobDocument> res = await SearchByLabelsAsync<JobDocument>(_options.JobIndexName, labels);
-            return res.Documents.Select(job => new Models.Job
-            {
-                Metadata = job.Metadata,
-                Spec = job.Spec,
-                Status = job.Status
-            }).ToList();
+            return res.Documents.Select(job => new Models.Job(
+                job.Metadata,
+                job.Spec,
+                job.Status,
+                job.Version
+            )).ToList();
         }
 
         public async Task<IEnumerable<Models.CronJob>> GetCronJobByLabel(string labelName, string labelValue)
         {
             ISearchResponse<CronJobDocument> res = await SearchByLabelAsync<CronJobDocument>(_options.CronJobIndexName, labelName, labelValue);
-            return res.Documents.Select(job => new Models.CronJob
-            {
-                Metadata = job.Metadata,
-                Spec = job.Spec,
-                Status = job.Status
-            }).ToList();
+            return res.Documents.Select(job => new Models.CronJob(
+                job.Metadata,
+                job.Spec,
+                job.Status,
+                job.Version
+            )).ToList();
         }
 
         public async Task<IEnumerable<Models.CronJob>> GetCronJobByLabels(IEnumerable<(string, string)> labels)
         {
             ISearchResponse<CronJobDocument> res = await SearchByLabelsAsync<CronJobDocument>(_options.JobIndexName, labels);
-            return res.Documents.Select(job => new Models.CronJob
-            {
-                Metadata = job.Metadata,
-                Spec = job.Spec,
-                Status = job.Status
-            }).ToList();
+            return res.Documents.Select(job => new Models.CronJob(
+                job.Metadata,
+                job.Spec,
+                job.Status,
+                job.Version
+            )).ToList();
         }
 
         private async Task<ISearchResponse<TDocument>> SearchByLabelAsync<TDocument>(string indexName, string labelName, string labelValue)

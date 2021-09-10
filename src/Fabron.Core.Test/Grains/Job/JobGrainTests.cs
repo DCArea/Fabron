@@ -1,15 +1,13 @@
 ﻿
 using System;
 using System.Threading.Tasks;
-
-using Fabron.Core.Test.Grains;
 using Fabron.Grains;
 using Fabron.Mando;
 using Fabron.Models;
+using Fabron.Stores;
 using FluentAssertions;
 
 using Microsoft.Extensions.Logging;
-
 using Moq;
 
 using Orleans.TestKit;
@@ -19,18 +17,25 @@ using Xunit;
 
 namespace Fabron.Test.Grains.Job
 {
-
-    public class JobGrainTests : GrainTestBase<Models.Job>
+    public class JobGrainTests : TestKitBase
     {
+        public JobGrainTests()
+        {
+            Silo.AddServiceProbe<ILogger<JobGrain>>();
+            Silo.AddServiceProbe<IMediator>();
+            Silo.AddService<IJobEventStore>(new InMemoryJobEventStore());
+        }
+
         [Fact]
         public async Task Create_Immediately()
         {
             (JobGrain grain, DateTime? _) = await Schedule();
 
-            Models.Job state = MockState.Object.State;
-            Assert.Equal(Command.Name, state.Spec.CommandName);
+            Models.Job? state = await grain.GetState();
+            Assert.Equal(Command.Name, state!.Spec.CommandName);
             Assert.Equal(Command.Data, state.Spec.CommandData);
-            Assert.Equal(state.Metadata.CreationTimestamp, state.Spec.Schedule);
+            state.Metadata.CreationTimestamp.Should().BeCloseTo(state.Spec.Schedule, TimeSpan.FromSeconds(1));
+            //Assert.Equal(state.Metadata.CreationTimestamp, state.Spec.Schedule);
 
             Silo.TimerRegistry.Mock
                 .Verify(m => m.RegisterTimer(
@@ -42,7 +47,7 @@ namespace Fabron.Test.Grains.Job
             Silo.ReminderRegistry.Mock
                 .Verify(m => m.RegisterOrUpdateReminder("Ticker", TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(2)));
 
-            State.Status.ExecutionStatus.Should().Be(ExecutionStatus.Scheduled);
+            state.Status.ExecutionStatus.Should().Be(ExecutionStatus.Scheduled);
         }
 
         [Fact]
@@ -50,8 +55,8 @@ namespace Fabron.Test.Grains.Job
         {
             (JobGrain grain, DateTime? scheduledAt) = await Schedule(TimeSpan.FromSeconds(10));
 
-            Models.Job state = MockState.Object.State;
-            Assert.Equal(Command.Name, state.Spec.CommandName);
+            Models.Job? state = await grain.GetState();
+            Assert.Equal(Command.Name, state!.Spec.CommandName);
             Assert.Equal(Command.Data, state.Spec.CommandData);
             Assert.Equal(scheduledAt, state.Spec.Schedule);
 
@@ -73,10 +78,10 @@ namespace Fabron.Test.Grains.Job
         [Fact]
         public async Task Create_5mDelay()
         {
-            (JobGrain _, DateTime? scheduledAt) = await Schedule(TimeSpan.FromMinutes(5));
+            (JobGrain grain, DateTime? scheduledAt) = await Schedule(TimeSpan.FromMinutes(5));
 
-            Models.Job state = MockState.Object.State;
-            Assert.Equal(scheduledAt, state.Spec.Schedule);
+            Models.Job? state = await grain.GetState();
+            Assert.Equal(scheduledAt, state!.Spec.Schedule);
 
             Silo.TimerRegistry.Mock.VerifyNoOtherCalls();
 
@@ -96,12 +101,6 @@ namespace Fabron.Test.Grains.Job
             Assert.Null(await grain.GetState());
             Silo.TimerRegistry.NumberOfActiveTimers.Should().Be(0);
             Assert.Null(await Silo.ReminderRegistry.GetReminder("Ticker"));
-        }
-
-        protected override void SetupServices()
-        {
-            Silo.AddServiceProbe<ILogger<JobGrain>>();
-            Silo.AddServiceProbe<IMediator>();
         }
 
 

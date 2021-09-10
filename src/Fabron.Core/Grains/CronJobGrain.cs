@@ -3,9 +3,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Fabron.Events;
 using Fabron.Models;
+using Fabron.Stores;
 using Microsoft.Extensions.Logging;
-
+using Microsoft.Toolkit.Diagnostics;
 using Orleans;
 using Orleans.Concurrency;
 using Orleans.Runtime;
@@ -17,7 +19,15 @@ namespace Fabron.Grains
         [ReadOnly]
         Task<CronJob?> GetState();
 
-        Task Schedule(string cronExp, string commandName, string commandData, DateTime? start, DateTime? end, bool suspend, Dictionary<string, string>? labels);
+        Task Schedule(
+            string cronExp,
+            string commandName,
+            string commandData,
+            DateTime? start,
+            DateTime? end,
+            bool suspend,
+            Dictionary<string, string>? labels,
+            Dictionary<string, string>? annotations);
 
         [AlwaysInterleave]
         Task Delete();
@@ -25,30 +35,62 @@ namespace Fabron.Grains
         Task Suspend();
 
         Task Resume();
+
+        [AlwaysInterleave]
+        Task CommitOffset(long version);
     }
 
-    public class CronJobGrain : Grain, ICronJobGrain, IRemindable
+    public partial class CronJobGrain : Grain, ICronJobGrain, IRemindable
     {
         private readonly ILogger _logger;
-        private readonly IPersistentState<CronJob> _jobState;
-        private readonly IJobEventBus _bus;
+        private readonly ICronJobEventStore _eventStore;
         private IGrainReminder? _tickReminder;
         private IDisposable? _tickTimer;
         private IDisposable? _statusProber;
-
         public CronJobGrain(
             ILogger<CronJobGrain> logger,
-            [PersistentState("CronJob", "JobStore")] IPersistentState<CronJob> job,
-            IJobEventBus bus)
+            ICronJobEventStore eventStore)
         {
             _logger = logger;
-            _jobState = job;
-            _bus = bus;
+            _eventStore = eventStore;
         }
 
-        private CronJob Job => _jobState.State;
+        public override async Task OnActivateAsync()
+        {
+            string key = this.GetPrimaryKeyString();
+            _consumer = GrainFactory.GetGrain<ICronJobEventConsumer>(key);
+            List<EventLog> eventLogs = await _eventStore.GetEventLogs(key, 0);
+            foreach (EventLog? eventLog in eventLogs)
+            {
+                TransitionState(eventLog);
+            }
 
-        public Task<CronJob?> GetState() => Task.FromResult(_jobState.RecordExists ? _jobState.State : default);
+            _offset = await _eventStore.GetConsumerOffset(key);
+        }
+
+        private ICronJobEventConsumer _consumer = default!;
+        private long _offset;
+        private CronJob? _state;
+        private CronJob State
+        {
+            get
+            {
+                Guard.IsNotNull(_state, nameof(State));
+                return _state;
+            }
+        }
+
+        public Task<CronJob?> GetState() => Task.FromResult(_state);
+
+        public async Task Delete()
+        {
+            await StopTicker();
+            // Un-Index
+            await _eventStore.ClearEventLogs(State.Metadata.Uid, long.MaxValue);
+            await _eventStore.ClearConsumerOffset(State.Metadata.Uid);
+            _offset = -1;
+            _state = null;
+        }
 
         public async Task Schedule(
             string cronExp,
@@ -57,61 +99,46 @@ namespace Fabron.Grains
             DateTime? notBefore,
             DateTime? expirationTime,
             bool suspend,
-            Dictionary<string, string>? labels)
+            Dictionary<string, string>? labels,
+            Dictionary<string, string>? annotations)
         {
-            DateTime now = DateTime.UtcNow;
-            _jobState.State = new CronJob
-            {
-                Metadata = new CronJobMetadata(this.GetPrimaryKeyString(), now, labels ?? new()),
-                Spec = new CronJobSpec(
-                    cronExp,
-                    commandName,
-                    commandData,
-                    notBefore,
-                    expirationTime,
-                    suspend),
-                Status = new CronJobStatus(new List<JobItem>())
-            };
-            await SaveJobStateAsync();
-            _logger.LogDebug($"CronJob[{Job.Metadata.Uid}]: Created");
+            var @event = new CronJobScheduled(
+                labels ?? new Dictionary<string, string>(),
+                annotations ?? new Dictionary<string, string>(),
+                cronExp,
+                commandName,
+                commandData,
+                notBefore,
+                expirationTime
+            );
+            await RaiseAsync(@event, nameof(CronJobScheduled));
 
-            if (!Job.Spec.Suspend)
+            if (!suspend)
             {
-                await ScheduleNextTick();
-            }
-            else
-            {
-                await StopTicker();
+                await Resume();
             }
         }
 
-        public async Task Delete()
-        {
-            await _jobState.ClearStateAsync();
-            await StopTicker();
-            _logger.LogDebug($"CronJob[{Job.Metadata.Uid}]: Deleted");
-        }
 
         public async Task Suspend()
         {
-            Job.Spec = Job.Spec with { Suspend = true };
-            await SaveJobStateAsync();
+            var @event = new CronJobSuspended();
+            await RaiseAsync(@event, nameof(CronJobSuspended));
             await StopTicker();
-            _logger.LogDebug($"CronJob[{Job.Metadata.Uid}]: Suspended");
         }
 
         public async Task Resume()
         {
-            Job.Spec = Job.Spec with { Suspend = false };
             await ScheduleNextTick();
-            _logger.LogDebug($"CronJob[{Job.Metadata.Uid}]: Resumed");
+            var @event = new CronJobResumed();
+            await RaiseAsync(@event, nameof(CronJobResumed));
         }
 
         private async Task Tick()
         {
             DateTime now = DateTime.UtcNow;
             DateTime notBefore = now.AddSeconds(-5);
-            DateTime? tick = Job.GetNextTick(notBefore);
+            DateTime? tick = State.GetNextTick(notBefore);
             if (tick is null)
             {
                 await TryComplete();
@@ -129,15 +156,14 @@ namespace Fabron.Grains
 
         private async Task CheckJobStatus()
         {
-            IEnumerable<Task<JobItem>> checkJobStatusTasks = Job.Status.Jobs
+            IEnumerable<Task<JobItem>> checkJobStatusTasks = State.Status.Jobs
                 .Select(job => Check(job));
             List<JobItem>? jobItems = (await Task.WhenAll(checkJobStatusTasks)).ToList();
-            Job.Status = Job.Status with
-            {
-                Jobs = jobItems.TakeLast(10).ToList()
-            };
-            await SaveJobStateAsync();
-            if (!Job.HasRunningJobs)
+
+            var @event = new CronJobItemsStatusChanged(jobItems.TakeLast(10).ToList());
+            await RaiseAsync(@event, nameof(CronJobItemsStatusChanged));
+
+            if (!State.HasRunningJobs)
             {
                 StopProbeTimer();
             }
@@ -161,53 +187,57 @@ namespace Fabron.Grains
 
         private async Task ScheduleJob()
         {
-            JobItem? latestJob = Job.LatestItem;
+            JobItem? latestJob = State.LatestItem;
             uint latestIndex = latestJob is null ? 0 : latestJob.Index;
             JobItem? jobItem = await Schedule(latestIndex + 1);
-            List<JobItem>? items = Job.Status.Jobs;
+            List<JobItem> items = State.Status.Jobs;
             items.Add(jobItem);
-            Job.Status = Job.Status with
-            {
-                Jobs = items.TakeLast(10).ToList()
-            };
-            await SaveJobStateAsync();
+
+            var @event = new CronJobItemsStatusChanged(items.TakeLast(10).ToList());
+            await RaiseAsync(@event, nameof(CronJobItemsStatusChanged));
+
             EnsureStatusProber();
-            _logger.LogDebug($"CronJob[{Job.Metadata.Uid}]: Scheduled job-{jobItem.Index}");
+            _logger.LogDebug($"CronJob[{State.Metadata.Uid}]: Scheduled job-{jobItem.Index}");
 
             async Task<JobItem> Schedule(uint index)
             {
                 string? jobId = GetChildJobIdByIndex(index);
                 IJobGrain grain = GrainFactory.GetGrain<IJobGrain>(jobId);
-                Dictionary<string, string>? labels = new Dictionary<string, string>
+                var labels = new Dictionary<string, string>(State.Metadata.Labels)
                 {
-                    {"owner_id", Job.Metadata.Uid },
+                    {"owner_id", State.Metadata.Uid },
                     {"owner_type" ,"cronjob"},
                     {"cron_index", index.ToString() }
                 };
-                Job? jobState = await grain.Schedule(Job.Spec.CommandName, Job.Spec.CommandData, null, labels);
+                var annotations = new Dictionary<string, string>(State.Metadata.Annotations)
+                {
+                };
+                Job jobState = await grain.Schedule(
+                    State.Spec.CommandName,
+                    State.Spec.CommandData,
+                    null,
+                    labels,
+                    annotations);
                 return new JobItem(index, jobId, DateTime.UtcNow, jobState.Status.ExecutionStatus);
             }
         }
 
-        private string GetChildJobIdByIndex(uint index) => $"cron/{Job.Metadata.Uid}/{index}";
+        private string GetChildJobIdByIndex(uint index) => $"cron/{State.Metadata.Uid}/{index}";
 
         private async Task TryComplete()
         {
-            bool hasRunningJobs = Job.HasRunningJobs;
+            bool hasRunningJobs = State.HasRunningJobs;
             if (hasRunningJobs)
             {
                 EnsureStatusProber();
-                _logger.LogDebug($"CronJob[{Job.Metadata.Uid}]: Can not complete since there're jobs still running, try later");
+                _logger.LogDebug($"CronJob[{State.Metadata.Uid}]: Can not complete since there're jobs still running, try later");
                 await TickAfter(TimeSpan.FromSeconds(20));
             }
 
-            Job.Status = Job.Status with
-            {
-                CompletionTimestamp = DateTime.UtcNow,
-            };
-            await SaveJobStateAsync();
+            var @event = new CronJobCompleted();
+            await RaiseAsync(@event, nameof(CronJobCompleted));
+
             await StopTicker();
-            _logger.LogDebug($"CronJob[{Job.Metadata.Uid}]: Completed");
         }
 
 
@@ -215,7 +245,7 @@ namespace Fabron.Grains
         {
             DateTime now = DateTime.UtcNow;
             DateTime notBefore = now.AddSeconds(-5);
-            DateTime nextTick = Job.GetNextTick(notBefore) ?? now;
+            DateTime nextTick = State.GetNextTick(notBefore) ?? now;
             await TickAfter(nextTick.Subtract(now));
         }
 
@@ -234,7 +264,7 @@ namespace Fabron.Grains
             {
                 _tickReminder = await RegisterOrUpdateReminder("Ticker", dueTime, TimeSpan.FromMinutes(2));
             }
-            _logger.LogDebug($"CronJob[{Job.Metadata.Uid}]: Tick After {dueTime}");
+            _logger.LogDebug($"CronJob[{State.Metadata.Uid}]: Tick After {dueTime}");
         }
 
         private async Task StopTicker()
@@ -261,12 +291,10 @@ namespace Fabron.Grains
 
         Task IRemindable.ReceiveReminder(string reminderName, TickStatus status) => Tick();
 
-
-        private async Task SaveJobStateAsync()
+        public async Task CommitOffset(long offset)
         {
-            Job.Version += 1;
-            await _jobState.WriteStateAsync();
-            await _bus.OnCronJobStateChanged(Job);
+            await _eventStore.SaveConsumerOffset(State.Metadata.Uid, offset);
+            _offset = offset;
         }
     }
 }

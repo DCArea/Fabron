@@ -10,7 +10,8 @@ namespace Fabron.Contracts
         string CommandName,
         TCommand CommandData,
         DateTime? NotBefore,
-        DateTime? ExpirationTime
+        DateTime? ExpirationTime,
+        bool Suspend
     );
 
     public record CronJob<TCommand>

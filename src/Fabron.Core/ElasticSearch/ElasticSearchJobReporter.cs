@@ -23,10 +23,12 @@ namespace Fabron.ElasticSearch
 
         public async Task Report(Job job)
         {
-            JobDocument doc = new(job.Metadata.Uid,
+            JobDocument doc = new(
+                job.Metadata.Uid,
                 job.Metadata,
                 job.Spec,
-                job.Status);
+                job.Status,
+                job.Version);
             Nest.IndexResponse res = await _esClient.IndexAsync(doc, idx => idx.Index(_options.JobIndexName));
             if (res.Result == Nest.Result.Error)
             {
@@ -36,10 +38,12 @@ namespace Fabron.ElasticSearch
 
         public async Task Report(CronJob job)
         {
-            CronJobDocument doc = new(job.Metadata.Uid,
+            CronJobDocument doc = new(
+                job.Metadata.Uid,
                 job.Metadata,
                 job.Spec,
-                job.Status);
+                job.Status,
+                job.Version);
             Nest.IndexResponse res = await _esClient.IndexAsync(doc, idx => idx.Index(_options.CronJobIndexName));
             if (res.Result == Nest.Result.Error)
             {
@@ -50,11 +54,12 @@ namespace Fabron.ElasticSearch
         public async Task Report(IEnumerable<Job> jobs)
         {
             IEnumerable<JobDocument> docs = jobs
-                .Where(job => job is not null)
-                .Select(job => new JobDocument(job!.Metadata.Uid,
-                  job.Metadata,
-                  job.Spec,
-                  job.Status));
+                .Select(job => new JobDocument(
+                    job.Metadata.Uid,
+                    job.Metadata,
+                    job.Spec,
+                    job.Status,
+                    job.Version));
             Nest.BulkResponse res = await Nest.IndexManyExtensions.IndexManyAsync(_esClient, docs, _options.JobIndexName);
             if (res.Errors)
             {
@@ -69,7 +74,8 @@ namespace Fabron.ElasticSearch
                 .Select(job => new CronJobDocument(job!.Metadata.Uid,
                   job.Metadata,
                   job.Spec,
-                  job.Status));
+                  job.Status,
+                  job.Version));
             Nest.BulkResponse res = await Nest.IndexManyExtensions.IndexManyAsync(_esClient, docs, _options.CronJobIndexName);
             if (res.Errors)
             {

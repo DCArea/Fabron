@@ -7,5 +7,6 @@ namespace Fabron.ElasticSearch
         string Id,
         CronJobMetadata Metadata,
         CronJobSpec Spec,
-        CronJobStatus Status);
+        CronJobStatus Status,
+        long Version);
 }

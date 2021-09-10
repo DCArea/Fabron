@@ -4,13 +4,12 @@ using System.Collections.Generic;
 
 namespace Fabron.Models
 {
-    public class Job
+    public record Job(
+        JobMetadata Metadata,
+        JobSpec Spec,
+        JobStatus Status,
+        long Version)
     {
-        public JobMetadata Metadata { get; set; } = default!;
-        public JobSpec Spec { get; init; } = default!;
-        public JobStatus Status { get; set; } = default!;
-        public ulong Version { get; set; }
-
         public TimeSpan DueTime
         {
             get
@@ -28,7 +27,8 @@ namespace Fabron.Models
     public record JobMetadata(
         string Uid,
         DateTime CreationTimestamp,
-        Dictionary<string, string> Labels
+        Dictionary<string, string> Labels,
+        Dictionary<string, string> Annotations
     );
 
     public record JobSpec(
@@ -43,7 +43,15 @@ namespace Fabron.Models
         DateTime? FinishedAt = null,
         string? Result = null,
         string? Reason = null,
-        bool Finalized = false,
-        ulong StateVersion = 0
-    );
+        bool Finalized = false)
+    {
+        public static JobStatus Initial
+            => new JobStatus(
+                ExecutionStatus.Scheduled,
+                null,
+                null,
+                null,
+                null,
+                false);
+    };
 }

@@ -50,6 +50,7 @@ namespace FabronService.FunctionalTests.Resources
             Assert.NotNull(reminder);
             Assert.Equal(request.Command.Url, reminder!.Command.Url);
             Assert.Equal(ExecutionStatus.Succeed, reminder!.Status);
+            await Task.Delay(300);
             Assert.Equal(200, reminder!.Result);
         }
     }

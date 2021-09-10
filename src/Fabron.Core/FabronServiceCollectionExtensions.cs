@@ -1,6 +1,5 @@
 
 using Fabron;
-using Fabron.Models.Events;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Microsoft.Extensions.DependencyInjection
@@ -25,15 +24,6 @@ namespace Microsoft.Extensions.DependencyInjection
             where TJobQuerier : class, IJobQuerier
         {
             services.AddSingleton<IJobQuerier, TJobQuerier>();
-            return services;
-        }
-
-        public static IServiceCollection AddDefaultEventBus(this IServiceCollection services)
-        {
-            services.AddSingleton<IJobEventBus, DefaultJobEventBus>();
-            services.AddTransient<IJobEventHandler<JobStateChanged>, DefaultJobStateChangedHandler>();
-            services.AddTransient<IJobEventHandler<CronJobStateChanged>, DefaultJobStateChangedHandler>();
-            services.AddTransient<IJobEventHandler<JobExecutionFailed>, DefaultJobStateChangedHandler>();
             return services;
         }
 

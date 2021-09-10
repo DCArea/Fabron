@@ -15,7 +15,8 @@ namespace Fabron.Models
     public record CronJobMetadata(
         string Uid,
         DateTime CreationTimestamp,
-        Dictionary<string, string> Labels
+        Dictionary<string, string> Labels,
+        Dictionary<string, string> Annotations
     );
 
     public record CronJobSpec(
@@ -30,16 +31,22 @@ namespace Fabron.Models
         List<JobItem> Jobs,
         uint LatestScheduleIndex = 0,
         DateTime? CompletionTimestamp = null,
-        string? Reason = null,
-        bool Finalized = false
-    );
-
-    public class CronJob
+        string? Reason = null)
     {
-        public CronJobMetadata Metadata { get; init; } = default!;
-        public CronJobSpec Spec { get; set; } = default!;
-        public CronJobStatus Status { get; set; } = default!;
-        public ulong Version { get; set; }
+        public static CronJobStatus Initial
+            => new CronJobStatus(
+                new List<JobItem>(),
+                0,
+                null,
+                null);
+    };
+
+    public record CronJob(
+        CronJobMetadata Metadata,
+        CronJobSpec Spec,
+        CronJobStatus Status,
+        long Version)
+    {
 
         public IEnumerable<JobItem> RunningJobs => Status.Jobs.Where(item => item.Status == ExecutionStatus.Scheduled);
         public IEnumerable<JobItem> FinishedJobs => Status.Jobs.Where(item => item.Status is ExecutionStatus.Succeed or ExecutionStatus.Faulted);

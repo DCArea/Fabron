@@ -21,7 +21,8 @@ namespace Fabron
             DateTime? notBefore = null,
             DateTime? expirationTime = null,
             bool suspend = false,
-            Dictionary<string, string>? labels = null) where TCommand : ICommand
+            Dictionary<string, string>? labels = null,
+            Dictionary<string, string>? annotations = null) where TCommand : ICommand
         {
             string commandName = _registry.CommandNameRegistrations[typeof(TCommand)];
             string commandData = JsonSerializer.Serialize(command);
@@ -34,7 +35,8 @@ namespace Fabron
                 notBefore,
                 expirationTime,
                 suspend,
-                labels);
+                labels,
+                annotations);
             CronJob? state = await grain.GetState();
             return state!.Map<TCommand>();
         }

@@ -3,6 +3,7 @@ using System.Reflection;
 
 using Fabron;
 using Fabron.Mando;
+using Fabron.Stores;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Orleans.Hosting
@@ -16,8 +17,7 @@ namespace Orleans.Hosting
                 {
                     services.AddScoped<IMediator, Mediator>()
                         .RegisterJobCommandHandlers(commandAssemblies)
-                        .AddJobReporter<NoopJobReporter>()
-                        .AddDefaultEventBus();
+                        .AddJobReporter<NoopJobReporter>();
                 });
             return siloBuilder;
         }
@@ -25,8 +25,12 @@ namespace Orleans.Hosting
         public static ISiloBuilder UseInMemoryJobStore(this ISiloBuilder siloBuilder)
         {
             siloBuilder
-                .UseInMemoryReminderService()
-                .AddMemoryGrainStorage("JobStore");
+                .UseInMemoryReminderService();
+            siloBuilder.ConfigureServices(services =>
+            {
+                services.AddSingleton<IJobEventStore, InMemoryJobEventStore>();
+                services.AddSingleton<ICronJobEventStore, InMemoryCronJobEventStore>();
+            });
             return siloBuilder;
         }
     }

@@ -11,7 +11,11 @@ namespace Fabron
     public interface IJobManager
     {
         // transient
-        Task<Job<TCommand, TResult>> ScheduleJob<TCommand, TResult>(string jobId, TCommand command, DateTime? scheduledAt = null, Dictionary<string, string>? labels = null) where TCommand : ICommand<TResult>;
+        Task<Job<TCommand, TResult>> ScheduleJob<TCommand, TResult>(
+            string jobId,
+            TCommand command,
+            DateTime? scheduledAt = null,
+            Dictionary<string, string>? labels = null) where TCommand : ICommand<TResult>;
 
         Task<Job<TJobCommand, TResult>?> GetJobById<TJobCommand, TResult>(string jobId) where TJobCommand : ICommand<TResult>;
 
@@ -24,7 +28,15 @@ namespace Fabron
         Task DeleteJobById(string jobId);
 
         // cron
-        Task<CronJob<TCommand>> ScheduleCronJob<TCommand>(string cronJobId, string cronExp, TCommand command, DateTime? notBefore = null, DateTime? expirationTime = null, bool suspend = false, Dictionary<string, string>? labels = null) where TCommand : ICommand;
+        Task<CronJob<TCommand>> ScheduleCronJob<TCommand>(
+            string cronJobId,
+            string cronExp,
+            TCommand command,
+            DateTime? notBefore = null,
+            DateTime? expirationTime = null,
+            bool suspend = false,
+            Dictionary<string, string>? labels = null,
+            Dictionary<string, string>? annotations = null) where TCommand : ICommand;
 
         Task SuspendCronJob(string jobId);
 

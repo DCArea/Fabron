@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 using AspNetCore.Authentication.ApiKey;
-
+using Fabron;
 using FabronService.Services;
 
 using Microsoft.AspNetCore.Authorization;
@@ -97,7 +97,9 @@ static void ConfigureServices(WebHostBuilderContext context, IServiceCollection 
     services.ConfigureFramework()
         .AddApiKeyAuth(context.Configuration["ApiKey"])
         .AddSwagger();
-    services.RegisterJobCommandHandlers();
+    services.AddSingleton<IJobManager, JobManager>()
+        .AddJobQuerier<NoopJobQuerier>()
+        .RegisterJobCommandHandlers();
 }
 
 static void ConfigureWebApplication(IApplicationBuilder app)

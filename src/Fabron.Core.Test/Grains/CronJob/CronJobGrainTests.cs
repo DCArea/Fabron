@@ -1,12 +1,12 @@
 
 using System;
 using System.Threading.Tasks;
-
-using Fabron.Core.Test.Grains;
 using Fabron.Grains;
 using Fabron.Models;
+using Fabron.Stores;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
+using Microsoft.Toolkit.Diagnostics;
 using Orleans.Runtime;
 using Orleans.TestKit;
 using Orleans.TestKit.Reminders;
@@ -15,8 +15,14 @@ using Xunit;
 namespace Fabron.Test.Grains
 {
 
-    public class CronJobGrainTests : GrainTestBase<Models.CronJob>
+    public class CronJobGrainTests : TestKitBase
     {
+        public CronJobGrainTests()
+        {
+            Silo.AddServiceProbe<ILogger<CronJobGrain>>();
+            Silo.AddService<ICronJobEventStore>(new InMemoryCronJobEventStore());
+        }
+
         [Fact]
         public async Task Schedule_Simple()
         {
@@ -26,7 +32,8 @@ namespace Fabron.Test.Grains
             CronJobGrain? grain = await Silo.CreateGrainAsync<CronJobGrain>(cronJobId);
             await Schedule(grain, cronExp);
 
-            CronJob state = MockState.Object.State;
+            CronJob? state = await grain.GetState();
+            Guard.IsNotNull(state, nameof(state));
             Assert.Equal(cronExp, state.Spec.Schedule);
             Assert.Equal(Command.Name, state.Spec.CommandName);
             Assert.Equal(Command.Data, state.Spec.CommandData);
@@ -48,6 +55,7 @@ namespace Fabron.Test.Grains
                 null,
                 null,
                 true,
+                null,
                 null);
 
             IGrainReminder? reminder = await Silo.ReminderRegistry.GetReminder("Ticker");
@@ -65,11 +73,13 @@ namespace Fabron.Test.Grains
                 null,
                 null,
                 false,
+                null,
                 null);
 
             await grain.Suspend();
 
-            CronJob state = MockState.Object.State;
+            CronJob? state = await grain.GetState();
+            Guard.IsNotNull(state, nameof(state));
             Assert.True(state.Spec.Suspend);
             IGrainReminder? reminder = await Silo.ReminderRegistry.GetReminder("Ticker");
             reminder.Should().BeNull();
@@ -87,12 +97,13 @@ namespace Fabron.Test.Grains
                 null,
                 null,
                 true,
+                null,
                 null);
 
             await grain.Resume();
 
-            CronJob state = MockState.Object.State;
-            Assert.False(state.Spec.Suspend);
+            CronJob? state = await grain.GetState();
+            Guard.IsNotNull(state, nameof(state));
             TestReminder reminder = (TestReminder)await Silo.ReminderRegistry.GetReminder("Ticker");
             reminder.DueTime.Should().BeCloseTo(TimeSpan.FromSeconds(3 * 60 - DateTime.UtcNow.Second), TimeSpan.FromSeconds(5));
             reminder.Period.Should().Be(TimeSpan.FromMinutes(2));
@@ -110,6 +121,7 @@ namespace Fabron.Test.Grains
                 null,
                 null,
                 true,
+                null,
                 null);
 
             await grain.Delete();
@@ -118,8 +130,6 @@ namespace Fabron.Test.Grains
             Silo.TimerRegistry.NumberOfActiveTimers.Should().Be(0);
             Assert.Null(await Silo.ReminderRegistry.GetReminder("Ticker"));
         }
-
-        protected override void SetupServices() => Silo.AddServiceProbe<ILogger<CronJobGrain>>();
 
         public (string Name, string Data) Command { get; private set; } = (Guid.NewGuid().ToString(), "{}");
 
@@ -130,7 +140,7 @@ namespace Fabron.Test.Grains
             return grain;
         }
 
-        private async Task Schedule(CronJobGrain grain, string cronExp) => await grain.Schedule(cronExp, Command.Name, Command.Data, null, null, false, null);
+        private async Task Schedule(CronJobGrain grain, string cronExp) => await grain.Schedule(cronExp, Command.Name, Command.Data, null, null, false, null, null);
     }
 }
 
