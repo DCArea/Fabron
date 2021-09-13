@@ -54,7 +54,8 @@ namespace Fabron
                     cronJob.Spec.CommandName,
                     cmdData,
                     cronJob.Spec.NotBefore,
-                    cronJob.Spec.ExpirationTime),
+                    cronJob.Spec.ExpirationTime,
+                    cronJob.Spec.Suspend),
                 cronJob.Status
             );
             return typedCronJob;
