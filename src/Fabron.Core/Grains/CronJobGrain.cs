@@ -59,28 +59,29 @@ namespace Fabron.Grains
             bool suspend,
             Dictionary<string, string>? labels)
         {
-            if (!_jobState.RecordExists)
+            DateTime now = DateTime.UtcNow;
+            _jobState.State = new CronJob
             {
-                DateTime now = DateTime.UtcNow;
-                _jobState.State = new CronJob
-                {
-                    Metadata = new CronJobMetadata(this.GetPrimaryKeyString(), now, labels ?? new()),
-                    Spec = new CronJobSpec(
-                        cronExp,
-                        commandName,
-                        commandData,
-                        notBefore,
-                        expirationTime,
-                        suspend),
-                    Status = new CronJobStatus(new List<JobItem>())
-                };
-                await SaveJobStateAsync();
-                _logger.LogDebug($"CronJob[{Job.Metadata.Uid}]: Created");
-            }
+                Metadata = new CronJobMetadata(this.GetPrimaryKeyString(), now, labels ?? new()),
+                Spec = new CronJobSpec(
+                    cronExp,
+                    commandName,
+                    commandData,
+                    notBefore,
+                    expirationTime,
+                    suspend),
+                Status = new CronJobStatus(new List<JobItem>())
+            };
+            await SaveJobStateAsync();
+            _logger.LogDebug($"CronJob[{Job.Metadata.Uid}]: Created");
 
             if (!Job.Spec.Suspend)
             {
                 await ScheduleNextTick();
+            }
+            else
+            {
+                await StopTicker();
             }
         }
 
