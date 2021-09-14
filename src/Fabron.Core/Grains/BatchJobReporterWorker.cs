@@ -28,9 +28,9 @@ namespace Fabron.Grains
         private readonly List<string> _pendingJobs;
         private readonly List<string> _pendingCronJobs;
         private readonly ILogger _logger;
-        private readonly IJobReporter _reporter;
+        private readonly IJobIndexer _reporter;
 
-        public BatchJobReporterWorker(ILogger<BatchJobReporterWorker> logger, IJobReporter reporter)
+        public BatchJobReporterWorker(ILogger<BatchJobReporterWorker> logger, IJobIndexer reporter)
         {
             _worker = new BatchWorkerFromDelegate(Submit);
             _pendingJobs = new List<string>();
@@ -72,7 +72,7 @@ namespace Fabron.Grains
 
             using (JobIndexDuration.NewTimer())
             {
-                await _reporter.Report(jobs);
+                await _reporter.Index(jobs);
             }
 
             _pendingJobs.RemoveRange(0, currentBatch.Length);
@@ -100,7 +100,7 @@ namespace Fabron.Grains
 
             using (JobIndexDuration.NewTimer())
             {
-                await _reporter.Report(jobs);
+                await _reporter.Index(jobs);
             }
 
             _pendingCronJobs.RemoveRange(0, currentBatch.Length);

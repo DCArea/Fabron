@@ -5,23 +5,24 @@ using System.Threading.Tasks;
 using Fabron.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Nest;
 
 namespace Fabron.ElasticSearch
 {
-    public class ElasticSearchJobReporter : IJobReporter
+    public class ElasticSearchJobIndexer : IJobIndexer
     {
-        private readonly ILogger<ElasticSearchJobReporter> _logger;
+        private readonly ILogger<ElasticSearchJobIndexer> _logger;
         private readonly ElasticSearchOptions _options;
         private readonly Nest.IElasticClient _esClient;
 
-        public ElasticSearchJobReporter(ILogger<ElasticSearchJobReporter> logger, IOptions<ElasticSearchOptions> options, Nest.IElasticClient esClient)
+        public ElasticSearchJobIndexer(ILogger<ElasticSearchJobIndexer> logger, IOptions<ElasticSearchOptions> options, Nest.IElasticClient esClient)
         {
             _logger = logger;
             _options = options.Value;
             _esClient = esClient;
         }
 
-        public async Task Report(Job job)
+        public async Task Index(Fabron.Models.Job job)
         {
             JobDocument doc = new(
                 job.Metadata.Uid,
@@ -36,7 +37,7 @@ namespace Fabron.ElasticSearch
             }
         }
 
-        public async Task Report(CronJob job)
+        public async Task Index(CronJob job)
         {
             CronJobDocument doc = new(
                 job.Metadata.Uid,
@@ -51,7 +52,7 @@ namespace Fabron.ElasticSearch
             }
         }
 
-        public async Task Report(IEnumerable<Job> jobs)
+        public async Task Index(IEnumerable<Fabron.Models.Job> jobs)
         {
             IEnumerable<JobDocument> docs = jobs
                 .Select(job => new JobDocument(
@@ -67,7 +68,7 @@ namespace Fabron.ElasticSearch
             }
         }
 
-        public async Task Report(IEnumerable<CronJob> jobs)
+        public async Task Index(IEnumerable<CronJob> jobs)
         {
             IEnumerable<CronJobDocument> docs = jobs
                 .Where(job => job is not null)
@@ -76,10 +77,30 @@ namespace Fabron.ElasticSearch
                   job.Spec,
                   job.Status,
                   job.Version));
-            Nest.BulkResponse res = await Nest.IndexManyExtensions.IndexManyAsync(_esClient, docs, _options.CronJobIndexName);
+            Nest.BulkResponse res = await _esClient.IndexManyAsync(docs, _options.CronJobIndexName);
             if (res.Errors)
             {
                 _logger.LogError($"Failed to index docs: {res.DebugInformation}");
+            }
+        }
+
+        public async Task DeleteJob(string jobId)
+        {
+            DeleteResponse? res = await _esClient
+                .DeleteAsync<JobDocument>(jobId, d => d.Index(_options.JobIndexName));
+            if (res.Result == Nest.Result.Error)
+            {
+                _logger.LogError($"Failed to delete doc: {res.DebugInformation}");
+            }
+        }
+
+        public async Task DeleteCronJob(string cronJobId)
+        {
+            DeleteResponse? res = await _esClient
+                .DeleteAsync<CronJobDocument>(cronJobId, d => d.Index(_options.CronJobIndexName));
+            if (res.Result == Nest.Result.Error)
+            {
+                _logger.LogError($"Failed to delete doc: {res.DebugInformation}");
             }
         }
     }

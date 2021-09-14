@@ -5,7 +5,6 @@ using Fabron;
 using Fabron.Contracts;
 using FabronService.Commands;
 using FabronService.Resources.HttpReminders.Models;
-using FabronService.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -17,15 +16,12 @@ namespace FabronService.Resources.HttpReminders
     {
         private readonly ILogger<Endpoints> _logger;
         private readonly IJobManager _jobManager;
-        private readonly IResourceLocator _resourceLocator;
 
         public Endpoints(ILogger<Endpoints> logger,
-            IJobManager jobManager,
-            IResourceLocator resourceLocator)
+            IJobManager jobManager)
         {
             _logger = logger;
             _jobManager = jobManager;
-            _resourceLocator = resourceLocator;
         }
 
         [HttpPost(Name = "HttpReminders_Register")]
@@ -33,8 +29,12 @@ namespace FabronService.Resources.HttpReminders
         {
             string tenantId = HttpContext.User.Identity!.Name!;
             string resourceUri = $"tenants/{tenantId}/HttpReminders/{req.Name}";
-            string resourceId = await _resourceLocator.GetOrCreateResourceId(resourceUri);
-            Job<RequestWebAPI, int>? job = await _jobManager.ScheduleJob<RequestWebAPI, int>(resourceId, req.Command, req.Schedule, new Dictionary<string, string> { { "tenant", tenantId } });
+            Job<RequestWebAPI, int>? job = await _jobManager.ScheduleJob<RequestWebAPI, int>(
+                resourceUri,
+                req.Command,
+                req.Schedule,
+                new Dictionary<string, string> { { "tenant", tenantId } },
+                null);
             HttpReminder reminder = job.ToResource(req.Name);
             return CreatedAtRoute("HttpReminders_Get", new { name = reminder.Name }, reminder);
         }
@@ -44,13 +44,8 @@ namespace FabronService.Resources.HttpReminders
         {
             string tenantId = HttpContext.User.Identity!.Name!;
             string resourceUri = $"tenants/{tenantId}/HttpReminders/{name}";
-            string? resourceId = await _resourceLocator.GetResourceId(resourceUri);
-            if (resourceId == null)
-            {
-                return NotFound();
-            }
 
-            Job<RequestWebAPI, int>? job = await _jobManager.GetJobById<RequestWebAPI, int>(resourceId);
+            Job<RequestWebAPI, int>? job = await _jobManager.GetJobById<RequestWebAPI, int>(resourceUri);
             return job is null ? NotFound() : Ok(job.ToResource(name));
         }
 

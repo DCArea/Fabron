@@ -12,7 +12,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-
+using Orleans;
 using Orleans.TestingHost;
 
 using Xunit;
@@ -46,9 +46,10 @@ namespace FabronService.FunctionalTests
                 })
                 .ConfigureServices((ctx, services) =>
                 {
-                    services.AddFabronCore();
+                    services.AddFabron();
                     services.AddSingleton(TestCluster);
                     services.AddSingleton(TestCluster.Client);
+                    services.AddSingleton<IGrainFactory>(TestCluster.Client);
                 })
                 .ConfigureWebHostDefaults(webBuilder =>
                 {

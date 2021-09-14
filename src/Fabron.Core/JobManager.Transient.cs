@@ -15,21 +15,32 @@ namespace Fabron
 {
     public partial class JobManager
     {
-        public async Task<Job<TCommand, TResult>> ScheduleJob<TCommand, TResult>(string jobId, TCommand command, DateTime? scheduledAt = null, Dictionary<string, string>? labels = null)
+        public async Task<Job<TCommand, TResult>> ScheduleJob<TCommand, TResult>(
+            string jobId,
+            TCommand command,
+            DateTime? scheduledAt,
+            Dictionary<string, string>? labels,
+            Dictionary<string, string>? annotations)
             where TCommand : ICommand<TResult>
         {
             string commandName = _registry.CommandNameRegistrations[typeof(TCommand)];
             string commandData = JsonSerializer.Serialize(command);
 
-            Job state = await Schedule(jobId, commandName, commandData, scheduledAt, labels);
+            Job state = await Schedule(jobId, commandName, commandData, scheduledAt, labels, annotations);
             return state.Map<TCommand, TResult>();
         }
 
-        private async Task<Job> Schedule(string jobId, string commandName, string commandData, DateTime? scheduledAt, Dictionary<string, string>? labels = null)
+        private async Task<Job> Schedule(
+            string jobId,
+            string commandName,
+            string commandData,
+            DateTime? scheduledAt,
+            Dictionary<string, string>? labels,
+            Dictionary<string, string>? annotations)
         {
             _logger.LogInformation($"Creating Job[{jobId}]");
             IJobGrain grain = _client.GetGrain<IJobGrain>(jobId);
-            await grain.Schedule(commandName, commandData, scheduledAt, labels);
+            await grain.Schedule(commandName, commandData, scheduledAt, labels, annotations);
             _logger.LogInformation($"Job[{jobId}] Created");
 
             Job? state = await grain.GetState();
@@ -41,7 +52,7 @@ namespace Fabron
         {
             IJobGrain grain = _client.GetGrain<IJobGrain>(jobId);
             Job? jobState = await grain.GetState();
-            if (jobState is null)
+            if (jobState is null || jobState.Status.Deleted)
             {
                 return null;
             }

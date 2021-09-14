@@ -126,9 +126,8 @@ namespace Fabron.Test.Grains
 
             await grain.Delete();
 
-            Assert.Null(await grain.GetState());
-            Silo.TimerRegistry.NumberOfActiveTimers.Should().Be(0);
-            Assert.Null(await Silo.ReminderRegistry.GetReminder("Ticker"));
+            var state = await grain.GetState();
+            Assert.True(state!.Status.Deleted);
         }
 
         public (string Name, string Data) Command { get; private set; } = (Guid.NewGuid().ToString(), "{}");

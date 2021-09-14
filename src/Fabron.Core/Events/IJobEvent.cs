@@ -13,6 +13,8 @@
                     => eventLog.GetPayload<JobExecutionSucceed>(),
                 nameof(JobExecutionFailed)
                     => eventLog.GetPayload<JobExecutionFailed>(),
+                nameof(JobDeleted)
+                    => eventLog.GetPayload<JobDeleted>(),
                 _ => ThrowHelper.ThrowInvalidEventName<IJobEvent>(eventLog.EntityId, eventLog.Version, eventLog.Type)
             };
     };

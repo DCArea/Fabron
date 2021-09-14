@@ -9,11 +9,22 @@ namespace Fabron.Events
         Task On(string jobId, DateTime timestamp, IJobEvent @event);
     }
 
-    public class ConsoleJobEventListener : IJobEventListener
+    public interface ICronJobEventListener
     {
-        private readonly ILogger<ConsoleJobEventListener> _logger;
+        Task On(string cronJobId, DateTime timestamp, ICronJobEvent @event);
+    }
 
-        public ConsoleJobEventListener(ILogger<ConsoleJobEventListener> logger)
+
+    public class NoopJobEventListener : IJobEventListener
+    {
+        public Task On(string jobId, DateTime timestamp, IJobEvent @event) => Task.CompletedTask;
+    }
+
+    public class LogBasedJobEventListener : IJobEventListener, ICronJobEventListener
+    {
+        private readonly ILogger _logger;
+
+        public LogBasedJobEventListener(ILogger<LogBasedJobEventListener> logger)
         {
             _logger = logger;
         }
@@ -21,6 +32,12 @@ namespace Fabron.Events
         public Task On(string jobId, DateTime timestamp, IJobEvent @event)
         {
             _logger.LogInformation($"{@event.GetType().Name} on Job[{jobId}] at {timestamp}");
+            return Task.CompletedTask;
+        }
+
+        public Task On(string cronJobId, DateTime timestamp, ICronJobEvent @event)
+        {
+            _logger.LogInformation($"{@event.GetType().Name} on CronJob[{cronJobId}] at {timestamp}");
             return Task.CompletedTask;
         }
     }

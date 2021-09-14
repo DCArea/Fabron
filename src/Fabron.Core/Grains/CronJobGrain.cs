@@ -53,23 +53,26 @@ namespace Fabron.Grains
         {
             _logger = logger;
             _eventStore = eventStore;
+
         }
 
         public override async Task OnActivateAsync()
         {
-            string key = this.GetPrimaryKeyString();
-            _consumer = GrainFactory.GetGrain<ICronJobEventConsumer>(key);
-            List<EventLog> eventLogs = await _eventStore.GetEventLogs(key, 0);
+            _id = this.GetPrimaryKeyString();
+            _consumer = GrainFactory.GetGrain<ICronJobEventConsumer>(_id);
+
+            List<EventLog> eventLogs = await _eventStore.GetEventLogs(_id, 0);
             foreach (EventLog? eventLog in eventLogs)
             {
                 TransitionState(eventLog);
             }
 
-            _offset = await _eventStore.GetConsumerOffset(key);
+            _consumerOffset = await _eventStore.GetConsumerOffset(_id);
         }
 
+        private string _id = default!;
         private ICronJobEventConsumer _consumer = default!;
-        private long _offset;
+        private long _consumerOffset;
         private CronJob? _state;
         private CronJob State
         {
@@ -79,17 +82,31 @@ namespace Fabron.Grains
                 return _state;
             }
         }
+        private bool ConsumerNotFollowedUp => _state is not null && _state.Version != _consumerOffset;
 
         public Task<CronJob?> GetState() => Task.FromResult(_state);
 
+        private async Task Purge()
+        {
+            if(ConsumerNotFollowedUp)
+            {
+                await NotifyConsumer();
+                return;
+            }
+
+            await _eventStore.ClearEventLogs(_id, long.MaxValue);
+            _state = null;
+            await _eventStore.ClearConsumerOffset(_id);
+            _consumerOffset = -1;
+            await StopTicker();
+        }
+
         public async Task Delete()
         {
-            await StopTicker();
-            // Un-Index
-            await _eventStore.ClearEventLogs(State.Metadata.Uid, long.MaxValue);
-            await _eventStore.ClearConsumerOffset(State.Metadata.Uid);
-            _offset = -1;
-            _state = null;
+            await TickAfter(TimeSpan.FromMinutes(5));
+            CronJobDeleted? @event = new CronJobDeleted();
+            await RaiseAsync(@event, nameof(CronJobDeleted));
+            await Purge();
         }
 
         public async Task Schedule(
@@ -102,6 +119,12 @@ namespace Fabron.Grains
             Dictionary<string, string>? labels,
             Dictionary<string, string>? annotations)
         {
+            if (ConsumerNotFollowedUp)
+            {
+                await NotifyConsumer();
+                ThrowHelper.ThrowConsumerNotFollowedUp(_id, State.Version, _consumerOffset);
+            }
+
             var @event = new CronJobScheduled(
                 labels ?? new Dictionary<string, string>(),
                 annotations ?? new Dictionary<string, string>(),
@@ -236,7 +259,6 @@ namespace Fabron.Grains
 
             var @event = new CronJobCompleted();
             await RaiseAsync(@event, nameof(CronJobCompleted));
-
             await StopTicker();
         }
 
@@ -293,8 +315,9 @@ namespace Fabron.Grains
 
         public async Task CommitOffset(long offset)
         {
+            Guard.IsBetweenOrEqualTo(offset, _consumerOffset, State.Version, nameof(offset));
             await _eventStore.SaveConsumerOffset(State.Metadata.Uid, offset);
-            _offset = offset;
+            _consumerOffset = offset;
         }
     }
 }

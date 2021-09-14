@@ -24,11 +24,6 @@ namespace Microsoft.Extensions.Hosting
             hostBuilder.UseOrleans((ctx, siloBuilder) =>
             {
                 siloBuilder.AddFabron(assemblies);
-                siloBuilder.ConfigureServices(services =>
-                {
-                    services.AddSingleton<IJobEventStore, InMemoryJobEventStore>();
-                    services.AddSingleton<IJobEventListener, ConsoleJobEventListener>();
-                });
                 configureDelegate(ctx, siloBuilder);
             });
 

@@ -18,11 +18,11 @@ namespace Fabron
             string jobId,
             string cronExp,
             TCommand command,
-            DateTime? notBefore = null,
-            DateTime? expirationTime = null,
-            bool suspend = false,
-            Dictionary<string, string>? labels = null,
-            Dictionary<string, string>? annotations = null) where TCommand : ICommand
+            DateTime? notBefore,
+            DateTime? expirationTime,
+            bool suspend,
+            Dictionary<string, string>? labels,
+            Dictionary<string, string>? annotations) where TCommand : ICommand
         {
             string commandName = _registry.CommandNameRegistrations[typeof(TCommand)];
             string commandData = JsonSerializer.Serialize(command);
@@ -58,7 +58,7 @@ namespace Fabron
         {
             ICronJobGrain grain = _client.GetGrain<ICronJobGrain>(jobId);
             CronJob? jobState = await grain.GetState();
-            if (jobState is null)
+            if (jobState is null || jobState.Status.Deleted)
             {
                 return null;
             }

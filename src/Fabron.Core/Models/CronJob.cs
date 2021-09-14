@@ -29,16 +29,18 @@ namespace Fabron.Models
 
     public record CronJobStatus(
         List<JobItem> Jobs,
-        uint LatestScheduleIndex = 0,
-        DateTime? CompletionTimestamp = null,
-        string? Reason = null)
+        uint LatestScheduleIndex,
+        DateTime? CompletionTimestamp,
+        string? Reason,
+        bool Deleted)
     {
         public static CronJobStatus Initial
             => new CronJobStatus(
                 new List<JobItem>(),
                 0,
                 null,
-                null);
+                null,
+                false);
     };
 
     public record CronJob(

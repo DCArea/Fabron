@@ -42,12 +42,12 @@ namespace Microsoft.Extensions.DependencyInjection
 
         internal static IServiceCollection AddElasticSearchJobReporter(this IServiceCollection services)
         {
-            services.AddSingleton<IJobReporter, ElasticSearchJobReporter>(sp =>
+            services.AddSingleton<IJobIndexer, ElasticSearchJobIndexer>(sp =>
             {
                 ElasticSearchOptions options = sp.GetRequiredService<IOptions<ElasticSearchOptions>>().Value;
                 ConnectionSettings settings = new ConnectionSettings(new Uri(options.Server));
                 ElasticClient client = new(settings);
-                return ActivatorUtilities.CreateInstance<ElasticSearchJobReporter>(sp, client);
+                return ActivatorUtilities.CreateInstance<ElasticSearchJobIndexer>(sp, client);
             });
             return services;
         }

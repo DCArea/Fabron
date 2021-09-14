@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 
 using AspNetCore.Authentication.ApiKey;
 using Fabron;
-using FabronService.Services;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -35,7 +34,7 @@ IHostBuilder hostBuilder = Host.CreateDefaultBuilder(args)
         {
             siloBuilder.UseLocalhostClustering()
                 .AddMemoryGrainStorageAsDefault()
-                .UseInMemoryJobStore();
+                .UseInMemory();
         }
         else
         {
@@ -98,7 +97,6 @@ static void ConfigureServices(WebHostBuilderContext context, IServiceCollection 
         .AddApiKeyAuth(context.Configuration["ApiKey"])
         .AddSwagger();
     services.AddSingleton<IJobManager, JobManager>()
-        .AddJobQuerier<NoopJobQuerier>()
         .RegisterJobCommandHandlers();
 }
 
@@ -137,7 +135,6 @@ public static class AppConfigureExtensions
         });
         services.AddHttpClient();
         services.AddHealthChecks();
-        services.AddSingleton<IResourceLocator, ResourceLocator>();
         return services;
     }
 

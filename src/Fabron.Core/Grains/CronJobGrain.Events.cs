@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using Fabron.Events;
 using Fabron.Models;
 using Microsoft.Toolkit.Diagnostics;
-using Orleans;
 
 namespace Fabron.Grains
 {
@@ -11,18 +10,21 @@ namespace Fabron.Grains
     {
         private EventLog CreateEventLog<TEvent>(TEvent @event, string type) where TEvent : class, ICronJobEvent
             => EventLog.Create<TEvent>(
-                this.GetPrimaryKeyString(),
+                _id,
                 (_state?.Version ?? -1) + 1,
                 DateTime.UtcNow,
                 type,
                 @event);
 
+        private Task NotifyConsumer()
+            => _consumer.NotifyChanged(_consumerOffset, State.Version);
+
         private async Task CommitAsync(EventLog eventLog)
         {
-            TransitionState(eventLog);
             await _eventStore.CommitEventLog(eventLog);
+            TransitionState(eventLog);
             _logger.EventRaised(eventLog);
-            await _consumer.NotifyChanged(_offset, eventLog.Version);
+            await NotifyConsumer();
         }
 
         private async Task RaiseAsync<TEvent>(TEvent @event, string eventType)
@@ -37,10 +39,11 @@ namespace Fabron.Grains
             var @event = ICronJobEvent.Get(eventlog);
             _state = @event switch
             {
-                CronJobScheduled e => _state.Apply(e, this.GetPrimaryKeyString(), eventlog.Timestamp),
+                CronJobScheduled e => _state.Apply(e, _id, eventlog.Timestamp),
                 CronJobSuspended e => State.Apply(e, eventlog.Timestamp),
                 CronJobResumed e => State.Apply(e, eventlog.Timestamp),
                 CronJobCompleted e => State.Apply(e, eventlog.Timestamp),
+                CronJobDeleted e => State.Apply(e),
                 _ => ThrowHelper.ThrowInvalidEventName<CronJob>(eventlog.EntityId, eventlog.Version, eventlog.Type)
             };
             Guard.IsEqualTo(State.Version, eventlog.Version, nameof(State.Version));
@@ -88,6 +91,16 @@ namespace Fabron.Grains
                 Status = state.Status with
                 {
                     CompletionTimestamp = timestamp
+                },
+                Version = state.Version + 1
+            };
+
+        public static CronJob Apply(this CronJob state, CronJobDeleted @event)
+            => state with
+            {
+                Status = state.Status with
+                {
+                    Deleted = true
                 },
                 Version = state.Version + 1
             };

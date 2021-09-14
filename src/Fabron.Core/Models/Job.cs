@@ -38,12 +38,12 @@ namespace Fabron.Models
     );
 
     public record JobStatus(
-        ExecutionStatus ExecutionStatus = ExecutionStatus.Scheduled,
-        DateTime? StartedAt = null,
-        DateTime? FinishedAt = null,
-        string? Result = null,
-        string? Reason = null,
-        bool Finalized = false)
+        ExecutionStatus ExecutionStatus,
+        DateTime? StartedAt,
+        DateTime? FinishedAt,
+        string? Result,
+        string? Reason,
+        bool Deleted)
     {
         public static JobStatus Initial
             => new JobStatus(

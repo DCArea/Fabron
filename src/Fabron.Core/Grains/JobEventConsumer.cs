@@ -20,76 +20,91 @@ namespace Fabron.Grains
         private readonly ILogger<IJobEventConsumer> _logger;
         private readonly IJobEventListener _eventListener;
         private readonly IJobEventStore _store;
-        private readonly IJobReporter _reporter;
+        private readonly IJobIndexer _indexer;
         private long _currentVersion = -1;
-        private long _committedVersion = -1;
+        private long _committedOffset = -1;
+        private long _consumedOffset = -1;
+
         public JobEventConsumer(
             ILogger<IJobEventConsumer> logger,
             IJobEventListener eventListener,
             IJobEventStore store,
-            IJobReporter reporter)
+            IJobIndexer reporter)
         {
             _logger = logger;
             _eventListener = eventListener;
             _store = store;
-            _reporter = reporter;
+            _indexer = reporter;
+
         }
+
+        public override Task OnActivateAsync()
+        {
+            _id = this.GetPrimaryKeyString();
+            _grain = GrainFactory.GetGrain<IJobGrain>(_id);
+            return Task.CompletedTask;
+        }
+
+        private string _id = default!;
+        private IJobGrain _grain = default!;
 
         public Task NotifyChanged(long fromVersion, long currentVersion)
         {
+            Guard.IsGreaterThanOrEqualTo(currentVersion, _committedOffset, nameof(currentVersion));
             if (currentVersion > _currentVersion)
             {
                 _currentVersion = currentVersion;
             }
 
-            if (_currentVersion <= _committedVersion)
+            if (_currentVersion <= _committedOffset)
             {
-                _logger.LogDebug($"JobEventConsumer[{this.GetPrimaryKeyString()}]: Skipped since current version was committed");
+                _logger.LogDebug($"JobEventConsumer[{_id}]: Skipped since current version was committed");
                 return Task.CompletedTask;
             }
 
-            if (fromVersion < _committedVersion)
+            if (fromVersion >= _committedOffset)
             {
-                fromVersion = _committedVersion;
+                _committedOffset = fromVersion;
             }
-
-            return Consume(fromVersion);
+            return Consume();
 
         }
 
-        private async Task Consume(long fromVersion)
+        private async Task Consume()
         {
-            string jobId = this.GetPrimaryKeyString();
-            List<EventLog> eventLogs = await _store.GetEventLogs(jobId, fromVersion);
-            long offset = _committedVersion;
+            List<EventLog> eventLogs = await _store.GetEventLogs(_id, _committedOffset);
             foreach (EventLog eventLog in eventLogs)
             {
-                IJobEvent jobEvent = eventLog.Type switch
-                {
-                    nameof(JobScheduled)
-                        => eventLog.GetPayload<JobScheduled>(),
-                    nameof(JobExecutionStarted)
-                        => eventLog.GetPayload<JobExecutionStarted>(),
-                    nameof(JobExecutionSucceed)
-                        => eventLog.GetPayload<JobExecutionSucceed>(),
-                    nameof(JobExecutionFailed)
-                        => eventLog.GetPayload<JobExecutionFailed>(),
-                    _ => ThrowHelper.ThrowInvalidEventName<IJobEvent>(eventLog.EntityId, eventLog.Version, eventLog.Type)
-                };
-
-                await _eventListener.On(jobId, eventLog.Timestamp, jobEvent);
-                offset = eventLog.Version;
+                IJobEvent jobEvent = IJobEvent.Get(eventLog);
+                await _eventListener.On(_id, eventLog.Timestamp, jobEvent);
+                _consumedOffset = eventLog.Version;
             }
 
-            IJobGrain grain = GrainFactory.GetGrain<IJobGrain>(jobId);
-            Models.Job? state = await grain.GetState();
-            Guard.IsNotNull(state, nameof(state));
-            await _reporter.Report(state);
-            _logger.LogDebug($"JobEventConsumer[{jobId}]: Job state reported");
+            await UpdateIndex();
+            await CommitOffset();
 
-            await grain.CommitOffset(offset);
-            _committedVersion = offset;
-            _logger.LogDebug($"JobEventConsumer[{jobId}]: Offset committed {offset}");
+        }
+
+        private async Task UpdateIndex()
+        {
+            Models.Job? state = await _grain.GetState();
+            if (state is null || state.Status.Deleted)
+            {
+                await _indexer.DeleteJob(_id);
+                _logger.LogDebug($"[{_id}]: Job state deleted");
+            }
+            else
+            {
+                await _indexer.Index(state);
+                _logger.LogDebug($"[{_id}]: Job state reported");
+            }
+        }
+
+        private async Task CommitOffset()
+        {
+            await _grain.CommitOffset(_consumedOffset);
+            _committedOffset = _consumedOffset;
+            _logger.LogDebug($"JobEventConsumer[{_id}]: Offset committed {_committedOffset}");
         }
 
     }

@@ -16,4 +16,6 @@ namespace Fabron.Events
 
     public record JobExecutionFailed(string Reason) : IJobEvent;
 
+    public record JobDeleted() : IJobEvent;
+
 }

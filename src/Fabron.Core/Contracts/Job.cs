@@ -16,8 +16,7 @@ namespace Fabron.Contracts
         DateTime? StartedAt,
         DateTime? FinishedAt,
         TResult? Result,
-        string? Reason,
-        bool Finalized
+        string? Reason
     );
 
     public record Job<TCommand, TResult>

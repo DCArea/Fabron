@@ -17,39 +17,45 @@ namespace Fabron.Grains
                 type,
                 @event);
 
+        private Task NotifyConsumer()
+            => _consumer.NotifyChanged(_consumerOffset, State.Version);
+
         private async Task CommitAsync(EventLog eventLog)
         {
-            TransitionState(eventLog);
             await _eventStore.CommitEventLog(eventLog);
+            TransitionState(eventLog);
             _logger.EventRaised(eventLog);
-            await _consumer.NotifyChanged(_offset, eventLog.Version);
+            await NotifyConsumer();
+        }
+
+        private async Task RaiseAsync<TEvent>(TEvent @event, string eventType)
+            where TEvent : class, IJobEvent
+        {
+            EventLog eventLog = CreateEventLog(@event, eventType);
+            await CommitAsync(eventLog);
         }
 
         private async Task RaiseAsync(JobScheduled jobScheduled)
         {
-            EventLog eventLog = CreateEventLog(jobScheduled, nameof(JobScheduled));
-            await CommitAsync(eventLog);
+            await RaiseAsync(jobScheduled, nameof(JobScheduled));
             MetricsHelper.JobCount_Scheduled.Inc();
         }
 
         private async Task RaiseAsync(JobExecutionStarted jobExecutionStarted)
         {
-            EventLog eventLog = CreateEventLog(jobExecutionStarted, nameof(JobExecutionStarted));
-            await CommitAsync(eventLog);
+            await RaiseAsync(jobExecutionStarted, nameof(JobExecutionStarted));
             MetricsHelper.JobCount_Running.Inc();
         }
 
         private async Task RaiseAsync(JobExecutionSucceed jobExecutionSucceed)
         {
-            EventLog eventLog = CreateEventLog(jobExecutionSucceed, nameof(JobExecutionSucceed));
-            await CommitAsync(eventLog);
+            await RaiseAsync(jobExecutionSucceed, nameof(JobExecutionSucceed));
             MetricsHelper.JobCount_RanToCompletion.Inc();
         }
 
         private async Task RaiseAsync(JobExecutionFailed jobExecutionFailed)
         {
-            EventLog eventLog = CreateEventLog(jobExecutionFailed, nameof(JobExecutionFailed));
-            await CommitAsync(eventLog);
+            await RaiseAsync(jobExecutionFailed, nameof(JobExecutionFailed));
             MetricsHelper.JobCount_Faulted.Inc();
         }
 
@@ -62,6 +68,7 @@ namespace Fabron.Grains
                 JobExecutionStarted e => State.Apply(e, eventlog.Timestamp),
                 JobExecutionSucceed e => State.Apply(e, eventlog.Timestamp),
                 JobExecutionFailed e => State.Apply(e, eventlog.Timestamp),
+                JobDeleted e => State.Apply(e),
                 _ => ThrowHelper.ThrowInvalidEventName<Job>(eventlog.EntityId, eventlog.Version, eventlog.Type)
             };
             Guard.IsEqualTo(State.Version, eventlog.Version, nameof(State.Version));
@@ -112,5 +119,14 @@ namespace Fabron.Grains
                 Version = state.Version + 1
             };
 
+        public static Job Apply(this Job state, JobDeleted @event)
+            => state with
+            {
+                Status = state.Status with
+                {
+                    Deleted = true
+                },
+                Version = state.Version + 1
+            };
     }
 }

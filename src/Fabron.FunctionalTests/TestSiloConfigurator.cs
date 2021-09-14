@@ -1,6 +1,5 @@
 
 using System;
-using Fabron;
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -8,7 +7,7 @@ using Orleans.Configuration;
 using Orleans.Hosting;
 using Orleans.TestingHost;
 
-namespace FabronService.FunctionalTests
+namespace Fabron.FunctionalTests
 {
     public class TestSiloConfigurator : ISiloConfigurator
     {
@@ -16,11 +15,17 @@ namespace FabronService.FunctionalTests
 
         public void Configure(ISiloBuilder siloBuilder)
         {
+            //siloBuilder.ConfigureLogging(logging =>
+            //{
+            //    logging.
+
+            //});
             siloBuilder.Configure<MessagingOptions>(options =>
             {
                 options.ResponseTimeout = TimeSpan.FromSeconds(5);
             });
             siloBuilder.UseInMemory();
+
             siloBuilder.ConfigureServices(ConfigureServices);
             siloBuilder.AddFabron();
         }

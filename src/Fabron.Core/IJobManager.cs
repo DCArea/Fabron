@@ -14,8 +14,9 @@ namespace Fabron
         Task<Job<TCommand, TResult>> ScheduleJob<TCommand, TResult>(
             string jobId,
             TCommand command,
-            DateTime? scheduledAt = null,
-            Dictionary<string, string>? labels = null) where TCommand : ICommand<TResult>;
+            DateTime? scheduledAt,
+            Dictionary<string, string>? labels,
+            Dictionary<string, string>? annotations) where TCommand : ICommand<TResult>;
 
         Task<Job<TJobCommand, TResult>?> GetJobById<TJobCommand, TResult>(string jobId) where TJobCommand : ICommand<TResult>;
 
@@ -32,11 +33,11 @@ namespace Fabron
             string cronJobId,
             string cronExp,
             TCommand command,
-            DateTime? notBefore = null,
-            DateTime? expirationTime = null,
-            bool suspend = false,
-            Dictionary<string, string>? labels = null,
-            Dictionary<string, string>? annotations = null) where TCommand : ICommand;
+            DateTime? notBefore,
+            DateTime? expirationTime,
+            bool suspend,
+            Dictionary<string, string>? labels,
+            Dictionary<string, string>? annotations) where TCommand : ICommand;
 
         Task SuspendCronJob(string jobId);
 

@@ -32,8 +32,7 @@ namespace Fabron
                     job.Status.StartedAt,
                     job.Status.FinishedAt,
                     cmdResult,
-                    job.Status.Reason,
-                    job.Status.Finalized)
+                    job.Status.Reason)
             );
             return typedJob;
         }

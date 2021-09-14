@@ -13,6 +13,7 @@ namespace Fabron.Events
                 nameof(CronJobSuspended)  => eventLog.GetPayload<CronJobSuspended>(),
                 nameof(CronJobResumed)  => eventLog.GetPayload<CronJobResumed>(),
                 nameof(CronJobCompleted)  => eventLog.GetPayload<CronJobCompleted>(),
+                nameof(CronJobDeleted)  => eventLog.GetPayload<CronJobDeleted>(),
                 _ => ThrowHelper.ThrowInvalidEventName<ICronJobEvent>(eventLog.EntityId, eventLog.Version, eventLog.Type)
             };
     };
@@ -31,6 +32,7 @@ namespace Fabron.Events
 
     public record CronJobItemsStatusChanged(List<JobItem> Items): ICronJobEvent;
     public record CronJobCompleted(): ICronJobEvent;
+    public record CronJobDeleted(): ICronJobEvent;
 
     public interface IFabronEvent { };
 
