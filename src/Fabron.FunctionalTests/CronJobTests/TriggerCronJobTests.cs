@@ -13,7 +13,8 @@ namespace Fabron.FunctionalTests.CronJobTests
         {
         }
 
-        [Fact(Skip = "Skip")]
+        //[Fact(Skip = "Skip")]
+        [Fact]
         public async Task ShouldScheduleNewJob()
         {
             DateTime utcNow = DateTime.UtcNow;
