@@ -12,7 +12,7 @@ namespace Fabron.FunctionalTests.JobTests
         {
         }
 
-        [Fact]
+        [Fact(Skip = "Skip")]
         public async Task ShouldCanBeQueried()
         {
             var labels = new Dictionary<string, string>
