@@ -263,7 +263,11 @@ namespace Fabron.Grains
             if (ConsumerNotFollowedUp)
             {
                 _consumingCompletionSource = new TaskCompletionSource<bool>();
-                await _consumingCompletionSource.Task;
+                await _consumingCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(3));
+                if (ConsumerNotFollowedUp)
+                {
+                    ThrowHelper.ThrowConsumerNotFollowedUp(_id, State.Version, _consumerOffset);
+                }
             }
         }
     }

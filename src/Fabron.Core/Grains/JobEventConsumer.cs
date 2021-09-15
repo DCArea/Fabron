@@ -73,6 +73,7 @@ namespace Fabron.Grains
 
             if (fromVersion >= _committedOffset)
             {
+                _logger.LogDebug($"CronJobEventConsumer[{_id}]: Update invalid _commitedOffset, from {_committedOffset} to {fromVersion}");
                 _committedOffset = fromVersion;
             }
             return Consume();
@@ -81,6 +82,7 @@ namespace Fabron.Grains
 
         private async Task Consume()
         {
+            _consumedOffset = _committedOffset;
             List<EventLog> eventLogs = await _store.GetEventLogs(_id, _committedOffset);
             foreach (EventLog eventLog in eventLogs)
             {
