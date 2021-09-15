@@ -129,7 +129,6 @@ namespace Fabron.Grains
             {
                 return;
             }
-            await TickAfter(TimeSpan.FromSeconds(20));
             CronJobDeleted? @event = new CronJobDeleted();
             await RaiseAsync(@event, nameof(CronJobDeleted));
         }
@@ -144,12 +143,6 @@ namespace Fabron.Grains
             Dictionary<string, string>? labels,
             Dictionary<string, string>? annotations)
         {
-            if (ConsumerNotFollowedUp)
-            {
-                await NotifyConsumer();
-                ThrowHelper.ThrowConsumerNotFollowedUp(_id, State.Version, _consumerOffset);
-            }
-
             var @event = new CronJobScheduled(
                 labels ?? new Dictionary<string, string>(),
                 annotations ?? new Dictionary<string, string>(),

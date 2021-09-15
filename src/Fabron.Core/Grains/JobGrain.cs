@@ -125,7 +125,6 @@ namespace Fabron.Grains
             {
                 return;
             }
-            await TickAfter(TimeSpan.FromSeconds(20));
             JobDeleted? @event = new JobDeleted();
             await RaiseAsync(@event, nameof(JobDeleted));
         }
@@ -139,12 +138,6 @@ namespace Fabron.Grains
             Dictionary<string, string>? labels,
             Dictionary<string, string>? annotations)
         {
-            if (ConsumerNotFollowedUp)
-            {
-                await NotifyConsumer();
-                ThrowHelper.ThrowConsumerNotFollowedUp(_id, State.Version, _consumerOffset);
-            }
-
             DateTime utcNow = DateTime.UtcNow;
             DateTime schedule_ = schedule is null || schedule.Value < utcNow ? utcNow : (DateTime)schedule;
             await EnsureTicker(TimeSpan.FromMinutes(2));

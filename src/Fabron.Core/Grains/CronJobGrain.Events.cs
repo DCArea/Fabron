@@ -18,7 +18,7 @@ namespace Fabron.Grains
 
         private async Task NotifyConsumer()
         {
-            var currentVersion = State.Version;
+            long currentVersion = State.Version;
             Guard.IsGreaterThanOrEqualTo(currentVersion, _consumerOffset, nameof(currentVersion));
             await _consumer.NotifyChanged(_consumerOffset, currentVersion);
         }
@@ -38,20 +38,20 @@ namespace Fabron.Grains
             await CommitAsync(eventLog);
         }
 
-        private void TransitionState(EventLog eventlog)
+        private void TransitionState(EventLog eventLog)
         {
-            var @event = ICronJobEvent.Get(eventlog);
+            var @event = ICronJobEvent.Get(eventLog);
             _state = @event switch
             {
-                CronJobScheduled e => _state.Apply(e, _id, eventlog.Timestamp),
-                CronJobSuspended e => State.Apply(e, eventlog.Timestamp),
-                CronJobResumed e => State.Apply(e, eventlog.Timestamp),
-                CronJobItemsStatusChanged e => State.Apply(e, eventlog.Timestamp),
-                CronJobCompleted e => State.Apply(e, eventlog.Timestamp),
+                CronJobScheduled e => _state.Apply(e, _id, eventLog.Timestamp),
+                CronJobSuspended e => State.Apply(e, eventLog.Timestamp),
+                CronJobResumed e => State.Apply(e, eventLog.Timestamp),
+                CronJobItemsStatusChanged e => State.Apply(e, eventLog.Timestamp),
+                CronJobCompleted e => State.Apply(e, eventLog.Timestamp),
                 CronJobDeleted e => State.Apply(e),
-                _ => ThrowHelper.ThrowInvalidEventName<CronJob>(eventlog.EntityId, eventlog.Version, eventlog.Type)
+                _ => ThrowHelper.ThrowInvalidEventName<CronJob>(eventLog.EntityId, eventLog.Version, eventLog.Type)
             };
-            Guard.IsEqualTo(State.Version, eventlog.Version, nameof(State.Version));
+            Guard.IsEqualTo(State.Version, eventLog.Version, nameof(State.Version));
         }
     }
 
@@ -68,7 +68,7 @@ namespace Fabron.Grains
                     @event.ExpirationTime,
                     true),
                 CronJobStatus.Initial,
-                0);
+                state == null ? 0 : state.Version + 1);
 
         public static CronJob Apply(this CronJob state, CronJobSuspended @event, DateTime timestamp)
             => state with

@@ -59,19 +59,19 @@ namespace Fabron.Grains
             MetricsHelper.JobCount_Faulted.Inc();
         }
 
-        private void TransitionState(EventLog eventlog)
+        private void TransitionState(EventLog eventLog)
         {
-            var @event = IJobEvent.Get(eventlog);
+            var @event = IJobEvent.Get(eventLog);
             _state = @event switch
             {
-                JobScheduled e => _state.Apply(e, this.GetPrimaryKeyString(), eventlog.Timestamp),
-                JobExecutionStarted e => State.Apply(e, eventlog.Timestamp),
-                JobExecutionSucceed e => State.Apply(e, eventlog.Timestamp),
-                JobExecutionFailed e => State.Apply(e, eventlog.Timestamp),
+                JobScheduled e => _state.Apply(e, _id, eventLog.Timestamp),
+                JobExecutionStarted e => State.Apply(e, eventLog.Timestamp),
+                JobExecutionSucceed e => State.Apply(e, eventLog.Timestamp),
+                JobExecutionFailed e => State.Apply(e, eventLog.Timestamp),
                 JobDeleted e => State.Apply(e),
-                _ => ThrowHelper.ThrowInvalidEventName<Job>(eventlog.EntityId, eventlog.Version, eventlog.Type)
+                _ => ThrowHelper.ThrowInvalidEventName<Job>(eventLog.EntityId, eventLog.Version, eventLog.Type)
             };
-            Guard.IsEqualTo(State.Version, eventlog.Version, nameof(State.Version));
+            Guard.IsEqualTo(State.Version, eventLog.Version, nameof(State.Version));
         }
     }
 
@@ -82,7 +82,7 @@ namespace Fabron.Grains
                 new(id, timestamp, @event.Labels, @event.Annotations),
                 new(@event.Schedule, @event.CommandName, @event.CommandData),
                 JobStatus.Initial,
-                0);
+                state == null ? 0 : state.Version + 1);
 
         public static Job Apply(this Job state, JobExecutionStarted @event, DateTime timestamp)
             => state with
