@@ -45,7 +45,7 @@ namespace FabronService.Resources.HttpReminders
             string tenantId = HttpContext.User.Identity!.Name!;
             string resourceUri = $"tenants/{tenantId}/HttpReminders/{name}";
 
-            Job<RequestWebAPI, int>? job = await _jobManager.GetJobById<RequestWebAPI, int>(resourceUri);
+            Job<RequestWebAPI, int>? job = await _jobManager.GetJob<RequestWebAPI, int>(resourceUri);
             return job is null ? NotFound() : Ok(job.ToResource(name));
         }
 

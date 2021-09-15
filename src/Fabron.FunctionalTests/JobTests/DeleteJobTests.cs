@@ -26,10 +26,10 @@ namespace Fabron.FunctionalTests.JobTests
                 null,
                 labels,
                 null);
-            await JobManager.DeleteJobById(job.Metadata.Uid);
+            await JobManager.DeleteJob(job.Metadata.Key);
 
             //await Task.Delay(3000);
-            Assert.Null(await JobManager.GetJobById<NoopCommand, NoopCommandResult>(job.Metadata.Uid));
+            Assert.Null(await JobManager.GetJob<NoopCommand, NoopCommandResult>(job.Metadata.Key));
             IEnumerable<Contracts.Job<NoopCommand, NoopCommandResult>> queried = await JobManager.GetJobByLabel<NoopCommand, NoopCommandResult>("foo", "bar");
             Assert.Empty(queried);
         }

@@ -10,7 +10,7 @@ namespace Fabron.Grains
     {
         private EventLog CreateEventLog<TEvent>(TEvent @event, string type) where TEvent : class, ICronJobEvent
             => EventLog.Create<TEvent>(
-                _id,
+                _key,
                 (_state?.Version ?? -1) + 1,
                 DateTime.UtcNow,
                 type,
@@ -43,13 +43,13 @@ namespace Fabron.Grains
             var @event = ICronJobEvent.Get(eventLog);
             _state = @event switch
             {
-                CronJobScheduled e => _state.Apply(e, _id, eventLog.Timestamp),
+                CronJobScheduled e => _state.Apply(e, _key, eventLog.Timestamp),
                 CronJobSuspended e => State.Apply(e, eventLog.Timestamp),
                 CronJobResumed e => State.Apply(e, eventLog.Timestamp),
                 CronJobItemsStatusChanged e => State.Apply(e, eventLog.Timestamp),
                 CronJobCompleted e => State.Apply(e, eventLog.Timestamp),
                 CronJobDeleted e => State.Apply(e),
-                _ => ThrowHelper.ThrowInvalidEventName<CronJob>(eventLog.EntityId, eventLog.Version, eventLog.Type)
+                _ => ThrowHelper.ThrowInvalidEventName<CronJob>(eventLog.EntityKey, eventLog.Version, eventLog.Type)
             };
             Guard.IsEqualTo(State.Version, eventLog.Version, nameof(State.Version));
         }
@@ -57,9 +57,14 @@ namespace Fabron.Grains
 
     public static class CronJobEventsExtensions
     {
-        public static CronJob Apply(this CronJob? state, CronJobScheduled @event, string id, DateTime timestamp)
+        public static CronJob Apply(this CronJob? state, CronJobScheduled @event, string key, DateTime timestamp)
             => new(
-                new(id, timestamp, @event.Labels, @event.Annotations),
+                new(
+                    key,
+                    state == null ? Guid.NewGuid().ToString(): state.Metadata.Uid,
+                    timestamp,
+                    @event.Labels,
+                    @event.Annotations),
                 new(
                     @event.Schedule,
                     @event.CommandName,

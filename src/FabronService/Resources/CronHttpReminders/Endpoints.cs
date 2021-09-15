@@ -50,7 +50,7 @@ namespace FabronService.Resources.CronHttpReminders
             string? tenantId = HttpContext.User.Identity!.Name;
             string? resourceUri = $"tenants/{tenantId}/CronHttpReminders/{name}";
 
-            CronJob<RequestWebAPI>? job = await _jobManager.GetCronJobById<RequestWebAPI>(resourceUri);
+            CronJob<RequestWebAPI>? job = await _jobManager.GetCronJob<RequestWebAPI>(resourceUri);
             return job is null ? NotFound() : Ok(job.ToResource(name));
         }
 

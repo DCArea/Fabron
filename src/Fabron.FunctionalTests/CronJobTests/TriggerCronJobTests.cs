@@ -31,8 +31,8 @@ namespace Fabron.FunctionalTests.CronJobTests
                 labels,
                 null);
 
-            await JobManager.TriggerCronJob(job.Metadata.Uid);
-            IEnumerable<Contracts.Job<NoopCommand, NoopCommandResult>>? items = await JobManager.GetJobByCron<NoopCommand, NoopCommandResult>(job.Metadata.Uid);
+            await JobManager.TriggerCronJob(job.Metadata.Key);
+            IEnumerable<Contracts.Job<NoopCommand, NoopCommandResult>>? items = await JobManager.GetJobByCron<NoopCommand, NoopCommandResult>(job.Metadata.Key);
             Assert.NotEmpty(items);
         }
     }

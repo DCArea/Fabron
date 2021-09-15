@@ -11,8 +11,8 @@ namespace Fabron.Grains
 {
     public interface IBatchJobReporterWorker : IGrainWithIntegerKey
     {
-        Task ReportJob(string jobId);
-        Task ReportCronJob(string cronJobId);
+        Task ReportJob(string key);
+        Task ReportCronJob(string cronkey);
     }
 
     [StatelessWorker]
@@ -39,16 +39,16 @@ namespace Fabron.Grains
             _reporter = reporter;
         }
 
-        public Task ReportJob(string jobId)
+        public Task ReportJob(string key)
         {
-            _pendingJobs.Add(jobId);
+            _pendingJobs.Add(key);
             _worker.Notify();
             return _worker.WaitForCurrentWorkToBeServiced();
         }
 
-        public Task ReportCronJob(string cronJobId)
+        public Task ReportCronJob(string cronkey)
         {
-            _pendingCronJobs.Add(cronJobId);
+            _pendingCronJobs.Add(cronkey);
             _worker.Notify();
             return _worker.WaitForCurrentWorkToBeServiced();
         }
@@ -64,7 +64,7 @@ namespace Fabron.Grains
 
             string[] currentBatch = _pendingJobs.ToArray();
             IEnumerable<string> ids = currentBatch.GroupBy(id => id).Select(g => g.Key);
-            Fabron.Models.Job?[] jobStates = await Task.WhenAll(ids.Select(jobId => GrainFactory.GetGrain<IJobGrain>(jobId).GetState()));
+            Fabron.Models.Job?[] jobStates = await Task.WhenAll(ids.Select(key => GrainFactory.GetGrain<IJobGrain>(key).GetState()));
             List<Models.Job> jobs = jobStates
                 .Where(job => job is not null)
                 .Cast<Fabron.Models.Job>()
@@ -92,7 +92,7 @@ namespace Fabron.Grains
 
             string[]? currentBatch = _pendingCronJobs.ToArray();
             IEnumerable<string> ids = currentBatch.GroupBy(id => id).Select(g => g.Key);
-            Fabron.Models.CronJob?[] jobStates = await Task.WhenAll(ids.Select(jobId => GrainFactory.GetGrain<ICronJobGrain>(jobId).GetState()));
+            Fabron.Models.CronJob?[] jobStates = await Task.WhenAll(ids.Select(key => GrainFactory.GetGrain<ICronJobGrain>(key).GetState()));
             List<Models.CronJob> jobs = jobStates
                 .Where(job => job is not null)
                 .Cast<Fabron.Models.CronJob>()

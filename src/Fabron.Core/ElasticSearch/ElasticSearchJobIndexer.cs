@@ -25,7 +25,7 @@ namespace Fabron.ElasticSearch
         public async Task Index(Fabron.Models.Job job)
         {
             JobDocument doc = new(
-                job.Metadata.Uid,
+                job.Metadata.Key,
                 job.Metadata,
                 job.Spec,
                 job.Status,
@@ -40,7 +40,7 @@ namespace Fabron.ElasticSearch
         public async Task Index(CronJob job)
         {
             CronJobDocument doc = new(
-                job.Metadata.Uid,
+                job.Metadata.Key,
                 job.Metadata,
                 job.Spec,
                 job.Status,
@@ -56,7 +56,7 @@ namespace Fabron.ElasticSearch
         {
             IEnumerable<JobDocument> docs = jobs
                 .Select(job => new JobDocument(
-                    job.Metadata.Uid,
+                    job.Metadata.Key,
                     job.Metadata,
                     job.Spec,
                     job.Status,
@@ -72,11 +72,11 @@ namespace Fabron.ElasticSearch
         {
             IEnumerable<CronJobDocument> docs = jobs
                 .Where(job => job is not null)
-                .Select(job => new CronJobDocument(job!.Metadata.Uid,
-                  job.Metadata,
-                  job.Spec,
-                  job.Status,
-                  job.Version));
+                .Select(job => new CronJobDocument(job!.Metadata.Key,
+                    job.Metadata,
+                    job.Spec,
+                    job.Status,
+                    job.Version));
             Nest.BulkResponse res = await _esClient.IndexManyAsync(docs, _options.CronJobIndexName);
             if (res.Errors)
             {
@@ -84,20 +84,20 @@ namespace Fabron.ElasticSearch
             }
         }
 
-        public async Task DeleteJob(string jobId)
+        public async Task DeleteJob(string key)
         {
             DeleteResponse? res = await _esClient
-                .DeleteAsync<JobDocument>(jobId, d => d.Index(_options.JobIndexName));
+                .DeleteAsync<JobDocument>(key, d => d.Index(_options.JobIndexName));
             if (res.Result == Nest.Result.Error)
             {
                 _logger.LogError($"Failed to delete doc: {res.DebugInformation}");
             }
         }
 
-        public async Task DeleteCronJob(string cronJobId)
+        public async Task DeleteCronJob(string cronkey)
         {
             DeleteResponse? res = await _esClient
-                .DeleteAsync<CronJobDocument>(cronJobId, d => d.Index(_options.CronJobIndexName));
+                .DeleteAsync<CronJobDocument>(cronkey, d => d.Index(_options.CronJobIndexName));
             if (res.Result == Nest.Result.Error)
             {
                 _logger.LogError($"Failed to delete doc: {res.DebugInformation}");

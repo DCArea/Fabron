@@ -28,8 +28,8 @@ namespace Fabron.Test.Grains
         {
             DateTime now = DateTime.UtcNow;
             string cronExp = $"{now.AddMinutes(10).Minute} * * * *";
-            string? cronJobId = Guid.NewGuid().ToString();
-            CronJobGrain? grain = await Silo.CreateGrainAsync<CronJobGrain>(cronJobId);
+            string? key = Guid.NewGuid().ToString();
+            CronJobGrain? grain = await Silo.CreateGrainAsync<CronJobGrain>(key);
             await Schedule(grain, cronExp);
 
             CronJob? state = await grain.GetState();

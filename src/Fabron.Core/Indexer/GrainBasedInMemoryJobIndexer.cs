@@ -18,8 +18,8 @@ namespace Fabron.Indexer
         public Task Index(IEnumerable<Job> jobs) => IndexerGrain.Index(jobs.ToList());
         public Task Index(CronJob job) => IndexerGrain.Index(job);
         public Task Index(IEnumerable<CronJob> jobs) => IndexerGrain.Index(jobs.ToList());
-        public Task DeleteCronJob(string cronJobId) => IndexerGrain.DeleteCronJob(cronJobId);
-        public Task DeleteJob(string jobId) => IndexerGrain.DeleteJob(jobId);
+        public Task DeleteCronJob(string key) => IndexerGrain.DeleteCronJob(key);
+        public Task DeleteJob(string key) => IndexerGrain.DeleteJob(key);
 
         public async Task<IEnumerable<CronJob>> GetCronJobByLabel(string labelName, string labelValue)
         {
@@ -48,8 +48,8 @@ namespace Fabron.Indexer
 
     public interface IJobIndexerGrain : IGrainWithIntegerKey
     {
-        Task DeleteCronJob(string cronJobId);
-        Task DeleteJob(string jobId);
+        Task DeleteCronJob(string key);
+        Task DeleteJob(string key);
         Task Index(Job job);
         Task Index(List<Job> jobs);
         Task Index(CronJob job);
@@ -69,8 +69,8 @@ namespace Fabron.Indexer
         public Task Index(List<Job> jobs) => _indexer.Index(jobs);
         public Task Index(CronJob job) => _indexer.Index(job);
         public Task Index(List<CronJob> job) => _indexer.Index(job);
-        public Task DeleteJob(string jobId) => _indexer.DeleteJob(jobId);
-        public Task DeleteCronJob(string cronJobId) => _indexer.DeleteCronJob(cronJobId);
+        public Task DeleteJob(string key) => _indexer.DeleteJob(key);
+        public Task DeleteCronJob(string key) => _indexer.DeleteCronJob(key);
 
         public async Task<List<CronJob>> GetCronJobByLabel(string labelName, string labelValue)
         {

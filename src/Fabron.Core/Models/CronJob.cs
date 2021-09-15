@@ -7,12 +7,13 @@ namespace Fabron.Models
 {
     public record JobItem(
         uint Index,
-        string Uid,
+        string Key,
         DateTime Schedule,
         ExecutionStatus Status
     );
 
     public record CronJobMetadata(
+        string Key,
         string Uid,
         DateTime CreationTimestamp,
         Dictionary<string, string> Labels,
@@ -71,7 +72,5 @@ namespace Fabron.Models
             }
             return nextTick;
         }
-
-        public string GetChildJobIdByIndex(uint index) => Metadata.Uid + "-" + index;
     }
 }

@@ -38,7 +38,7 @@ namespace Fabron.Grains
         Task Purge();
 
         [AlwaysInterleave]
-        Task WaitEventsConsumed();
+        Task WaitEventsConsumed(int timeoutSeconds);
     }
 
     public partial class JobGrain : Grain, IJobGrain, IRemindable
@@ -61,19 +61,19 @@ namespace Fabron.Grains
 
         public override async Task OnActivateAsync()
         {
-            _id = this.GetPrimaryKeyString();
-            _consumer = GrainFactory.GetGrain<IJobEventConsumer>(_id);
+            _key = this.GetPrimaryKeyString();
+            _consumer = GrainFactory.GetGrain<IJobEventConsumer>(_key);
 
-            List<EventLog> eventLogs = await _eventStore.GetEventLogs(_id, 0);
+            List<EventLog> eventLogs = await _eventStore.GetEventLogs(_key, 0);
             foreach (EventLog? eventLog in eventLogs)
             {
                 TransitionState(eventLog);
             }
 
-            _consumerOffset = await _eventStore.GetConsumerOffset(_id);
+            _consumerOffset = await _eventStore.GetConsumerOffset(_key);
         }
 
-        private string _id = default!;
+        private string _key = default!;
         private IJobEventConsumer _consumer = default!;
         private long _consumerOffset;
         private Job? _state;
@@ -100,23 +100,23 @@ namespace Fabron.Grains
             if (ConsumerNotFollowedUp)
             {
                 await NotifyConsumer();
-                await WaitEventsConsumed();
+                await WaitEventsConsumed(10);
                 return;
             }
 
             if (_state != null)
             {
-                await _eventStore.ClearEventLogs(_id, long.MaxValue);
+                await _eventStore.ClearEventLogs(_key, long.MaxValue);
                 _state = null;
             }
             if (_consumerOffset != -1)
             {
-                await _eventStore.ClearConsumerOffset(_id);
+                await _eventStore.ClearConsumerOffset(_key);
                 await _consumer.Reset();
                 _consumerOffset = -1;
             }
             await StopTicker();
-            _logger.JobPurged(_id);
+            _logger.JobPurged(_key);
         }
 
         public async Task Delete()
@@ -179,7 +179,7 @@ namespace Fabron.Grains
 
         private async Task Start()
         {
-            _logger.StartingJobExecution(State.Metadata.Uid);
+            _logger.StartingJobExecution(State.Metadata.Key);
             MetricsHelper.JobScheduleTardiness.Observe(State.Tardiness.TotalSeconds);
 
 
@@ -226,7 +226,7 @@ namespace Fabron.Grains
             {
                 await EnsureTicker(dueTime);
             }
-            _logger.LogDebug($"Job[{State.Metadata.Uid}]: Tick After {dueTime}");
+            _logger.LogDebug($"Job[{_key}]: Tick After {dueTime}");
         }
 
         private async Task EnsureTicker(TimeSpan dueTime) => _tickReminder = await RegisterOrUpdateReminder("Ticker", dueTime, TimeSpan.FromMinutes(2));
@@ -249,7 +249,7 @@ namespace Fabron.Grains
         public async Task CommitOffset(long offset)
         {
             Guard.IsBetweenOrEqualTo(offset, _consumerOffset, State.Version, nameof(offset));
-            await _eventStore.SaveConsumerOffset(State.Metadata.Uid, offset);
+            await _eventStore.SaveConsumerOffset(State.Metadata.Key, offset);
             _consumerOffset = offset;
 
             if (_consumingCompletionSource != null && _consumerOffset == State.Version)
@@ -258,15 +258,21 @@ namespace Fabron.Grains
             }
         }
 
-        public async Task WaitEventsConsumed()
+        public async Task WaitEventsConsumed(int timeoutSeconds)
         {
             if (ConsumerNotFollowedUp)
             {
                 _consumingCompletionSource = new TaskCompletionSource<bool>();
-                await _consumingCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(3));
+                try
+                {
+                    await _consumingCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(timeoutSeconds));
+                }
+                catch (TimeoutException)
+                {
+                }
                 if (ConsumerNotFollowedUp)
                 {
-                    ThrowHelper.ThrowConsumerNotFollowedUp(_id, State.Version, _consumerOffset);
+                    ThrowHelper.ThrowConsumerNotFollowedUp(_key, State.Version, _consumerOffset);
                 }
             }
         }

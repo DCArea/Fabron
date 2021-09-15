@@ -25,6 +25,7 @@ namespace Fabron.Models
     }
 
     public record JobMetadata(
+        string Key,
         string Uid,
         DateTime CreationTimestamp,
         Dictionary<string, string> Labels,

@@ -7,8 +7,8 @@ namespace Fabron
 {
     public interface IJobIndexer
     {
-        Task DeleteCronJob(string cronJobId);
-        Task DeleteJob(string jobId);
+        Task DeleteCronJob(string key);
+        Task DeleteJob(string key);
         Task Index(Job job);
         Task Index(IEnumerable<Job> jobs);
         Task Index(CronJob job);

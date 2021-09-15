@@ -11,7 +11,7 @@ namespace Fabron.Indexer
         public readonly Dictionary<string, CronJob> _cronJobs = new();
         public Task Index(Job job)
         {
-            _jobs[job.Metadata.Uid] = job;
+            _jobs[job.Metadata.Key] = job;
             return Task.CompletedTask;
         }
 
@@ -19,14 +19,14 @@ namespace Fabron.Indexer
         {
             foreach (Job? job in jobs)
             {
-                _jobs[job.Metadata.Uid] = job;
+                _jobs[job.Metadata.Key] = job;
             }
             return Task.CompletedTask;
         }
 
         public Task Index(CronJob job)
         {
-            _cronJobs[job.Metadata.Uid] = job;
+            _cronJobs[job.Metadata.Key] = job;
             return Task.CompletedTask;
         }
 
@@ -34,20 +34,20 @@ namespace Fabron.Indexer
         {
             foreach (CronJob? job in jobs)
             {
-                _cronJobs[job.Metadata.Uid] = job;
+                _cronJobs[job.Metadata.Key] = job;
             }
             return Task.CompletedTask;
         }
 
-        public Task DeleteJob(string jobId)
+        public Task DeleteJob(string key)
         {
-            _jobs.Remove(jobId);
+            _jobs.Remove(key);
             return Task.CompletedTask;
         }
 
-        public Task DeleteCronJob(string cronJobId)
+        public Task DeleteCronJob(string key)
         {
-            _cronJobs.Remove(cronJobId);
+            _cronJobs.Remove(key);
             return Task.CompletedTask;
         }
 

@@ -5,7 +5,7 @@ using Microsoft.Toolkit.Diagnostics;
 namespace Fabron.Events
 {
     public record EventLog(
-        string EntityId,
+        string EntityKey,
         long Version,
         DateTime Timestamp,
         string Type,
@@ -22,13 +22,13 @@ namespace Fabron.Events
             return @event;
         }
 
-        private EventLog(string entityId, long version, DateTime timestamp, string type, string data, object cache)
-            : this(entityId, version, timestamp, type, data)
+        private EventLog(string entityKey, long version, DateTime timestamp, string type, string data, object cache)
+            : this(entityKey, version, timestamp, type, data)
             => _cache = cache;
 
-        public static EventLog Create<TEvent>(string entityId, long version, DateTime timestamp, string type, TEvent @event) where TEvent : class
+        public static EventLog Create<TEvent>(string entityKey, long version, DateTime timestamp, string type, TEvent @event) where TEvent : class
             => new(
-                entityId,
+                entityKey,
                 version,
                 timestamp,
                 type,

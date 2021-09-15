@@ -6,18 +6,18 @@ namespace Fabron.Events
 {
     public interface IJobEventListener
     {
-        Task On(string jobId, DateTime timestamp, IJobEvent @event);
+        Task On(string key, DateTime timestamp, IJobEvent @event);
     }
 
     public interface ICronJobEventListener
     {
-        Task On(string cronJobId, DateTime timestamp, ICronJobEvent @event);
+        Task On(string key, DateTime timestamp, ICronJobEvent @event);
     }
 
 
     public class NoopJobEventListener : IJobEventListener
     {
-        public Task On(string jobId, DateTime timestamp, IJobEvent @event) => Task.CompletedTask;
+        public Task On(string key, DateTime timestamp, IJobEvent @event) => Task.CompletedTask;
     }
 
     public class LogBasedJobEventListener : IJobEventListener, ICronJobEventListener
@@ -29,15 +29,15 @@ namespace Fabron.Events
             _logger = logger;
         }
 
-        public Task On(string jobId, DateTime timestamp, IJobEvent @event)
+        public Task On(string key, DateTime timestamp, IJobEvent @event)
         {
-            _logger.LogInformation($"{@event.GetType().Name} on Job[{jobId}] at {timestamp}");
+            _logger.LogInformation($"{@event.GetType().Name} on Job[{key}] at {timestamp}");
             return Task.CompletedTask;
         }
 
-        public Task On(string cronJobId, DateTime timestamp, ICronJobEvent @event)
+        public Task On(string key, DateTime timestamp, ICronJobEvent @event)
         {
-            _logger.LogInformation($"{@event.GetType().Name} on CronJob[{cronJobId}] at {timestamp}");
+            _logger.LogInformation($"{@event.GetType().Name} on CronJob[{key}] at {timestamp}");
             return Task.CompletedTask;
         }
     }

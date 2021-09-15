@@ -53,7 +53,7 @@ namespace FabronService.Resources.CronHttpReminders.Models
 
         public static CronHttpReminderItem ToResource(this Job<RequestWebAPI, int> job)
             => new(
-                job.Metadata.Uid,
+                job.Metadata.Key,
                 job.Spec.CommandData,
                 job.Status.Result,
                 job.Metadata.CreationTimestamp,

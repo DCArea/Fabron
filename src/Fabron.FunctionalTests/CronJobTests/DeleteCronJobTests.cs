@@ -28,10 +28,10 @@ namespace Fabron.FunctionalTests.JobTests
                 false,
                 null,
                 null);
-            await JobManager.DeleteCronJobById(job.Metadata.Uid);
+            await JobManager.DeleteCronJob(job.Metadata.Key);
 
             //await Task.Delay(3000);
-            Assert.Null(await JobManager.GetCronJobById<NoopCommand>(job.Metadata.Uid));
+            Assert.Null(await JobManager.GetCronJob<NoopCommand>(job.Metadata.Key));
             IEnumerable<Contracts.CronJob<NoopCommand>>? queried = await JobManager.GetCronJobByLabel<NoopCommand>("foo", "bar");
             Assert.Empty(queried);
         }
@@ -52,7 +52,7 @@ namespace Fabron.FunctionalTests.JobTests
                 false,
                 null,
                 null);
-            await JobManager.DeleteCronJobById(job.Metadata.Uid);
+            await JobManager.DeleteCronJob(job.Metadata.Key);
 
             await Assert.ThrowsAsync<InvalidOperationException>(() =>
              JobManager.ScheduleCronJob<NoopCommand>(
@@ -84,12 +84,12 @@ namespace Fabron.FunctionalTests.JobTests
                 false,
                 null,
                 null);
-            Grains.ICronJobGrain? grain = GetCronJobGrain(job.Metadata.Uid);
-            await JobManager.DeleteCronJobById(job.Metadata.Uid);
+            Grains.ICronJobGrain? grain = GetCronJobGrain(job.Metadata.Key);
+            await JobManager.DeleteCronJob(job.Metadata.Key);
 
             await grain.Purge();
 
-            await JobManager.DeleteCronJobById(job.Metadata.Uid);
+            await JobManager.DeleteCronJob(job.Metadata.Key);
         }
     }
 

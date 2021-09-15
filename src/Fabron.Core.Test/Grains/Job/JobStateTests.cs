@@ -13,7 +13,7 @@ namespace Core.Test.Grains.Job
         {
             DateTime now = DateTime.UtcNow;
             Fabron.Models.Job state = new(
-                new JobMetadata("test", now, new(), new()),
+                new JobMetadata("test", Guid.NewGuid().ToString(), now, new(), new()),
                 new(now.AddMilliseconds(-20), "test", "123"),
                 JobStatus.Initial,
                 0

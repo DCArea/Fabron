@@ -6,13 +6,13 @@ namespace Fabron.Stores
 {
     public interface IEventStore
     {
-        Task<long> GetConsumerOffset(string entityId);
+        Task<long> GetConsumerOffset(string entityKey);
         Task CommitEventLog(EventLog eventLog);
-        Task ClearConsumerOffset(string entityId);
+        Task ClearConsumerOffset(string entityKey);
 
-        Task<List<EventLog>> GetEventLogs(string entityId, long minVersion);
-        Task SaveConsumerOffset(string entityId, long consumerOffset);
-        Task ClearEventLogs(string entityId, long maxVersion);
+        Task<List<EventLog>> GetEventLogs(string entityKey, long minVersion);
+        Task SaveConsumerOffset(string entityKey, long consumerOffset);
+        Task ClearEventLogs(string entityKey, long maxVersion);
     }
 
     public interface IJobEventStore: IEventStore

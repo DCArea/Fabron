@@ -11,6 +11,7 @@ using Microsoft.Toolkit.Diagnostics;
 using Orleans;
 using Orleans.Concurrency;
 using Orleans.Runtime;
+using static Fabron.FabronConstants;
 
 namespace Fabron.Grains
 {
@@ -67,19 +68,19 @@ namespace Fabron.Grains
 
         public override async Task OnActivateAsync()
         {
-            _id = this.GetPrimaryKeyString();
-            _consumer = GrainFactory.GetGrain<ICronJobEventConsumer>(_id);
+            _key = this.GetPrimaryKeyString();
+            _consumer = GrainFactory.GetGrain<ICronJobEventConsumer>(_key);
 
-            List<EventLog> eventLogs = await _eventStore.GetEventLogs(_id, 0);
+            List<EventLog> eventLogs = await _eventStore.GetEventLogs(_key, 0);
             foreach (EventLog? eventLog in eventLogs)
             {
                 TransitionState(eventLog);
             }
 
-            _consumerOffset = await _eventStore.GetConsumerOffset(_id);
+            _consumerOffset = await _eventStore.GetConsumerOffset(_key);
         }
 
-        private string _id = default!;
+        private string _key = default!;
         private ICronJobEventConsumer _consumer = default!;
         private long _consumerOffset;
         private CronJob? _state;
@@ -110,17 +111,17 @@ namespace Fabron.Grains
 
             if (_state != null)
             {
-                await _eventStore.ClearEventLogs(_id, long.MaxValue);
+                await _eventStore.ClearEventLogs(_key, long.MaxValue);
                 _state = null;
             }
             if (_consumerOffset != -1)
             {
-                await _eventStore.ClearConsumerOffset(_id);
+                await _eventStore.ClearConsumerOffset(_key);
                 await _consumer.Reset();
                 _consumerOffset = -1;
             }
             await StopTicker();
-            _logger.CronJobPurged(_id);
+            _logger.CronJobPurged(_key);
         }
 
         public async Task Delete()
@@ -223,8 +224,8 @@ namespace Fabron.Grains
                 {
                     return job;
                 }
-                string? jobId = GetChildJobIdByIndex(job.Index);
-                IJobGrain? grain = GrainFactory.GetGrain<IJobGrain>(jobId);
+                string? childKey = GetChildJobKeyByIndex(job.Index);
+                IJobGrain? grain = GrainFactory.GetGrain<IJobGrain>(childKey);
                 ExecutionStatus status = await grain.GetStatus();
                 return job with
                 {
@@ -246,17 +247,17 @@ namespace Fabron.Grains
             await RaiseAsync(@event, nameof(CronJobItemsStatusChanged));
 
             EnsureStatusProber();
-            _logger.LogDebug($"CronJob[{State.Metadata.Uid}]: Scheduled job-{jobItem.Index}");
 
             async Task<JobItem> Schedule(uint index)
             {
-                string? jobId = GetChildJobIdByIndex(index);
-                IJobGrain grain = GrainFactory.GetGrain<IJobGrain>(jobId);
+                string? childKey = GetChildJobKeyByIndex(index);
+                IJobGrain grain = GrainFactory.GetGrain<IJobGrain>(childKey);
                 var labels = new Dictionary<string, string>(State.Metadata.Labels)
                 {
-                    {"owner_id", State.Metadata.Uid },
-                    {"owner_type" ,"cronjob"},
-                    {"cron_index", index.ToString() }
+                    { LabelNames.OwnerId, State.Metadata.Uid },
+                    { LabelNames.OwnerKey, State.Metadata.Key },
+                    { LabelNames.OwnerType , OwnerTypes.CronJob },
+                    { LabelNames.CronIndex, index.ToString() }
                 };
                 var annotations = new Dictionary<string, string>(State.Metadata.Annotations)
                 {
@@ -267,11 +268,11 @@ namespace Fabron.Grains
                     null,
                     labels,
                     annotations);
-                return new JobItem(index, jobId, DateTime.UtcNow, jobState.Status.ExecutionStatus);
+                return new JobItem(index, childKey, DateTime.UtcNow, jobState.Status.ExecutionStatus);
             }
         }
 
-        private string GetChildJobIdByIndex(uint index) => $"cron/{State.Metadata.Uid}/{index}";
+        private string GetChildJobKeyByIndex(uint index) => string.Format(CronItemKeyTemplate, State.Metadata.Uid, index.ToString());
 
         private async Task TryComplete()
         {
@@ -279,7 +280,7 @@ namespace Fabron.Grains
             if (hasRunningJobs)
             {
                 EnsureStatusProber();
-                _logger.LogDebug($"CronJob[{State.Metadata.Uid}]: Can not complete since there're jobs still running, try later");
+                _logger.LogDebug($"CronJob[{State.Metadata.Key}]: Can not complete since there're jobs still running, try later");
                 await TickAfter(TimeSpan.FromSeconds(20));
             }
 
@@ -312,7 +313,7 @@ namespace Fabron.Grains
             {
                 _tickReminder = await RegisterOrUpdateReminder("Ticker", dueTime, TimeSpan.FromMinutes(2));
             }
-            _logger.LogDebug($"CronJob[{State.Metadata.Uid}]: Tick After {dueTime}");
+            _logger.LogDebug($"CronJob[{State.Metadata.Key}]: Tick After {dueTime}");
         }
 
         private async Task StopTicker()
@@ -342,7 +343,7 @@ namespace Fabron.Grains
         public async Task CommitOffset(long offset)
         {
             Guard.IsBetweenOrEqualTo(offset, _consumerOffset, State.Version, nameof(offset));
-            await _eventStore.SaveConsumerOffset(State.Metadata.Uid, offset);
+            await _eventStore.SaveConsumerOffset(State.Metadata.Key, offset);
             _consumerOffset = offset;
 
             if (_consumingCompletionSource != null && _consumerOffset == State.Version)

@@ -17,47 +17,47 @@ namespace Fabron.Grains
             s_eventRaisedDebug = LoggerMessage.Define<string, long, string, string>(
                 LogLevel.Debug,
                 new EventId(1, nameof(EventRaised)),
-                "Event {Type}({Version}) raised on [{EntityId}], detail: {Data}");
+                "Event '{Type}'({Version}) raised on [{Key}], detail: {Data}");
             s_eventRaisedInformation = LoggerMessage.Define<string, long, string>(
                 LogLevel.Information,
                 new EventId(1, nameof(EventRaised)),
-                "Event '{Type}'({Version}) raised on [{EntityId}]");
+                "Event '{Type}'({Version}) raised on [{Key}]");
 
             s_startingJobExecution = LoggerMessage.Define<string>(
                 LogLevel.Information,
                 new EventId(1, nameof(StartingJobExecution)),
-                "Job[{JobId}]: Starting job execution");
+                "Job[{Key}]: Starting job execution");
 
             s_jobPurged = LoggerMessage.Define<string>(
                 LogLevel.Information,
                 new EventId(1, nameof(JobPurged)),
-                "Job[{JobId}]: Purged");
+                "Job[{Key}]: Purged");
 
             s_cronJobPurged = LoggerMessage.Define<string>(
                 LogLevel.Information,
                 new EventId(1, nameof(CronJobPurged)),
-                "CronJob[{JobId}]: Purged");
+                "CronJob[{Key}]: Purged");
         }
 
         public static void EventRaised(this ILogger logger, EventLog eventLog)
         {
             if (logger.IsEnabled(LogLevel.Debug))
             {
-                s_eventRaisedDebug(logger, eventLog.Type, eventLog.Version, eventLog.EntityId, eventLog.Data, null);
+                s_eventRaisedDebug(logger, eventLog.Type, eventLog.Version, eventLog.EntityKey, eventLog.Data, null);
             }
             else
             {
-                s_eventRaisedInformation(logger, eventLog.Type, eventLog.Version, eventLog.EntityId, null);
+                s_eventRaisedInformation(logger, eventLog.Type, eventLog.Version, eventLog.EntityKey, null);
             }
         }
 
-        public static void StartingJobExecution(this ILogger logger, string jobId)
-            => s_startingJobExecution(logger, jobId, null);
+        public static void StartingJobExecution(this ILogger logger, string key)
+            => s_startingJobExecution(logger, key, null);
 
-        public static void JobPurged(this ILogger logger, string jobId)
-            => s_jobPurged(logger, jobId, null);
+        public static void JobPurged(this ILogger logger, string key)
+            => s_jobPurged(logger, key, null);
 
-        public static void CronJobPurged(this ILogger logger, string jobId)
-            => s_cronJobPurged(logger, jobId, null);
+        public static void CronJobPurged(this ILogger logger, string key)
+            => s_cronJobPurged(logger, key, null);
     }
 }

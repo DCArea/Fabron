@@ -40,12 +40,12 @@ namespace Fabron.Grains
 
         public override Task OnActivateAsync()
         {
-            _id = this.GetPrimaryKeyString();
-            _grain = GrainFactory.GetGrain<ICronJobGrain>(_id);
+            _key = this.GetPrimaryKeyString();
+            _grain = GrainFactory.GetGrain<ICronJobGrain>(_key);
             return Task.CompletedTask;
         }
 
-        private string _id = default!;
+        private string _key = default!;
         private ICronJobGrain _grain = default!;
 
         public Task Reset()
@@ -66,13 +66,13 @@ namespace Fabron.Grains
 
             if (_currentVersion <= _committedOffset)
             {
-                _logger.LogDebug($"CronJobEventConsumer[{_id}]: Skipped since current version was committed");
+                _logger.LogDebug($"CronJobEventConsumer[{_key}]: Skipped since current version was committed");
                 return Task.CompletedTask;
             }
 
             if (fromVersion > _committedOffset)
             {
-                _logger.LogDebug($"CronJobEventConsumer[{_id}]: Update invalid _commitedOffset, from {_committedOffset} to {fromVersion}");
+                _logger.LogDebug($"CronJobEventConsumer[{_key}]: Update invalid _commitedOffset, from {_committedOffset} to {fromVersion}");
                 _committedOffset = fromVersion;
             }
             return Consume();
@@ -82,7 +82,7 @@ namespace Fabron.Grains
         private async Task Consume()
         {
             _consumedOffset = _committedOffset;
-            List<EventLog> eventLogs = await _store.GetEventLogs(_id, _committedOffset);
+            List<EventLog> eventLogs = await _store.GetEventLogs(_key, _committedOffset);
             if (eventLogs.Count == 0)
             {
                 return;
@@ -92,7 +92,7 @@ namespace Fabron.Grains
             foreach (EventLog eventLog in eventLogs)
             {
                 lastEvent = ICronJobEvent.Get(eventLog);
-                await _eventListener.On(_id, eventLog.Timestamp, lastEvent);
+                await _eventListener.On(_key, eventLog.Timestamp, lastEvent);
                 _consumedOffset = eventLog.Version;
             }
 
@@ -105,13 +105,13 @@ namespace Fabron.Grains
             Models.CronJob? state = await _grain.GetState();
             if (state is null || state.Status.Deleted)
             {
-                await _indexer.DeleteCronJob(_id);
-                _logger.LogDebug($"[{_id}]: CronJob state deleted");
+                await _indexer.DeleteCronJob(_key);
+                _logger.LogDebug($"[{_key}]: CronJob state deleted");
             }
             else
             {
                 await _indexer.Index(state);
-                _logger.LogDebug($"[{_id}]: CronJob state reported");
+                _logger.LogDebug($"[{_key}]: CronJob state reported");
             }
         }
 
@@ -119,7 +119,7 @@ namespace Fabron.Grains
         {
             await _grain.CommitOffset(_consumedOffset);
             _committedOffset = _consumedOffset;
-            _logger.LogDebug($"CronJobEventConsumer[{_id}]: Offset committed {_committedOffset}");
+            _logger.LogDebug($"CronJobEventConsumer[{_key}]: Offset committed {_committedOffset}");
         }
     }
 }

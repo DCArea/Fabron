@@ -64,12 +64,12 @@ namespace Fabron.Grains
             var @event = IJobEvent.Get(eventLog);
             _state = @event switch
             {
-                JobScheduled e => _state.Apply(e, _id, eventLog.Timestamp),
+                JobScheduled e => _state.Apply(e, _key, eventLog.Timestamp),
                 JobExecutionStarted e => State.Apply(e, eventLog.Timestamp),
                 JobExecutionSucceed e => State.Apply(e, eventLog.Timestamp),
                 JobExecutionFailed e => State.Apply(e, eventLog.Timestamp),
                 JobDeleted e => State.Apply(e),
-                _ => ThrowHelper.ThrowInvalidEventName<Job>(eventLog.EntityId, eventLog.Version, eventLog.Type)
+                _ => ThrowHelper.ThrowInvalidEventName<Job>(eventLog.EntityKey, eventLog.Version, eventLog.Type)
             };
             Guard.IsEqualTo(State.Version, eventLog.Version, nameof(State.Version));
         }
@@ -77,10 +77,18 @@ namespace Fabron.Grains
 
     public static class JobEventsExtensions
     {
-        public static Job Apply(this Job? state, JobScheduled @event, string id, DateTime timestamp)
+        public static Job Apply(this Job? state, JobScheduled @event, string key, DateTime timestamp)
             => new(
-                new(id, timestamp, @event.Labels, @event.Annotations),
-                new(@event.Schedule, @event.CommandName, @event.CommandData),
+                new(
+                    key,
+                    state == null ? Guid.NewGuid().ToString() : state.Metadata.Uid,
+                    timestamp,
+                    @event.Labels,
+                    @event.Annotations),
+                new(
+                    @event.Schedule,
+                    @event.CommandName,
+                    @event.CommandData),
                 JobStatus.Initial,
                 state == null ? 0 : state.Version + 1);
 
