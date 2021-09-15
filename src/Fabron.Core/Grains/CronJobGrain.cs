@@ -41,6 +41,10 @@ namespace Fabron.Grains
         [AlwaysInterleave]
         Task CommitOffset(long version);
 
+        [AlwaysInterleave]
+        Task Purge();
+
+        [AlwaysInterleave]
         Task WaitEventsConsumed();
     }
 
@@ -94,28 +98,35 @@ namespace Fabron.Grains
 
         public Task<CronJob?> GetState() => Task.FromResult(_state);
 
-        private async Task Purge()
+        public async Task Purge()
         {
             if (ConsumerNotFollowedUp)
             {
                 await NotifyConsumer();
-                // Ensure all events consumed
+                await WaitEventsConsumed();
                 return;
             }
 
-            await _eventStore.ClearEventLogs(_id, long.MaxValue);
-            _state = null;
-            await _eventStore.ClearConsumerOffset(_id);
-            _consumerOffset = -1;
+            if(_state != null)
+            {
+                await _eventStore.ClearEventLogs(_id, long.MaxValue);
+                _state = null;
+            }
+            if(_consumerOffset != -1)
+            {
+                await _eventStore.ClearConsumerOffset(_id);
+                await _consumer.Reset();
+                _consumerOffset = -1;
+            }
             await StopTicker();
         }
 
         public async Task Delete()
         {
-            if (Deleted)
-            {
-                return;
-            }
+            //if (Deleted)
+            //{
+            //    return;
+            //}
             await TickAfter(TimeSpan.FromSeconds(20));
             CronJobDeleted? @event = new CronJobDeleted();
             await RaiseAsync(@event, nameof(CronJobDeleted));

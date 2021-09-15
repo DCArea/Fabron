@@ -13,6 +13,8 @@ namespace Fabron.Grains
     {
         [OneWay]
         Task NotifyChanged(long fromVersion, long currentVersion);
+
+        Task Reset();
     }
 
     public class CronJobEventConsumer : Grain, ICronJobEventConsumer
@@ -46,6 +48,14 @@ namespace Fabron.Grains
         private string _id = default!;
         private ICronJobGrain _grain = default!;
 
+        public Task Reset()
+        {
+            _currentVersion = -1;
+            _committedOffset = -1;
+            _consumedOffset = -1;
+            return Task.CompletedTask;
+        }
+
         public Task NotifyChanged(long fromVersion, long currentVersion)
         {
             Guard.IsGreaterThanOrEqualTo(currentVersion, _committedOffset, nameof(currentVersion));
@@ -77,10 +87,11 @@ namespace Fabron.Grains
                 return;
             }
 
+            ICronJobEvent lastEvent;
             foreach (EventLog eventLog in eventLogs)
             {
-                var jobEvent = ICronJobEvent.Get(eventLog);
-                await _eventListener.On(_id, eventLog.Timestamp, jobEvent);
+                lastEvent = ICronJobEvent.Get(eventLog);
+                await _eventListener.On(_id, eventLog.Timestamp, lastEvent);
                 _consumedOffset = eventLog.Version;
             }
 
