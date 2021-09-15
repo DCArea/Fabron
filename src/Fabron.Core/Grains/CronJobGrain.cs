@@ -29,6 +29,8 @@ namespace Fabron.Grains
             Dictionary<string, string>? labels,
             Dictionary<string, string>? annotations);
 
+        Task Trigger();
+
         [AlwaysInterleave]
         Task Delete();
 
@@ -140,6 +142,11 @@ namespace Fabron.Grains
             {
                 await Resume();
             }
+        }
+
+        public async Task Trigger()
+        {
+            await ScheduleJob();
         }
 
 

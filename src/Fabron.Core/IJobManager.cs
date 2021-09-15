@@ -39,6 +39,8 @@ namespace Fabron
             Dictionary<string, string>? labels,
             Dictionary<string, string>? annotations) where TCommand : ICommand;
 
+        Task TriggerCronJob(string jobId);
+
         Task SuspendCronJob(string jobId);
         Task ResumeCronJob(string jobId);
 

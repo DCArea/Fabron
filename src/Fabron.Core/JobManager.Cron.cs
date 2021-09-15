@@ -41,6 +41,12 @@ namespace Fabron
             return state!.Map<TCommand>();
         }
 
+        public Task TriggerCronJob(string jobId)
+        {
+            ICronJobGrain grain = _client.GetGrain<ICronJobGrain>(jobId);
+            return grain.Trigger();
+        }
+
         public Task SuspendCronJob(string jobId)
         {
             ICronJobGrain grain = _client.GetGrain<ICronJobGrain>(jobId);

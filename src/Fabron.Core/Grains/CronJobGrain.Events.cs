@@ -42,6 +42,7 @@ namespace Fabron.Grains
                 CronJobScheduled e => _state.Apply(e, _id, eventlog.Timestamp),
                 CronJobSuspended e => State.Apply(e, eventlog.Timestamp),
                 CronJobResumed e => State.Apply(e, eventlog.Timestamp),
+                CronJobItemsStatusChanged e => State.Apply(e, eventlog.Timestamp),
                 CronJobCompleted e => State.Apply(e, eventlog.Timestamp),
                 CronJobDeleted e => State.Apply(e),
                 _ => ThrowHelper.ThrowInvalidEventName<CronJob>(eventlog.EntityId, eventlog.Version, eventlog.Type)
@@ -81,6 +82,15 @@ namespace Fabron.Grains
                 Spec = state.Spec with
                 {
                     Suspend = false
+                },
+                Version = state.Version + 1
+            };
+        public static CronJob Apply(this CronJob state, CronJobItemsStatusChanged @event, DateTime timestamp)
+            => state with
+            {
+                Status = state.Status with
+                {
+                    Jobs = @event.Items
                 },
                 Version = state.Version + 1
             };
