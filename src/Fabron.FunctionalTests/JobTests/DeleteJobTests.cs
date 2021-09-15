@@ -13,7 +13,7 @@ namespace Fabron.FunctionalTests.JobTests
 
         public DeleteJobTests(DefaultClusterFixture fixture, ITestOutputHelper output) : base(fixture, output) { }
 
-        [Fact]
+        [Fact(Skip = "Skip")]
         public async Task DeleteJob()
         {
             var labels = new Dictionary<string, string>

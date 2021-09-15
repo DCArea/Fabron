@@ -40,6 +40,8 @@ namespace Fabron.Grains
 
         [AlwaysInterleave]
         Task CommitOffset(long version);
+
+        Task WaitEventsConsumed();
     }
 
     public partial class CronJobGrain : Grain, ICronJobGrain, IRemindable
@@ -76,6 +78,8 @@ namespace Fabron.Grains
         private ICronJobEventConsumer _consumer = default!;
         private long _consumerOffset;
         private CronJob? _state;
+        private TaskCompletionSource<bool>? _consumingCompletionSource;
+
         private CronJob State
         {
             get
@@ -85,14 +89,17 @@ namespace Fabron.Grains
             }
         }
         private bool ConsumerNotFollowedUp => _state is not null && _state.Version != _consumerOffset;
+        private bool Deleted => _state is null || _state.Status.Deleted;
+        private bool DeletedButNotPurged => (_state is not null && _state.Status.Deleted) || (_state is null && _consumerOffset != -1);
 
         public Task<CronJob?> GetState() => Task.FromResult(_state);
 
         private async Task Purge()
         {
-            if(ConsumerNotFollowedUp)
+            if (ConsumerNotFollowedUp)
             {
                 await NotifyConsumer();
+                // Ensure all events consumed
                 return;
             }
 
@@ -105,10 +112,13 @@ namespace Fabron.Grains
 
         public async Task Delete()
         {
-            await TickAfter(TimeSpan.FromMinutes(5));
+            if (Deleted)
+            {
+                return;
+            }
+            await TickAfter(TimeSpan.FromSeconds(20));
             CronJobDeleted? @event = new CronJobDeleted();
             await RaiseAsync(@event, nameof(CronJobDeleted));
-            await Purge();
         }
 
         public async Task Schedule(
@@ -144,10 +154,7 @@ namespace Fabron.Grains
             }
         }
 
-        public async Task Trigger()
-        {
-            await ScheduleJob();
-        }
+        public async Task Trigger() => await ScheduleJob();
 
 
         public async Task Suspend()
@@ -166,6 +173,12 @@ namespace Fabron.Grains
 
         private async Task Tick()
         {
+            if (DeletedButNotPurged)
+            {
+                await Purge();
+                return;
+            }
+
             DateTime now = DateTime.UtcNow;
             DateTime notBefore = now.AddSeconds(-5);
             DateTime? tick = State.GetNextTick(notBefore);
@@ -325,6 +338,21 @@ namespace Fabron.Grains
             Guard.IsBetweenOrEqualTo(offset, _consumerOffset, State.Version, nameof(offset));
             await _eventStore.SaveConsumerOffset(State.Metadata.Uid, offset);
             _consumerOffset = offset;
+
+            if (_consumingCompletionSource != null && _consumerOffset == State.Version)
+            {
+                _consumingCompletionSource.SetResult(true);
+            }
+        }
+
+        public async Task WaitEventsConsumed()
+        {
+            if (ConsumerNotFollowedUp)
+            {
+                _consumingCompletionSource = new TaskCompletionSource<bool>();
+                await _consumingCompletionSource.Task;
+            }
+
         }
     }
 }

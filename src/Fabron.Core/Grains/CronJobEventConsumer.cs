@@ -72,6 +72,11 @@ namespace Fabron.Grains
         {
             Guard.IsEqualTo(_consumedOffset, _committedOffset, nameof(_consumedOffset));
             List<EventLog> eventLogs = await _store.GetEventLogs(_id, _committedOffset);
+            if (eventLogs.Count == 0)
+            {
+                return;
+            }
+
             foreach (EventLog eventLog in eventLogs)
             {
                 var jobEvent = ICronJobEvent.Get(eventLog);

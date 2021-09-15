@@ -16,8 +16,12 @@ namespace Fabron.Grains
                 type,
                 @event);
 
-        private Task NotifyConsumer()
-            => _consumer.NotifyChanged(_consumerOffset, State.Version);
+        private async Task NotifyConsumer()
+        {
+            var currentVersion = State.Version;
+            Guard.IsGreaterThan(currentVersion, _consumerOffset, nameof(currentVersion));
+            await _consumer.NotifyChanged(_consumerOffset, currentVersion);
+        }
 
         private async Task CommitAsync(EventLog eventLog)
         {
