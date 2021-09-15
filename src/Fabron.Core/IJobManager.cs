@@ -40,6 +40,7 @@ namespace Fabron
             Dictionary<string, string>? annotations) where TCommand : ICommand;
 
         Task SuspendCronJob(string jobId);
+        Task ResumeCronJob(string jobId);
 
         Task<CronJob<TCommand>?> GetCronJobById<TCommand>(string cronJobId) where TCommand : ICommand;
 
