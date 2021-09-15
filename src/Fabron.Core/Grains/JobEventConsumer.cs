@@ -13,6 +13,7 @@ namespace Fabron.Grains
     {
         [OneWay]
         Task NotifyChanged(long fromVersion, long currentVersion);
+        Task Reset();
     }
 
     public class JobEventConsumer : Grain, IJobEventConsumer
@@ -47,6 +48,14 @@ namespace Fabron.Grains
 
         private string _id = default!;
         private IJobGrain _grain = default!;
+
+        public Task Reset()
+        {
+            _currentVersion = -1;
+            _committedOffset = -1;
+            _consumedOffset = -1;
+            return Task.CompletedTask;
+        }
 
         public Task NotifyChanged(long fromVersion, long currentVersion)
         {

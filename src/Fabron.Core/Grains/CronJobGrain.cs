@@ -32,11 +32,12 @@ namespace Fabron.Grains
         Task Trigger();
 
         [AlwaysInterleave]
-        Task Delete();
-
         Task Suspend();
 
         Task Resume();
+
+        [AlwaysInterleave]
+        Task Delete();
 
         [AlwaysInterleave]
         Task CommitOffset(long version);
@@ -123,10 +124,10 @@ namespace Fabron.Grains
 
         public async Task Delete()
         {
-            //if (Deleted)
-            //{
-            //    return;
-            //}
+            if (Deleted)
+            {
+                return;
+            }
             await TickAfter(TimeSpan.FromSeconds(20));
             CronJobDeleted? @event = new CronJobDeleted();
             await RaiseAsync(@event, nameof(CronJobDeleted));
