@@ -13,7 +13,7 @@ namespace Fabron.FunctionalTests.CronJobTests
         {
         }
 
-        [Fact]
+        [Fact(Skip = "Skip")]
         public async Task ShouldScheduleNewJob()
         {
             DateTime utcNow = DateTime.UtcNow;
@@ -32,7 +32,7 @@ namespace Fabron.FunctionalTests.CronJobTests
                 null);
 
             await JobManager.TriggerCronJob(job.Metadata.Uid);
-            var items = await JobManager.GetJobByCron<NoopCommand, NoopCommandResult>(job.Metadata.Uid);
+            IEnumerable<Contracts.Job<NoopCommand, NoopCommandResult>>? items = await JobManager.GetJobByCron<NoopCommand, NoopCommandResult>(job.Metadata.Uid);
             Assert.NotEmpty(items);
         }
     }

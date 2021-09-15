@@ -108,18 +108,19 @@ namespace Fabron.Grains
                 return;
             }
 
-            if(_state != null)
+            if (_state != null)
             {
                 await _eventStore.ClearEventLogs(_id, long.MaxValue);
                 _state = null;
             }
-            if(_consumerOffset != -1)
+            if (_consumerOffset != -1)
             {
                 await _eventStore.ClearConsumerOffset(_id);
                 await _consumer.Reset();
                 _consumerOffset = -1;
             }
             await StopTicker();
+            _logger.CronJobPurged(_id);
         }
 
         public async Task Delete()

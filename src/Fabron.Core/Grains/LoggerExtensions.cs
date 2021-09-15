@@ -9,7 +9,8 @@ namespace Fabron.Grains
         private static readonly Action<ILogger, string, long, string, string, Exception?> s_eventRaisedDebug;
         private static readonly Action<ILogger, string, long, string, Exception?> s_eventRaisedInformation;
         private static readonly Action<ILogger, string, Exception?> s_startingJobExecution;
-        private static readonly Action<ILogger, string, Exception?> s_jobFinalized;
+        private static readonly Action<ILogger, string, Exception?> s_jobPurged;
+        private static readonly Action<ILogger, string, Exception?> s_cronJobPurged;
 
         static LoggerExtensions()
         {
@@ -27,10 +28,15 @@ namespace Fabron.Grains
                 new EventId(1, nameof(StartingJobExecution)),
                 "Job[{JobId}]: Starting job execution");
 
-            s_jobFinalized = LoggerMessage.Define<string>(
+            s_jobPurged = LoggerMessage.Define<string>(
                 LogLevel.Information,
-                new EventId(1, nameof(JobFinalized)),
-                "Job[{JobId}]: Finalized");
+                new EventId(1, nameof(JobPurged)),
+                "Job[{JobId}]: Purged");
+
+            s_cronJobPurged = LoggerMessage.Define<string>(
+                LogLevel.Information,
+                new EventId(1, nameof(CronJobPurged)),
+                "CronJob[{JobId}]: Purged");
         }
 
         public static void EventRaised(this ILogger logger, EventLog eventLog)
@@ -48,7 +54,10 @@ namespace Fabron.Grains
         public static void StartingJobExecution(this ILogger logger, string jobId)
             => s_startingJobExecution(logger, jobId, null);
 
-        public static void JobFinalized(this ILogger logger, string jobId)
-            => s_jobFinalized(logger, jobId, null);
+        public static void JobPurged(this ILogger logger, string jobId)
+            => s_jobPurged(logger, jobId, null);
+
+        public static void CronJobPurged(this ILogger logger, string jobId)
+            => s_cronJobPurged(logger, jobId, null);
     }
 }

@@ -116,6 +116,7 @@ namespace Fabron.Grains
                 _consumerOffset = -1;
             }
             await StopTicker();
+            _logger.JobPurged(_id);
         }
 
         public async Task Delete()
