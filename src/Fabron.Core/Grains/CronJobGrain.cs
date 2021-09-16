@@ -209,6 +209,11 @@ namespace Fabron.Grains
 
         private async Task CheckJobStatus()
         {
+            if (Deleted)
+            {
+                _statusProber?.Dispose();
+                _logger.CancelStatusProberBecauseCronJobDeleted(_key);
+            }
             IEnumerable<Task<JobItem>> checkJobStatusTasks = State.Status.Jobs
                 .Select(job => Check(job));
             List<JobItem>? jobItems = (await Task.WhenAll(checkJobStatusTasks)).ToList();

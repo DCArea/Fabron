@@ -11,6 +11,7 @@ namespace Fabron.Grains
         private static readonly Action<ILogger, string, Exception?> s_startingJobExecution;
         private static readonly Action<ILogger, string, Exception?> s_jobPurged;
         private static readonly Action<ILogger, string, Exception?> s_cronJobPurged;
+        private static readonly Action<ILogger, string, Exception?> s_cancelStatusProberBecauseCronJobDeleted;
 
         static LoggerExtensions()
         {
@@ -37,6 +38,11 @@ namespace Fabron.Grains
                 LogLevel.Information,
                 new EventId(1, nameof(CronJobPurged)),
                 "CronJob[{Key}]: Purged");
+
+            s_cancelStatusProberBecauseCronJobDeleted = LoggerMessage.Define<string>(
+                LogLevel.Information,
+                new EventId(1, nameof(CancelStatusProberBecauseCronJobDeleted)),
+                "CronJob[{Key}]: Cancel item status prober because this CronJob was deleted");
         }
 
         public static void EventRaised(this ILogger logger, EventLog eventLog)
@@ -59,5 +65,8 @@ namespace Fabron.Grains
 
         public static void CronJobPurged(this ILogger logger, string key)
             => s_cronJobPurged(logger, key, null);
+
+        public static void CancelStatusProberBecauseCronJobDeleted(this ILogger logger, string key)
+            => s_cancelStatusProberBecauseCronJobDeleted(logger, key, null);
     }
 }
