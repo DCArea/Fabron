@@ -187,7 +187,6 @@ namespace Fabron.Grains
             _logger.StartingJobExecution(State.Metadata.Key);
             MetricsHelper.JobScheduleTardiness.Observe(State.Tardiness.TotalSeconds);
 
-
             JobExecutionStarted jobExecutionStarted = new JobExecutionStarted();
             await RaiseAsync(jobExecutionStarted);
 
@@ -242,8 +241,9 @@ namespace Fabron.Grains
             IGrainReminder? reminder = null;
             if (_tickReminder is null)
             {
-                reminder = await GetReminder("Ticker");
+                _tickReminder = await GetReminder("Ticker");
             }
+            reminder = _tickReminder;
             // need retry to resolve tag mismatch
             int retry = 0;
             while (true)

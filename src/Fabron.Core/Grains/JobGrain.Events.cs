@@ -11,7 +11,7 @@ namespace Fabron.Grains
     {
         private EventLog CreateEventLog<TEvent>(TEvent @event, string type) where TEvent : class
             => EventLog.Create<TEvent>(
-                this.GetPrimaryKeyString(),
+                _key,
                 (_state?.Version ?? -1) + 1,
                 DateTime.UtcNow,
                 type,
