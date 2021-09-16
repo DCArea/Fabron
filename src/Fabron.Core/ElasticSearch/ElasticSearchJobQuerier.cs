@@ -20,8 +20,18 @@ namespace Fabron.ElasticSearch
             _esClient = esClient;
         }
 
+        public async Task<Models.Job?> GetJobByKey(string key)
+        {
+            ISearchResponse<JobDocument> res = await SearchByKeyAsync<JobDocument>(_options.JobIndexName, key);
+            return res.Documents.Select(job => new Models.Job(
+                job.Metadata,
+                job.Spec,
+                job.Status,
+                job.Version
+            )).FirstOrDefault();
+        }
 
-        public async Task<IEnumerable<Models.Job>> GetJobByLabel(string labelName, string labelValue)
+        public async Task<List<Models.Job>> GetJobByLabel(string labelName, string labelValue)
         {
             ISearchResponse<JobDocument> res = await SearchByLabelAsync<JobDocument>(_options.JobIndexName, labelName, labelValue);
             return res.Documents.Select(job => new Models.Job(
@@ -32,7 +42,7 @@ namespace Fabron.ElasticSearch
             )).ToList();
         }
 
-        public async Task<IEnumerable<Models.Job>> GetJobByLabels(IEnumerable<(string, string)> labels)
+        public async Task<List<Models.Job>> GetJobByLabels(IEnumerable<(string, string)> labels)
         {
             ISearchResponse<JobDocument> res = await SearchByLabelsAsync<JobDocument>(_options.JobIndexName, labels);
             return res.Documents.Select(job => new Models.Job(
@@ -43,7 +53,18 @@ namespace Fabron.ElasticSearch
             )).ToList();
         }
 
-        public async Task<IEnumerable<Models.CronJob>> GetCronJobByLabel(string labelName, string labelValue)
+        public async Task<Models.CronJob?> GetCronJobByKey(string key)
+        {
+            ISearchResponse<CronJobDocument> res = await SearchByKeyAsync<CronJobDocument>(_options.CronJobIndexName, key);
+            return res.Documents.Select(job => new Models.CronJob(
+                job.Metadata,
+                job.Spec,
+                job.Status,
+                job.Version
+            )).FirstOrDefault();
+        }
+
+        public async Task<List<Models.CronJob>> GetCronJobByLabel(string labelName, string labelValue)
         {
             ISearchResponse<CronJobDocument> res = await SearchByLabelAsync<CronJobDocument>(_options.CronJobIndexName, labelName, labelValue);
             return res.Documents.Select(job => new Models.CronJob(
@@ -54,15 +75,27 @@ namespace Fabron.ElasticSearch
             )).ToList();
         }
 
-        public async Task<IEnumerable<Models.CronJob>> GetCronJobByLabels(IEnumerable<(string, string)> labels)
+        public async Task<List<Models.CronJob>> GetCronJobByLabels(IEnumerable<(string, string)> labels)
         {
-            ISearchResponse<CronJobDocument> res = await SearchByLabelsAsync<CronJobDocument>(_options.JobIndexName, labels);
+            ISearchResponse<CronJobDocument> res = await SearchByLabelsAsync<CronJobDocument>(_options.CronJobIndexName, labels);
             return res.Documents.Select(job => new Models.CronJob(
                 job.Metadata,
                 job.Spec,
                 job.Status,
                 job.Version
             )).ToList();
+        }
+
+        private async Task<ISearchResponse<TDocument>> SearchByKeyAsync<TDocument>(string indexName, string key)
+            where TDocument : class
+        {
+            ISearchResponse<TDocument> res = await _esClient.SearchAsync<TDocument>(s => s
+                .Index(indexName)
+                .Query(q => q
+                    .Term(m => m.Field("metadata.key").Value(key))
+                )
+            );
+            return res;
         }
 
         private async Task<ISearchResponse<TDocument>> SearchByLabelAsync<TDocument>(string indexName, string labelName, string labelValue)

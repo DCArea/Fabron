@@ -51,14 +51,14 @@ namespace Fabron.Indexer
             return Task.CompletedTask;
         }
 
-        public Task<IEnumerable<CronJob>> GetCronJobByLabel(string labelName, string labelValue)
+        public Task<List<CronJob>> GetCronJobByLabel(string labelName, string labelValue)
         {
             IEnumerable<CronJob> jobs = _cronJobs.Values
                 .Where(v => v.Metadata.Labels.TryGetValue(labelName, out string? value) && value == labelValue);
-            return Task.FromResult(jobs);
+            return Task.FromResult(jobs.ToList());
         }
 
-        public Task<IEnumerable<CronJob>> GetCronJobByLabels(IEnumerable<(string, string)> labels)
+        public Task<List<CronJob>> GetCronJobByLabels(IEnumerable<(string, string)> labels)
         {
             IEnumerable<CronJob> jobs = _cronJobs.Values;
             foreach ((string labelName, string labelValue) in labels)
@@ -66,17 +66,17 @@ namespace Fabron.Indexer
                 jobs = jobs.Where(v => v.Metadata.Labels.TryGetValue(labelName, out string? value) && value == labelValue);
 
             }
-            return Task.FromResult(jobs);
+            return Task.FromResult(jobs.ToList());
         }
 
-        public Task<IEnumerable<Job>> GetJobByLabel(string labelName, string labelValue)
+        public Task<List<Job>> GetJobByLabel(string labelName, string labelValue)
         {
             IEnumerable<Job> jobs = _jobs.Values
                 .Where(v => v.Metadata.Labels.TryGetValue(labelName, out string? value) && value == labelValue);
-            return Task.FromResult(jobs);
+            return Task.FromResult(jobs.ToList());
         }
 
-        public Task<IEnumerable<Job>> GetJobByLabels(IEnumerable<(string, string)> labels)
+        public Task<List<Job>> GetJobByLabels(IEnumerable<(string, string)> labels)
         {
             IEnumerable<Job> jobs = _jobs.Values;
             foreach ((string labelName, string labelValue) in labels)
@@ -84,7 +84,16 @@ namespace Fabron.Indexer
                 jobs = jobs.Where(v => v.Metadata.Labels.TryGetValue(labelName, out string? value) && value == labelValue);
 
             }
-            return Task.FromResult(jobs);
+            return Task.FromResult(jobs.ToList());
+        }
+
+        public Task<Job?> GetJobByKey(string key)
+        {
+            return Task.FromResult(_jobs.TryGetValue(key, out Job? job) ? job : null);
+        }
+        public Task<CronJob?> GetCronJobByKey(string key)
+        {
+            return Task.FromResult(_cronJobs.TryGetValue(key, out CronJob? job) ? job : null);
         }
     }
 }

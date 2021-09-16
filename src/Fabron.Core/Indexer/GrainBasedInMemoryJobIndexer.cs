@@ -21,29 +21,21 @@ namespace Fabron.Indexer
         public Task DeleteCronJob(string key) => IndexerGrain.DeleteCronJob(key);
         public Task DeleteJob(string key) => IndexerGrain.DeleteJob(key);
 
-        public async Task<IEnumerable<CronJob>> GetCronJobByLabel(string labelName, string labelValue)
-        {
-            List<CronJob>? jobs = await IndexerGrain.GetCronJobByLabel(labelName, labelValue);
-            return jobs;
-        }
+        public Task<List<CronJob>> GetCronJobByLabel(string labelName, string labelValue)
+            => IndexerGrain.GetCronJobByLabel(labelName, labelValue);
 
-        public async Task<IEnumerable<CronJob>> GetCronJobByLabels(IEnumerable<(string, string)> labels)
-        {
-            List<CronJob>? jobs = await IndexerGrain.GetCronJobByLabels(labels);
-            return jobs;
-        }
+        public Task<List<CronJob>> GetCronJobByLabels(IEnumerable<(string, string)> labels)
+            => IndexerGrain.GetCronJobByLabels(labels);
 
-        public async Task<IEnumerable<Job>> GetJobByLabel(string labelName, string labelValue)
-        {
-            List<Job>? jobs = await IndexerGrain.GetJobByLabel(labelName, labelValue);
-            return jobs;
-        }
+        public Task<List<Job>> GetJobByLabel(string labelName, string labelValue)
+            => IndexerGrain.GetJobByLabel(labelName, labelValue);
 
-        public async Task<IEnumerable<Job>> GetJobByLabels(IEnumerable<(string, string)> labels)
-        {
-            List<Job> jobs = await IndexerGrain.GetJobByLabels(labels);
-            return jobs;
-        }
+        public Task<List<Job>> GetJobByLabels(IEnumerable<(string, string)> labels)
+            => IndexerGrain.GetJobByLabels(labels);
+
+        public Task<Job?> GetJobByKey(string key) => IndexerGrain.GetJobByKey(key);
+
+        public Task<CronJob?> GetCronJobByKey(string key) => IndexerGrain.GetCronJobByKey(key);
     }
 
     public interface IJobIndexerGrain : IGrainWithIntegerKey
@@ -55,8 +47,10 @@ namespace Fabron.Indexer
         Task Index(CronJob job);
         Task Index(List<CronJob> job);
 
+        Task<Job?> GetJobByKey(string key);
         Task<List<Job>> GetJobByLabel(string labelName, string labelValue);
         Task<List<Job>> GetJobByLabels(IEnumerable<(string, string)> labels);
+        Task<CronJob?> GetCronJobByKey(string key);
         Task<List<CronJob>> GetCronJobByLabel(string labelName, string labelValue);
         Task<List<CronJob>> GetCronJobByLabels(IEnumerable<(string, string)> labels);
     }
@@ -72,10 +66,10 @@ namespace Fabron.Indexer
         public Task DeleteJob(string key) => _indexer.DeleteJob(key);
         public Task DeleteCronJob(string key) => _indexer.DeleteCronJob(key);
 
+        public Task<CronJob?> GetCronJobByKey(string key) => _indexer.GetCronJobByKey(key);
         public async Task<List<CronJob>> GetCronJobByLabel(string labelName, string labelValue)
         {
-            IEnumerable<CronJob>? jobs = await _indexer.GetCronJobByLabel(labelName, labelValue);
-            return jobs.ToList();
+            return await _indexer.GetCronJobByLabel(labelName, labelValue);
         }
 
         public async Task<List<CronJob>> GetCronJobByLabels(IEnumerable<(string, string)> labels)
@@ -84,6 +78,7 @@ namespace Fabron.Indexer
             return jobs.ToList();
         }
 
+        public Task<Job?> GetJobByKey(string key) => _indexer.GetJobByKey(key);
         public async Task<List<Job>> GetJobByLabel(string labelName, string labelValue)
         {
             IEnumerable<Job>? jobs = await _indexer.GetJobByLabel(labelName, labelValue);
