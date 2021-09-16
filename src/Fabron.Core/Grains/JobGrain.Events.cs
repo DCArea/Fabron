@@ -22,7 +22,15 @@ namespace Fabron.Grains
 
         private async Task CommitAsync(EventLog eventLog)
         {
-            await _eventStore.CommitEventLog(eventLog);
+            try
+            {
+                await _eventStore.CommitEventLog(eventLog);
+            }
+            catch (Exception e)
+            {
+                _logger.FailedToCommitEvent(eventLog, e);
+                // reset state
+            }
             TransitionState(eventLog);
             _logger.EventRaised(eventLog);
             await NotifyConsumer();
