@@ -94,7 +94,10 @@ namespace Fabron.Grains
 
         public Task<Job?> GetState() => Task.FromResult(_state);
 
-        public Task<ExecutionStatus> GetStatus() => Task.FromResult(State.Status.ExecutionStatus);
+        public Task<ExecutionStatus> GetStatus()
+        {
+            return Task.FromResult(_state is not null ? State.Status.ExecutionStatus : ExecutionStatus.NotScheduled);
+        }
 
         public async Task Purge()
         {
@@ -163,7 +166,7 @@ namespace Fabron.Grains
         {
             if (Deleted)
             {
-                if(!Purged)
+                if (!Purged)
                     await Purge();
                 return;
             }
