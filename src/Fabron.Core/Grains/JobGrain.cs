@@ -21,6 +21,7 @@ namespace Fabron.Grains
 
         [ReadOnly]
         Task<ExecutionStatus> GetStatus();
+
         Task<Job> Schedule(
             string commandName,
             string commandData,
@@ -28,16 +29,14 @@ namespace Fabron.Grains
             Dictionary<string, string>? labels,
             Dictionary<string, string>? annotations);
 
-        [AlwaysInterleave]
         Task Delete();
 
         [AlwaysInterleave]
         Task CommitOffset(long version);
 
-        [AlwaysInterleave]
         Task Purge();
 
-        [AlwaysInterleave]
+        [ReadOnly]
         Task WaitEventsConsumed(int timeoutSeconds);
     }
 

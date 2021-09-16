@@ -32,21 +32,18 @@ namespace Fabron.Grains
 
         Task Trigger();
 
-        [AlwaysInterleave]
         Task Suspend();
 
         Task Resume();
 
-        [AlwaysInterleave]
         Task Delete();
 
         [AlwaysInterleave]
         Task CommitOffset(long version);
 
-        [AlwaysInterleave]
         Task Purge();
 
-        [AlwaysInterleave]
+        [ReadOnly]
         Task WaitEventsConsumed();
     }
 
@@ -175,6 +172,10 @@ namespace Fabron.Grains
 
         public async Task Suspend()
         {
+            if (State.Spec.Suspend)
+            {
+                return;
+            }
             var @event = new CronJobSuspended();
             await RaiseAsync(@event, nameof(CronJobSuspended));
             await StopTicker();
@@ -182,6 +183,10 @@ namespace Fabron.Grains
 
         public async Task Resume()
         {
+            if (!State.Spec.Suspend)
+            {
+                return;
+            }
             await ScheduleNextTick();
             var @event = new CronJobResumed();
             await RaiseAsync(@event, nameof(CronJobResumed));
@@ -193,6 +198,12 @@ namespace Fabron.Grains
             {
                 if (!Purged)
                     await Purge();
+                return;
+            }
+
+            if (State.Spec.Suspend)
+            {
+                await StopTicker();
                 return;
             }
 

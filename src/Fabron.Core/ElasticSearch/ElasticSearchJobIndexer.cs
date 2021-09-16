@@ -22,14 +22,16 @@ namespace Fabron.ElasticSearch
             _esClient = esClient;
         }
 
+        private Dictionary<string, string> Normalize(Dictionary<string, string> source)
+        {
+            return source
+                .Select(kv => new KeyValuePair<string, string>(kv.Key.Replace('.', '_'), kv.Value))
+                .ToDictionary(kv => kv.Key, kv => kv.Value);
+        }
+
         public async Task Index(Fabron.Models.Job job)
         {
-            JobDocument doc = new(
-                job.Metadata.Key,
-                job.Metadata,
-                job.Spec,
-                job.Status,
-                job.Version);
+            JobDocument doc = job.ToDocument();
             Nest.IndexResponse res = await _esClient.IndexAsync(doc, idx => idx.Index(_options.JobIndexName));
             if (res.Result == Nest.Result.Error)
             {
@@ -39,12 +41,7 @@ namespace Fabron.ElasticSearch
 
         public async Task Index(CronJob job)
         {
-            CronJobDocument doc = new(
-                job.Metadata.Key,
-                job.Metadata,
-                job.Spec,
-                job.Status,
-                job.Version);
+            CronJobDocument doc = job.ToDocument();
             Nest.IndexResponse res = await _esClient.IndexAsync(doc, idx => idx.Index(_options.CronJobIndexName));
             if (res.Result == Nest.Result.Error)
             {
@@ -55,12 +52,8 @@ namespace Fabron.ElasticSearch
         public async Task Index(IEnumerable<Fabron.Models.Job> jobs)
         {
             IEnumerable<JobDocument> docs = jobs
-                .Select(job => new JobDocument(
-                    job.Metadata.Key,
-                    job.Metadata,
-                    job.Spec,
-                    job.Status,
-                    job.Version));
+                .Where(job => job is not null)
+                .Select(job => job.ToDocument());
             Nest.BulkResponse res = await Nest.IndexManyExtensions.IndexManyAsync(_esClient, docs, _options.JobIndexName);
             if (res.Errors)
             {
@@ -72,11 +65,7 @@ namespace Fabron.ElasticSearch
         {
             IEnumerable<CronJobDocument> docs = jobs
                 .Where(job => job is not null)
-                .Select(job => new CronJobDocument(job!.Metadata.Key,
-                    job.Metadata,
-                    job.Spec,
-                    job.Status,
-                    job.Version));
+                .Select(job => job.ToDocument());
             Nest.BulkResponse res = await _esClient.IndexManyAsync(docs, _options.CronJobIndexName);
             if (res.Errors)
             {
