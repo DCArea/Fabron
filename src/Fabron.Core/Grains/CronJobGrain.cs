@@ -54,17 +54,19 @@ namespace Fabron.Grains
     {
         private readonly ILogger _logger;
         private readonly ICronJobEventStore _eventStore;
+        private readonly IJobQuerier _querier;
         private readonly TimeSpan _defaultTickPeriod = TimeSpan.FromMinutes(2);
         private IGrainReminder? _tickReminder;
         private IDisposable? _tickTimer;
         private IDisposable? _statusProber;
         public CronJobGrain(
             ILogger<CronJobGrain> logger,
-            ICronJobEventStore eventStore)
+            ICronJobEventStore eventStore,
+            IJobQuerier querier)
         {
             _logger = logger;
             _eventStore = eventStore;
-
+            _querier = querier;
         }
 
         public override async Task OnActivateAsync()
@@ -72,7 +74,12 @@ namespace Fabron.Grains
             _key = this.GetPrimaryKeyString();
             _consumer = GrainFactory.GetGrain<ICronJobEventConsumer>(_key);
 
-            List<EventLog> eventLogs = await _eventStore.GetEventLogs(_key, 0);
+            var snapshot = await _querier.GetCronJobByKey(_key);
+            if (snapshot is not null)
+            {
+                _state = snapshot;
+            }
+            List<EventLog> eventLogs = await _eventStore.GetEventLogs(_key, _state?.Version ?? 0);
             foreach (EventLog? eventLog in eventLogs)
             {
                 TransitionState(eventLog);
