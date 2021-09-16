@@ -1,4 +1,5 @@
 ﻿
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -70,7 +71,7 @@ namespace Fabron.ElasticSearch
             ISearchResponse<TDocument> res = await _esClient.SearchAsync<TDocument>(s => s
                 .Index(indexName)
                 .Query(q => q
-                    .Match(m => m.Field($"metadata.labels.{labelName}").Query(labelValue))
+                    .Term(m => m.Field($"metadata.labels.{labelName}").Value(labelValue))
                 )
             );
             return res;
@@ -79,18 +80,13 @@ namespace Fabron.ElasticSearch
         private async Task<ISearchResponse<TDocument>> SearchByLabelsAsync<TDocument>(string indexName, IEnumerable<(string, string)> labels)
             where TDocument : class
         {
+            var must = labels
+                .Select<(string, string), Func<QueryContainerDescriptor<TDocument>, QueryContainer>>(label => (QueryContainerDescriptor<TDocument> d)
+                    => d.Term(t => t.Field($"metadata.labels.{label.Item1}").Value(label.Item2)));
             ISearchResponse<TDocument> res = await _esClient.SearchAsync<TDocument>(s => s
                 .Index(_options.JobIndexName)
                 .Query(q => q
-                    .Match(m =>
-                    {
-                        MatchQueryDescriptor<TDocument> q = m;
-                        foreach ((string labelName, string labelValue) in labels)
-                        {
-                            q = q.Field($"metadata.labels.{labelName}").Query(labelValue);
-                        }
-                        return q;
-                    })
+                    .Bool(b => b.Must(must))
                 )
             );
             return res;

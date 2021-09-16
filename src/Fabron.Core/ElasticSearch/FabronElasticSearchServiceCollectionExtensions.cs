@@ -4,6 +4,7 @@ using System;
 using Fabron;
 using Fabron.ElasticSearch;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 
 using Nest;
@@ -30,25 +31,27 @@ namespace Microsoft.Extensions.DependencyInjection
 
         internal static IServiceCollection AddElasticSearchJobQuerier(this IServiceCollection services)
         {
-            services.AddSingleton<IJobQuerier, ElasticSearchJobQuerier>(sp =>
+            services.TryAddSingleton<IElasticClient>(sp =>
             {
                 ElasticSearchOptions options = sp.GetRequiredService<IOptions<ElasticSearchOptions>>().Value;
                 ConnectionSettings settings = new ConnectionSettings(new Uri(options.Server));
                 ElasticClient client = new(settings);
-                return ActivatorUtilities.CreateInstance<ElasticSearchJobQuerier>(sp, client);
+                return client;
             });
+            services.AddSingleton<IJobQuerier, ElasticSearchJobQuerier>();
             return services;
         }
 
         internal static IServiceCollection AddElasticSearchJobReporter(this IServiceCollection services)
         {
-            services.AddSingleton<IJobIndexer, ElasticSearchJobIndexer>(sp =>
+            services.TryAddSingleton<IElasticClient>(sp =>
             {
                 ElasticSearchOptions options = sp.GetRequiredService<IOptions<ElasticSearchOptions>>().Value;
                 ConnectionSettings settings = new ConnectionSettings(new Uri(options.Server));
                 ElasticClient client = new(settings);
-                return ActivatorUtilities.CreateInstance<ElasticSearchJobIndexer>(sp, client);
+                return client;
             });
+            services.AddSingleton<IJobIndexer, ElasticSearchJobIndexer>();
             return services;
         }
     }
