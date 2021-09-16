@@ -54,6 +54,7 @@ namespace Fabron.Grains
     {
         private readonly ILogger _logger;
         private readonly ICronJobEventStore _eventStore;
+        private readonly TimeSpan _defaultTickPeriod = TimeSpan.FromMinutes(2);
         private IGrainReminder? _tickReminder;
         private IDisposable? _tickTimer;
         private IDisposable? _statusProber;
@@ -96,7 +97,8 @@ namespace Fabron.Grains
         }
         private bool ConsumerNotFollowedUp => _state is not null && _state.Version != _consumerOffset;
         private bool Deleted => _state is null || _state.Status.Deleted;
-        private bool DeletedButNotPurged => (_state is not null && _state.Status.Deleted) || (_state is null && _consumerOffset != -1);
+        private bool Purged => _state is null && _consumerOffset == -1;
+        private bool DeletedButNotPurged => Deleted && !Purged;
 
         public Task<CronJob?> GetState() => Task.FromResult(_state);
 
@@ -180,9 +182,10 @@ namespace Fabron.Grains
 
         private async Task Tick()
         {
-            if (DeletedButNotPurged)
+            if (Deleted)
             {
-                await Purge();
+                if (!Purged)
+                    await Purge();
                 return;
             }
 
@@ -301,17 +304,17 @@ namespace Fabron.Grains
         private async Task TickAfter(TimeSpan dueTime)
         {
             _tickTimer?.Dispose();
-            if (dueTime.TotalMinutes < 2)
+            if (dueTime < _defaultTickPeriod)
             {
                 _tickTimer = RegisterTimer(_ => Tick(), null, dueTime, TimeSpan.FromMilliseconds(-1));
                 if (_tickReminder is null)
                 {
-                    _tickReminder = await RegisterOrUpdateReminder("Ticker", dueTime.Add(TimeSpan.FromMinutes(2)), TimeSpan.FromMinutes(2));
+                    _tickReminder = await RegisterOrUpdateReminder("Ticker", dueTime.Add(_defaultTickPeriod), _defaultTickPeriod);
                 }
             }
             else
             {
-                _tickReminder = await RegisterOrUpdateReminder("Ticker", dueTime, TimeSpan.FromMinutes(2));
+                _tickReminder = await RegisterOrUpdateReminder("Ticker", dueTime, _defaultTickPeriod);
             }
             _logger.LogDebug($"CronJob[{State.Metadata.Key}]: Tick After {dueTime}");
         }

@@ -89,7 +89,8 @@ namespace Fabron.Grains
         }
         private bool ConsumerNotFollowedUp => _state is not null && _state.Version != _consumerOffset;
         private bool Deleted => _state is null || _state.Status.Deleted;
-        private bool DeletedButNotPurged => (_state is not null && _state.Status.Deleted) || (_state is null && _consumerOffset != -1);
+        private bool Purged => _state is null && _consumerOffset == -1;
+        private bool DeletedButNotPurged => Deleted && !Purged;
 
         public Task<Job?> GetState() => Task.FromResult(_state);
 
@@ -160,9 +161,10 @@ namespace Fabron.Grains
 
         private async Task Tick()
         {
-            if (DeletedButNotPurged)
+            if (Deleted)
             {
-                await Purge();
+                if(!Purged)
+                    await Purge();
                 return;
             }
 
