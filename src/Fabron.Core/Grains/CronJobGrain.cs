@@ -75,8 +75,11 @@ namespace Fabron.Grains
             if (snapshot is not null)
             {
                 _state = snapshot;
+                _logger.LogInformation($"Loaded state from querier, current version: {_state.Version}");
             }
-            List<EventLog> eventLogs = await _eventStore.GetEventLogs(_key, (_state?.Version + 1) ?? 0);
+            var from = _state is null ? 0L : _state.Version + 1;
+            _logger.LogInformation($"Loading event from {from}");
+            List<EventLog> eventLogs = await _eventStore.GetEventLogs(_key, from);
             foreach (EventLog? eventLog in eventLogs)
             {
                 TransitionState(eventLog);

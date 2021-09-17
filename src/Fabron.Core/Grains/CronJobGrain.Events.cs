@@ -49,6 +49,7 @@ namespace Fabron.Grains
         private void TransitionState(EventLog eventLog)
         {
             var @event = ICronJobEvent.Get(eventLog);
+            _logger.ApplyingEvent(_state?.Version ?? -1, eventLog);
             _state = @event switch
             {
                 CronJobScheduled e => _state.Apply(e, _key, eventLog.Timestamp),
@@ -59,6 +60,7 @@ namespace Fabron.Grains
                 CronJobDeleted e => State.Apply(e),
                 _ => ThrowHelper.ThrowInvalidEventName<CronJob>(eventLog.EntityKey, eventLog.Version, eventLog.Type)
             };
+            _logger.AppliedEvent(State.Version, eventLog);
             Guard.IsEqualTo(State.Version, eventLog.Version, nameof(State.Version));
         }
     }

@@ -13,6 +13,8 @@ namespace Fabron.Grains
         private static readonly Action<ILogger, string, Exception?> s_cronJobPurged;
         private static readonly Action<ILogger, string, Exception?> s_cancelStatusProberBecauseCronJobDeleted;
         private static readonly Action<ILogger, string, string, long, Exception> s_failedToCommitEvent;
+        private static readonly Action<ILogger, string, string, long, long, Exception?> s_applyingEvent;
+        private static readonly Action<ILogger, string, string, long, long, Exception?> s_appliedEvent;
 
         static LoggerExtensions()
         {
@@ -49,6 +51,16 @@ namespace Fabron.Grains
                 LogLevel.Error,
                 new EventId(1, nameof(FailedToCommitEvent)),
                 "CronJob[{Key}]: Failed to commit event '{Type}'({Version})");
+
+            s_applyingEvent = LoggerMessage.Define<string, string, long, long>(
+                LogLevel.Debug,
+                new EventId(1, nameof(ApplyingEvent)),
+                "CronJob[{Key}]: Applying event '{Type}'({Version}), current state version: {StateVersion}");
+
+            s_appliedEvent = LoggerMessage.Define<string, string, long, long>(
+                LogLevel.Debug,
+                new EventId(1, nameof(AppliedEvent)),
+                "CronJob[{Key}]: Applying event '{Type}'({Version}), current state version: {StateVersion}");
         }
 
         public static void EventRaised(this ILogger logger, EventLog eventLog)
@@ -77,5 +89,22 @@ namespace Fabron.Grains
 
         public static void FailedToCommitEvent(this ILogger logger, EventLog eventLog, Exception e)
             => s_failedToCommitEvent(logger, eventLog.EntityKey, eventLog.Type, eventLog.Version, e);
+
+        public static void ApplyingEvent(this ILogger logger, long stateVersion, EventLog eventLog)
+        {
+            if (logger.IsEnabled(LogLevel.Debug))
+            {
+                s_applyingEvent(logger, eventLog.EntityKey, eventLog.Type, eventLog.Version, stateVersion, null);
+            }
+        }
+
+        public static void AppliedEvent(this ILogger logger, long stateVersion, EventLog eventLog)
+        {
+            if (logger.IsEnabled(LogLevel.Debug))
+            {
+                s_appliedEvent(logger, eventLog.EntityKey, eventLog.Type, eventLog.Version, stateVersion, null);
+            }
+        }
+
     }
 }
