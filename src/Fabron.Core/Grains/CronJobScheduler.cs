@@ -88,7 +88,7 @@ namespace Fabron.Grains
             // Completed
             if (tick is null || (state.Spec.ExpirationTime.HasValue && tick.Value > state.Spec.ExpirationTime.Value))
             {
-                await _self.Complete();
+                await Complete();
                 return;
             }
 
@@ -104,7 +104,7 @@ namespace Fabron.Grains
             // Completed
             if (tick is null || (state.Spec.ExpirationTime.HasValue && tick.Value > state.Spec.ExpirationTime.Value))
             {
-                await _self.Complete();
+                await Complete();
                 return;
             }
             else
@@ -114,11 +114,17 @@ namespace Fabron.Grains
 
         }
 
+        private async Task Complete()
+        {
+            _logger.CompletingCronJob(_key);
+            await _self.Complete();
+        }
+
         private async Task ScheduleJob(CronJob state, DateTime schedule)
         {
-            JobItem? latestJob = state.LatestItem;
-
             string jobKey = state.GetChildJobKeyByIndex(schedule);
+            _logger.SchedulingNewJob(_key, jobKey);
+
             IJobGrain grain = GrainFactory.GetGrain<IJobGrain>(jobKey);
             var labels = new Dictionary<string, string>(state.Metadata.Labels)
                 {
@@ -136,6 +142,7 @@ namespace Fabron.Grains
                 labels,
                 annotations);
 
+            _logger.ScheduledNewJob(_key, jobKey);
         }
 
         private async Task TickAfter(TimeSpan dueTime)
@@ -153,7 +160,7 @@ namespace Fabron.Grains
             {
                 _tickReminder = await RegisterOrUpdateReminder("Ticker", dueTime, _defaultTickPeriod);
             }
-            // _logger.LogDebug($"CronJob[{State.Metadata.Key}]: Tick After {dueTime}");
+            _logger.TickerRegistered(_key, dueTime);
         }
 
         private async Task StopTicker()
@@ -168,10 +175,11 @@ namespace Fabron.Grains
             int retry = 0;
             while (true)
             {
-                if (reminder is null) return;
+                if (reminder is null) break;
                 try
                 {
                     await UnregisterReminder(reminder);
+                    _logger.TickerStopped(_key);
                     break;
                 }
                 catch (Orleans.Runtime.ReminderException)

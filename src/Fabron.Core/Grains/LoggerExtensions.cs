@@ -19,6 +19,11 @@ namespace Fabron.Grains
         private static readonly Action<ILogger, string, long, Exception?> s_consumerOffsetLoaded;
         private static readonly Action<ILogger, string, long, Exception?> s_consumerOffsetUpdated;
         private static readonly Action<ILogger, string, Exception?> s_cronJobSchedulerUnhealthy;
+        private static readonly Action<ILogger, string, TimeSpan, Exception?> s_tickerRegistered;
+        private static readonly Action<ILogger, string, Exception?> s_tickerStopped;
+        private static readonly Action<ILogger, string, Exception?> s_completingCronJob;
+        private static readonly Action<ILogger, string, string, Exception?> s_schedulingNewJob;
+        private static readonly Action<ILogger, string, string, Exception?> s_scheduledNewJob;
 
         static LoggerExtensions()
         {
@@ -85,6 +90,31 @@ namespace Fabron.Grains
                 LogLevel.Debug,
                 new EventId(1, nameof(CronJobSchedulerUnhealthy)),
                 "[{Key}]: Scheduler unhealthy, restarting");
+
+            s_tickerRegistered = LoggerMessage.Define<string, TimeSpan>(
+                LogLevel.Debug,
+                new EventId(1, nameof(TickerRegistered)),
+                "[{Key}]: Ticker registered with due time: {DueTime}");
+
+            s_tickerStopped = LoggerMessage.Define<string>(
+                LogLevel.Debug,
+                new EventId(1, nameof(TickerStopped)),
+                "[{Key}]: Ticker stopped");
+
+            s_completingCronJob = LoggerMessage.Define<string>(
+                LogLevel.Information,
+                new EventId(1, nameof(CompletingCronJob)),
+                "[{Key}]: Completing cron job");
+
+            s_schedulingNewJob = LoggerMessage.Define<string, string>(
+                LogLevel.Information,
+                new EventId(1, nameof(SchedulingNewJob)),
+                "[{Key}]: Scheduling new job for cron [{JobKey}]");
+
+            s_scheduledNewJob = LoggerMessage.Define<string, string>(
+                LogLevel.Debug,
+                new EventId(1, nameof(ScheduledNewJob)),
+                "[{Key}]: Scheduled new job for cron [{JobKey}]");
         }
 
         public static void EventRaised(this ILogger logger, EventLog eventLog)
@@ -164,5 +194,39 @@ namespace Fabron.Grains
             s_cronJobSchedulerUnhealthy(logger, key, null);
         }
 
+
+        public static void TickerRegistered(this ILogger logger, string key, TimeSpan dueTime)
+        {
+            if (logger.IsEnabled(LogLevel.Debug))
+            {
+                s_tickerRegistered(logger, key, dueTime, null);
+            }
+        }
+
+        public static void TickerStopped(this ILogger logger, string key)
+        {
+            if (logger.IsEnabled(LogLevel.Debug))
+            {
+                s_tickerStopped(logger, key, null);
+            }
+        }
+
+        public static void CompletingCronJob(this ILogger logger, string key)
+        {
+            s_completingCronJob(logger, key, null);
+        }
+
+        public static void SchedulingNewJob(this ILogger logger, string key, string jobKey)
+        {
+            s_schedulingNewJob(logger, key, jobKey, null);
+        }
+
+        public static void ScheduledNewJob(this ILogger logger, string key, string jobKey)
+        {
+            if (logger.IsEnabled(LogLevel.Debug))
+            {
+                s_scheduledNewJob(logger, key, jobKey, null);
+            }
+        }
     }
 }
