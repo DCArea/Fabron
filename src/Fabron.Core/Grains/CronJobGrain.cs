@@ -193,7 +193,7 @@ namespace Fabron.Grains
             }
 
             await SetHealthCheck();
-            if (!state.Spec.Suspend)
+            if (state.Spec.Suspend)
             {
                 var @event = new CronJobResumed();
                 await RaiseAsync(@event, nameof(CronJobResumed));
