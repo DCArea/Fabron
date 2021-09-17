@@ -76,7 +76,7 @@ namespace Fabron.Grains
             {
                 _state = snapshot;
             }
-            List<EventLog> eventLogs = await _eventStore.GetEventLogs(_key, _state?.Version ?? 0);
+            List<EventLog> eventLogs = await _eventStore.GetEventLogs(_key, (_state?.Version + 1) ?? 0);
             foreach (EventLog? eventLog in eventLogs)
             {
                 TransitionState(eventLog);
