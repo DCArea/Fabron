@@ -75,10 +75,11 @@ namespace Fabron.Grains
             if (snapshot is not null)
             {
                 _state = snapshot;
-                _logger.LogInformation($"Loaded state from querier, current version: {_state.Version}");
+                _logger.StateSnapshotLoaded(_key, _state.Version);
             }
             var from = _state is null ? 0L : _state.Version + 1;
-            _logger.LogInformation($"Loading event from {from}");
+
+            _logger.LoadingEvents(_key, from);
             List<EventLog> eventLogs = await _eventStore.GetEventLogs(_key, from);
             foreach (EventLog? eventLog in eventLogs)
             {
@@ -86,6 +87,7 @@ namespace Fabron.Grains
             }
 
             _consumerOffset = await _eventStore.GetConsumerOffset(_key);
+            _logger.ConsumerOffsetLoaded(_key, _consumerOffset);
         }
 
         private string _key = default!;
@@ -130,7 +132,7 @@ namespace Fabron.Grains
                 _consumerOffset = -1;
             }
             await StopTicker();
-            _logger.CronJobPurged(_key);
+            _logger.Purged(_key);
         }
 
         public async Task Delete()
@@ -392,6 +394,7 @@ namespace Fabron.Grains
             Guard.IsBetweenOrEqualTo(offset, _consumerOffset, State.Version, nameof(offset));
             await _eventStore.SaveConsumerOffset(State.Metadata.Key, offset);
             _consumerOffset = offset;
+            _logger.ConsumerOffsetUpdated(_key, _consumerOffset);
 
             if (_consumingCompletionSource != null && _consumerOffset == State.Version)
             {

@@ -6,83 +6,98 @@ namespace Fabron.Grains
 {
     public static class LoggerExtensions
     {
-        private static readonly Action<ILogger, string, long, string, string, Exception?> s_eventRaisedDebug;
-        private static readonly Action<ILogger, string, long, string, Exception?> s_eventRaisedInformation;
+        private static readonly Action<ILogger, string, string, long, string, Exception?> s_eventRaisedDebug;
+        private static readonly Action<ILogger, string, string, long, Exception?> s_eventRaisedInformation;
         private static readonly Action<ILogger, string, Exception?> s_startingJobExecution;
-        private static readonly Action<ILogger, string, Exception?> s_jobPurged;
-        private static readonly Action<ILogger, string, Exception?> s_cronJobPurged;
+        private static readonly Action<ILogger, string, Exception?> s_purged;
         private static readonly Action<ILogger, string, Exception?> s_cancelStatusProberBecauseCronJobDeleted;
         private static readonly Action<ILogger, string, string, long, Exception> s_failedToCommitEvent;
         private static readonly Action<ILogger, string, string, long, long, Exception?> s_applyingEvent;
         private static readonly Action<ILogger, string, string, long, long, Exception?> s_appliedEvent;
+        private static readonly Action<ILogger, string, long, Exception?> s_stateSnapshotLoaded;
+        private static readonly Action<ILogger, string, long, Exception?> s_loadingEvents;
+        private static readonly Action<ILogger, string, long, Exception?> s_consumerOffsetLoaded;
+        private static readonly Action<ILogger, string, long, Exception?> s_consumerOffsetUpdated;
 
         static LoggerExtensions()
         {
-            s_eventRaisedDebug = LoggerMessage.Define<string, long, string, string>(
+            s_eventRaisedDebug = LoggerMessage.Define<string, string, long, string>(
                 LogLevel.Debug,
                 new EventId(1, nameof(EventRaised)),
-                "Event '{Type}'({Version}) raised on [{Key}], detail: {Data}");
-            s_eventRaisedInformation = LoggerMessage.Define<string, long, string>(
+                "[{Key}]: Event '{Type}'({Version}) raised, detail: {Data}");
+            s_eventRaisedInformation = LoggerMessage.Define<string, string, long>(
                 LogLevel.Information,
                 new EventId(1, nameof(EventRaised)),
-                "Event '{Type}'({Version}) raised on [{Key}]");
+                "[{Key}]: Event '{Type}'({Version}) raised");
 
             s_startingJobExecution = LoggerMessage.Define<string>(
                 LogLevel.Information,
                 new EventId(1, nameof(StartingJobExecution)),
-                "Job[{Key}]: Starting job execution");
+                "[{Key}]: Starting job execution");
 
-            s_jobPurged = LoggerMessage.Define<string>(
+            s_purged = LoggerMessage.Define<string>(
                 LogLevel.Information,
-                new EventId(1, nameof(JobPurged)),
-                "Job[{Key}]: Purged");
-
-            s_cronJobPurged = LoggerMessage.Define<string>(
-                LogLevel.Information,
-                new EventId(1, nameof(CronJobPurged)),
-                "CronJob[{Key}]: Purged");
+                new EventId(1, nameof(Purged)),
+                "[{Key}]: Purged");
 
             s_cancelStatusProberBecauseCronJobDeleted = LoggerMessage.Define<string>(
                 LogLevel.Information,
                 new EventId(1, nameof(CancelStatusProberBecauseCronJobDeleted)),
-                "CronJob[{Key}]: Cancel item status prober because this CronJob was deleted");
+                "[{Key}]: Cancel item status prober because this CronJob was deleted");
 
             s_failedToCommitEvent = LoggerMessage.Define<string, string, long>(
                 LogLevel.Error,
                 new EventId(1, nameof(FailedToCommitEvent)),
-                "CronJob[{Key}]: Failed to commit event '{Type}'({Version})");
+                "[{Key}]: Failed to commit event '{Type}'({Version})");
 
             s_applyingEvent = LoggerMessage.Define<string, string, long, long>(
                 LogLevel.Debug,
                 new EventId(1, nameof(ApplyingEvent)),
-                "CronJob[{Key}]: Applying event '{Type}'({Version}), current state version: {StateVersion}");
+                "[{Key}]: Applying event '{Type}'({Version}), current state version: {StateVersion}");
 
             s_appliedEvent = LoggerMessage.Define<string, string, long, long>(
                 LogLevel.Debug,
                 new EventId(1, nameof(AppliedEvent)),
-                "CronJob[{Key}]: Applying event '{Type}'({Version}), current state version: {StateVersion}");
+                "[{Key}]: Applied event '{Type}'({Version}), current state version: {StateVersion}");
+
+            s_stateSnapshotLoaded = LoggerMessage.Define<string, long>(
+                LogLevel.Debug,
+                new EventId(1, nameof(StateSnapshotLoaded)),
+                "[{Key}]: State snapshot loaded at version: {Version}");
+
+            s_loadingEvents = LoggerMessage.Define<string, long>(
+                LogLevel.Debug,
+                new EventId(1, nameof(LoadingEvents)),
+                "[{Key}]: Loading events from version: {FromVersion}");
+
+            s_consumerOffsetLoaded = LoggerMessage.Define<string, long>(
+                LogLevel.Debug,
+                new EventId(1, nameof(ConsumerOffsetLoaded)),
+                "[{Key}]: Consumer offset loaded at: {Offset}");
+
+            s_consumerOffsetUpdated = LoggerMessage.Define<string, long>(
+                LogLevel.Debug,
+                new EventId(1, nameof(ConsumerOffsetUpdated)),
+                "[{Key}]: Consumer offset updated at: {Offset}");
         }
 
         public static void EventRaised(this ILogger logger, EventLog eventLog)
         {
             if (logger.IsEnabled(LogLevel.Debug))
             {
-                s_eventRaisedDebug(logger, eventLog.Type, eventLog.Version, eventLog.EntityKey, eventLog.Data, null);
+                s_eventRaisedDebug(logger, eventLog.EntityKey, eventLog.Type, eventLog.Version, eventLog.Data, null);
             }
             else
             {
-                s_eventRaisedInformation(logger, eventLog.Type, eventLog.Version, eventLog.EntityKey, null);
+                s_eventRaisedInformation(logger, eventLog.EntityKey, eventLog.Type, eventLog.Version, null);
             }
         }
 
         public static void StartingJobExecution(this ILogger logger, string key)
             => s_startingJobExecution(logger, key, null);
 
-        public static void JobPurged(this ILogger logger, string key)
-            => s_jobPurged(logger, key, null);
-
-        public static void CronJobPurged(this ILogger logger, string key)
-            => s_cronJobPurged(logger, key, null);
+        public static void Purged(this ILogger logger, string key)
+            => s_purged(logger, key, null);
 
         public static void CancelStatusProberBecauseCronJobDeleted(this ILogger logger, string key)
             => s_cancelStatusProberBecauseCronJobDeleted(logger, key, null);
@@ -105,6 +120,39 @@ namespace Fabron.Grains
                 s_appliedEvent(logger, eventLog.EntityKey, eventLog.Type, eventLog.Version, stateVersion, null);
             }
         }
+
+        public static void StateSnapshotLoaded(this ILogger logger, string key, long version)
+        {
+            if (logger.IsEnabled(LogLevel.Debug))
+            {
+                s_stateSnapshotLoaded(logger, key, version, null);
+            }
+        }
+
+        public static void LoadingEvents(this ILogger logger, string key, long fromVersion)
+        {
+            if (logger.IsEnabled(LogLevel.Debug))
+            {
+                s_loadingEvents(logger, key, fromVersion, null);
+            }
+        }
+
+        public static void ConsumerOffsetLoaded(this ILogger logger, string key, long offset)
+        {
+            if (logger.IsEnabled(LogLevel.Debug))
+            {
+                s_consumerOffsetLoaded(logger, key, offset, null);
+            }
+        }
+
+        public static void ConsumerOffsetUpdated(this ILogger logger, string key, long offset)
+        {
+            if (logger.IsEnabled(LogLevel.Debug))
+            {
+                s_consumerOffsetUpdated(logger, key, offset, null);
+            }
+        }
+
 
     }
 }

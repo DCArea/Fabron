@@ -50,6 +50,7 @@ namespace Fabron.Stores
 
             var eventLogs = feed.Values
                 .OrderBy(log => log.Version)
+                .Where(log => log.Version >= minVersion)
                 .ToList();
             return Task.FromResult(eventLogs);
         }

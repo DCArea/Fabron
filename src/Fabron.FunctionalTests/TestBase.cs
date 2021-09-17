@@ -21,6 +21,7 @@ namespace Fabron.FunctionalTests
         public IJobManager JobManager => _fixture.Client.ServiceProvider.GetRequiredService<IJobManager>();
         public IJobEventStore JobEventStore => _fixture.ClusterServices.GetRequiredService<IJobEventStore>();
         public ICronJobEventStore CronJobEventStore => _fixture.ClusterServices.GetRequiredService<ICronJobEventStore>();
+        public IJobIndexer JobIndexer => _fixture.ClusterServices.GetRequiredService<IJobIndexer>();
 
         public ICronJobGrain GetCronJobGrain(string id) => _fixture.Client.GetGrain<ICronJobGrain>(id);
         public IJobGrain GetJobGrain(string id) => _fixture.Client.GetGrain<IJobGrain>(id);

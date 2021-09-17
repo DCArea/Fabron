@@ -119,7 +119,7 @@ namespace Fabron.Grains
                 _consumerOffset = -1;
             }
             await StopTicker();
-            _logger.JobPurged(_key);
+            _logger.Purged(_key);
         }
 
         public async Task Delete()
