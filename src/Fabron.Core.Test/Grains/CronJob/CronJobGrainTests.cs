@@ -37,10 +37,6 @@ namespace Fabron.Test.Grains
             Assert.Equal(cronExp, state.Spec.Schedule);
             Assert.Equal(Command.Name, state.Spec.CommandName);
             Assert.Equal(Command.Data, state.Spec.CommandData);
-
-            TestReminder reminder = (TestReminder)await Silo.ReminderRegistry.GetReminder("Ticker");
-            reminder.DueTime.Should().BeCloseTo(TimeSpan.FromSeconds(10 * 60 - DateTime.UtcNow.Second), TimeSpan.FromSeconds(5));
-            reminder.Period.Should().Be(TimeSpan.FromMinutes(2));
         }
 
         [Fact]
@@ -57,9 +53,6 @@ namespace Fabron.Test.Grains
                 true,
                 null,
                 null);
-
-            IGrainReminder? reminder = await Silo.ReminderRegistry.GetReminder("Ticker");
-            reminder.Should().BeNull();
         }
 
         [Fact]
@@ -81,9 +74,6 @@ namespace Fabron.Test.Grains
             CronJob? state = await grain.GetState();
             Guard.IsNotNull(state, nameof(state));
             Assert.True(state.Spec.Suspend);
-            IGrainReminder? reminder = await Silo.ReminderRegistry.GetReminder("Ticker");
-            reminder.Should().BeNull();
-            Assert.Equal(0, Silo.TimerRegistry.NumberOfActiveTimers);
         }
 
         [Fact]
@@ -104,10 +94,6 @@ namespace Fabron.Test.Grains
 
             CronJob? state = await grain.GetState();
             Guard.IsNotNull(state, nameof(state));
-            TestReminder reminder = (TestReminder)await Silo.ReminderRegistry.GetReminder("Ticker");
-            reminder.DueTime.Should().BeCloseTo(TimeSpan.FromSeconds(3 * 60 - DateTime.UtcNow.Second), TimeSpan.FromSeconds(5));
-            reminder.Period.Should().Be(TimeSpan.FromMinutes(2));
-            Assert.Equal(1, Silo.TimerRegistry.NumberOfActiveTimers);
         }
 
         [Fact]

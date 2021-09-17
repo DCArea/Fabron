@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using static Fabron.FabronConstants;
 
 namespace Fabron.Models
 {
@@ -72,5 +73,7 @@ namespace Fabron.Models
             }
             return nextTick;
         }
+
+        public string GetChildJobKeyByIndex(DateTime schedule) => string.Format(CronItemKeyTemplate, this.Metadata.Uid, schedule.ToString("yyyy-MM-ddTHH:mm:ssZ"));
     }
 }

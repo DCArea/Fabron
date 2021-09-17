@@ -10,7 +10,7 @@ namespace Fabron
         public static T ThrowInvalidEventName<T>(string entityKey, long version, string name)
             => throw new InvalidOperationException($"Event({name}) is not supported for {typeof(T).Name}[{entityKey}:{version}]");
 
-        //public static T ThrowInvalidEventPayload<T>(string entityKey, string version, string name)
-        //    => throw new InvalidOperationException($"Event({name}) payload is invalid");
+        public static void ThrowStartCompletedCronJob(string key)
+            => throw new InvalidOperationException($"Can not start a completed cron job");
     }
 }

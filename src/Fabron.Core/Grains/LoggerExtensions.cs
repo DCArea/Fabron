@@ -18,6 +18,7 @@ namespace Fabron.Grains
         private static readonly Action<ILogger, string, long, Exception?> s_loadingEvents;
         private static readonly Action<ILogger, string, long, Exception?> s_consumerOffsetLoaded;
         private static readonly Action<ILogger, string, long, Exception?> s_consumerOffsetUpdated;
+        private static readonly Action<ILogger, string, Exception?> s_cronJobSchedulerUnhealthy;
 
         static LoggerExtensions()
         {
@@ -79,6 +80,11 @@ namespace Fabron.Grains
                 LogLevel.Debug,
                 new EventId(1, nameof(ConsumerOffsetUpdated)),
                 "[{Key}]: Consumer offset updated at: {Offset}");
+
+            s_cronJobSchedulerUnhealthy = LoggerMessage.Define<string>(
+                LogLevel.Debug,
+                new EventId(1, nameof(CronJobSchedulerUnhealthy)),
+                "[{Key}]: Scheduler unhealthy, restarting");
         }
 
         public static void EventRaised(this ILogger logger, EventLog eventLog)
@@ -153,6 +159,10 @@ namespace Fabron.Grains
             }
         }
 
+        public static void CronJobSchedulerUnhealthy(this ILogger logger, string key)
+        {
+            s_cronJobSchedulerUnhealthy(logger, key, null);
+        }
 
     }
 }
