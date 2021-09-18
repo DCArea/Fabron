@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Fabron.Events;
 using Fabron.Models;
 using Microsoft.Toolkit.Diagnostics;
+using Orleans;
 
 namespace Fabron.Grains
 {
@@ -20,7 +21,14 @@ namespace Fabron.Grains
         {
             long currentVersion = State.Version;
             Guard.IsGreaterThanOrEqualTo(currentVersion, _consumerOffset, nameof(currentVersion));
-            await _consumer.NotifyChanged(_consumerOffset, currentVersion);
+            if (_options.UseAsynchronousIndexer)
+            {
+                _consumer.InvokeOneWay(c => c.NotifyChanged(_consumerOffset, currentVersion));
+            }
+            else
+            {
+                await _consumer.NotifyChanged(_consumerOffset, currentVersion);
+            }
         }
 
         private async Task CommitAsync(EventLog eventLog)

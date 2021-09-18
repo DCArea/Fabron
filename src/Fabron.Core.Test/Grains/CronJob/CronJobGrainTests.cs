@@ -6,6 +6,7 @@ using Fabron.Models;
 using Fabron.Stores;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.Toolkit.Diagnostics;
 using Orleans.Runtime;
 using Orleans.TestKit;
@@ -20,6 +21,10 @@ namespace Fabron.Test.Grains
         public CronJobGrainTests()
         {
             Silo.AddServiceProbe<ILogger<CronJobGrain>>();
+            Silo.AddService<IOptions<CronJobOptions>>(Options.Create(new CronJobOptions
+            {
+                UseAsynchronousIndexer = false
+            }));
             Silo.AddService<ICronJobEventStore>(new InMemoryCronJobEventStore());
         }
 

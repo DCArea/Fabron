@@ -8,6 +8,7 @@ using Fabron.Stores;
 using FluentAssertions;
 
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
 
 using Orleans.TestKit;
@@ -22,6 +23,7 @@ namespace Fabron.Test.Grains.Job
         public JobGrainTests()
         {
             Silo.AddServiceProbe<ILogger<JobGrain>>();
+            Silo.AddService<IOptions<JobOptions>>(Options.Create(new JobOptions()));
             Silo.AddServiceProbe<IMediator>();
             Silo.AddService<IJobEventStore>(new InMemoryJobEventStore());
         }

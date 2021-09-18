@@ -2,9 +2,11 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Fabron;
 using Fabron.Events;
 using Fabron.Stores;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Orleans.Hosting;
 
 namespace Microsoft.Extensions.Hosting
@@ -20,6 +22,10 @@ namespace Microsoft.Extensions.Hosting
             {
                 throw new ArgumentNullException(nameof(configureDelegate));
             }
+
+            hostBuilder.ConfigureServices((ctx, services) =>
+            {
+            });
 
             hostBuilder.UseOrleans((ctx, siloBuilder) =>
             {

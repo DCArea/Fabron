@@ -24,6 +24,12 @@ namespace Fabron.Grains
         private static readonly Action<ILogger, string, Exception?> s_completingCronJob;
         private static readonly Action<ILogger, string, string, Exception?> s_schedulingNewJob;
         private static readonly Action<ILogger, string, string, Exception?> s_scheduledNewJob;
+        private static readonly Action<ILogger, string, ConsumerState, ConsumerState, Exception?> s_resettingConsumerState;
+        private static readonly Action<ILogger, string, long, ConsumerState, Exception?> s_consumerIgnoredStateChangedEvent;
+        private static readonly Action<ILogger, string, long, ConsumerState, Exception?> s_consumerUpdatedOffsetFromProducer;
+        private static readonly Action<ILogger, string, long, Exception?> s_stateIndexed;
+        private static readonly Action<ILogger, string, Exception?> s_stateIndexDeleted;
+        private static readonly Action<ILogger, string, long, Exception?> s_consumerOffsetCommitted;
 
         static LoggerExtensions()
         {
@@ -115,6 +121,36 @@ namespace Fabron.Grains
                 LogLevel.Debug,
                 new EventId(1, nameof(ScheduledNewJob)),
                 "[{Key}]: Scheduled new job for cron [{JobKey}]");
+
+            s_resettingConsumerState = LoggerMessage.Define<string, ConsumerState, ConsumerState>(
+                LogLevel.Information,
+                new EventId(1, nameof(ResettingConsumerState)),
+                "[{Key}]: Resetting consumer state, before: {OldState}, now: {NewState} ");
+
+            s_consumerIgnoredStateChangedEvent = LoggerMessage.Define<string, long, ConsumerState>(
+                LogLevel.Information,
+                new EventId(1, nameof(ConsumerIgnoredStateChangedEvent)),
+                "[{Key}]: Ignored state change event({CurrentVersion}), consumer state: {state} ");
+
+            s_consumerUpdatedOffsetFromProducer = LoggerMessage.Define<string, long, ConsumerState>(
+                LogLevel.Information,
+                new EventId(1, nameof(ConsumerUpdatedOffsetFromProducer)),
+                "[{Key}]: Updated offset as ({Offset}), consumer state: {state} ");
+
+            s_stateIndexed = LoggerMessage.Define<string, long>(
+                LogLevel.Information,
+                new EventId(1, nameof(StateIndexed)),
+                "[{Key}]: Indexed state at version ({Version})");
+
+            s_stateIndexDeleted = LoggerMessage.Define<string>(
+                LogLevel.Information,
+                new EventId(1, nameof(StateIndexDeleted)),
+                "[{Key}]: Delete index");
+
+            s_consumerOffsetCommitted = LoggerMessage.Define<string, long>(
+                LogLevel.Information,
+                new EventId(1, nameof(ConsumerOffsetCommitted)),
+                "[{Key}]: Committed offset({offset}) ");
         }
 
         public static void EventRaised(this ILogger logger, EventLog eventLog)
@@ -226,6 +262,51 @@ namespace Fabron.Grains
             if (logger.IsEnabled(LogLevel.Debug))
             {
                 s_scheduledNewJob(logger, key, jobKey, null);
+            }
+        }
+
+        public static void ResettingConsumerState(this ILogger logger, string key, ConsumerState oldState, ConsumerState newState)
+        {
+            s_resettingConsumerState(logger, key, oldState, newState, null);
+        }
+
+        public static void ConsumerIgnoredStateChangedEvent(this ILogger logger, string key, long currentVersion, ConsumerState state)
+        {
+            if (logger.IsEnabled(LogLevel.Debug))
+            {
+                s_consumerIgnoredStateChangedEvent(logger, key, currentVersion, state, null);
+            }
+        }
+
+        public static void ConsumerUpdatedOffsetFromProducer(this ILogger logger, string key, long offset, ConsumerState state)
+        {
+            if (logger.IsEnabled(LogLevel.Debug))
+            {
+                s_consumerUpdatedOffsetFromProducer(logger, key, offset, state, null);
+            }
+        }
+
+        public static void StateIndexed(this ILogger logger, string key, long version)
+        {
+            if (logger.IsEnabled(LogLevel.Debug))
+            {
+                s_stateIndexed(logger, key, version, null);
+            }
+        }
+
+        public static void StateIndexDeleted(this ILogger logger, string key)
+        {
+            if (logger.IsEnabled(LogLevel.Debug))
+            {
+                s_stateIndexDeleted(logger, key, null);
+            }
+        }
+
+        public static void ConsumerOffsetCommitted(this ILogger logger, string key, long version)
+        {
+            if (logger.IsEnabled(LogLevel.Debug))
+            {
+                s_consumerOffsetCommitted(logger, key, version, null);
             }
         }
     }

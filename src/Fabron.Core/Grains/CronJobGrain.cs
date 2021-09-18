@@ -7,10 +7,12 @@ using Fabron.Events;
 using Fabron.Models;
 using Fabron.Stores;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.Toolkit.Diagnostics;
 using Orleans;
 using Orleans.Concurrency;
 using Orleans.Runtime;
+using Orleans.Streams;
 using static Fabron.FabronConstants;
 
 namespace Fabron.Grains
@@ -52,23 +54,30 @@ namespace Fabron.Grains
     public partial class CronJobGrain : Grain, ICronJobGrain, IRemindable
     {
         private readonly ILogger _logger;
+        private readonly CronJobOptions _options;
         private readonly ICronJobEventStore _eventStore;
         private readonly IJobQuerier _querier;
         public CronJobGrain(
             ILogger<CronJobGrain> logger,
+            IOptions<CronJobOptions> options,
             ICronJobEventStore eventStore,
             IJobQuerier querier)
         {
             _logger = logger;
+            _options = options.Value;
             _eventStore = eventStore;
             _querier = querier;
         }
 
+        private string _key = default!;
+        private CronJob? _state;
+        private long _consumerOffset;
+        private ICronJobScheduler _scheduler = default!;
         public override async Task OnActivateAsync()
         {
             _key = this.GetPrimaryKeyString();
-            _consumer = GrainFactory.GetGrain<ICronJobEventConsumer>(_key);
             _scheduler = GrainFactory.GetGrain<ICronJobScheduler>(_key);
+            _consumer = GrainFactory.GetGrain<ICronJobEventConsumer>(_key);
 
             var snapshot = await _querier.GetCronJobByKey(_key);
             if (snapshot is not null)
@@ -89,13 +98,10 @@ namespace Fabron.Grains
             _logger.ConsumerOffsetLoaded(_key, _consumerOffset);
         }
 
-        private string _key = default!;
         private ICronJobEventConsumer _consumer = default!;
-        private ICronJobScheduler _scheduler = default!;
-        private long _consumerOffset;
-        private CronJob? _state;
         private TaskCompletionSource<bool>? _consumingCompletionSource;
-        private object _lock = new object();
+        private IDisposable? _hcTimer = null;
+        private IGrainReminder? _hcReminder = null;
 
         private CronJob State
         {
@@ -225,6 +231,7 @@ namespace Fabron.Grains
 
             if (_consumingCompletionSource != null && _consumerOffset == State.Version)
             {
+                _logger.LogDebug($"Completing wait consuming task");
                 _consumingCompletionSource.SetResult(true);
             }
         }
@@ -235,16 +242,21 @@ namespace Fabron.Grains
             {
                 _consumingCompletionSource = new TaskCompletionSource<bool>();
                 int retry = 0;
+                _logger.LogDebug($"Waiting events consumed for {_key}");
                 while (true)
                 {
                     try
                     {
                         await _consumingCompletionSource.Task.WaitAsync(TimeSpan.FromMilliseconds(100));
+                        _logger.LogDebug($"Waiting completed");
+                        break;
                     }
                     catch (TimeoutException)
                     {
+                        // _logger.LogDebug($"Waiting events consumed for {_key}");
                         if (retry++ > 10 * waitSeconds)
                         {
+                            _logger.LogDebug($"Waiting timeout");
                             throw;
                         }
                         await NotifyConsumer();
@@ -254,11 +266,9 @@ namespace Fabron.Grains
 
         }
 
-        private IDisposable? _hcTimer = null;
-        private IGrainReminder? _hcReminder = null;
         private async Task SetHealthCheck()
         {
-            _hcReminder = await RegisterOrUpdateReminder("HealthCheck", TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(5));
+            _hcReminder = await RegisterOrUpdateReminder(Names.HealthCheckTicker, TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(5));
             SetHealthCheckTimer();
         }
         private void SetHealthCheckTimer()
@@ -300,7 +310,7 @@ namespace Fabron.Grains
         private async Task StopHealthCheck()
         {
 
-            var reminder = _hcReminder ?? await GetReminder("HealthCheck");
+            var reminder = _hcReminder ?? await GetReminder(Names.HealthCheckTicker);
             int retry = 0;
             while (true)
             {
@@ -314,7 +324,7 @@ namespace Fabron.Grains
                 {
                     if (retry++ < 3)
                     {
-                        reminder = await GetReminder("HealthCheck");
+                        reminder = await GetReminder(Names.HealthCheckTicker);
                         continue;
                     }
                     throw;

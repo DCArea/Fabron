@@ -20,6 +20,11 @@ namespace Fabron.Events
         public Task On(string key, DateTime timestamp, IJobEvent @event) => Task.CompletedTask;
     }
 
+    public class NoopCronJobEventListener : ICronJobEventListener
+    {
+        public Task On(string key, DateTime timestamp, ICronJobEvent @event) => Task.CompletedTask;
+    }
+
     public class LogBasedJobEventListener : IJobEventListener, ICronJobEventListener
     {
         private readonly ILogger _logger;

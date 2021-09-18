@@ -17,10 +17,15 @@ namespace Orleans.Hosting
             siloBuilder
                 .ConfigureServices((ctx, services) =>
                 {
+                    // services.AddOptions<CronJobOptions>();
                     services.AddScoped<IMediator, Mediator>()
-                        .AddSingleton<IJobEventListener, NoopJobEventListener>()
                         .RegisterJobCommandHandlers(commandAssemblies);
-                });
+                })
+                .AddSimpleMessageStreamProvider(Names.StreamProvider, config =>
+                {
+                    config.FireAndForgetDelivery = true;
+                })
+                .AddMemoryGrainStorage("PubSubStore");
             return siloBuilder;
         }
 
@@ -37,7 +42,7 @@ namespace Orleans.Hosting
         public static ISiloBuilder UseInMemory(this ISiloBuilder siloBuilder)
         {
             siloBuilder
-                .SetEventListener<LogBasedJobEventListener, LogBasedJobEventListener>()
+                .SetEventListener<NoopJobEventListener, NoopCronJobEventListener>()
                 .UseEventStore<InMemoryJobEventStore, InMemoryCronJobEventStore>()
                 .UseJobIndexer<GrainBasedInMemoryJobIndexer>()
                 .UseInMemoryReminderService();

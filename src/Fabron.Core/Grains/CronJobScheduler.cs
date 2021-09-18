@@ -23,7 +23,7 @@ namespace Fabron.Grains
         Task Trigger();
     }
 
-    public class CronJobScheduler : Grain, ICronJobScheduler
+    public class CronJobScheduler : Grain, ICronJobScheduler, IRemindable
     {
         private readonly TimeSpan _defaultTickPeriod = TimeSpan.FromMinutes(2);
         private readonly ILogger<CronJobScheduler> _logger;
@@ -66,6 +66,7 @@ namespace Fabron.Grains
 
         private async Task Tick()
         {
+
             var state = await _self.GetState();
 
             // Stopped
@@ -97,10 +98,9 @@ namespace Fabron.Grains
             {
                 await ScheduleJob(state, tick.Value);
             }
-
             // Check if we need to set ticker for next schedule
+            tick = cron.GetNextOccurrence(tick.Value);
             now = DateTime.UtcNow;
-            tick = cron.GetNextOccurrence(now.AddSeconds(-5));
             // Completed
             if (tick is null || (state.Spec.ExpirationTime.HasValue && tick.Value > state.Spec.ExpirationTime.Value))
             {
@@ -109,9 +109,19 @@ namespace Fabron.Grains
             }
             else
             {
-                await TickAfter(tick.Value.Subtract(now));
+                if (tick.Value > now)
+                {
+                    await TickAfter(tick.Value.Subtract(now));
+                    return;
+                }
+                else if(tick.Value <= now.AddSeconds(5))
+                {
+                    await TickAfter(TimeSpan.Zero);
+                    return;
+                }else{
+                    _logger.LogWarning("Missed tick");
+                }
             }
-
         }
 
         private async Task Complete()
@@ -148,6 +158,7 @@ namespace Fabron.Grains
         private async Task TickAfter(TimeSpan dueTime)
         {
             _tickTimer?.Dispose();
+            Guard.IsBetweenOrEqualTo(dueTime.Ticks, -1, int.MaxValue, nameof(dueTime));
             if (dueTime < _defaultTickPeriod)
             {
                 _tickTimer = RegisterTimer(_ => Tick(), null, dueTime, TimeSpan.FromMilliseconds(-1));
@@ -186,6 +197,7 @@ namespace Fabron.Grains
                 {
                     if (retry++ < 3)
                     {
+                        _logger.LogWarning("Unregister reminder failed, retrying");
                         reminder = await GetReminder("Ticker");
                         continue;
                     }
@@ -193,5 +205,7 @@ namespace Fabron.Grains
                 }
             }
         }
+
+        public Task ReceiveReminder(string reminderName, TickStatus status) => Tick();
     }
 }

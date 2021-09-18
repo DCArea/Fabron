@@ -1,28 +1,30 @@
-﻿using System.Collections.Generic;
+using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
-using Fabron.FunctionalTests.Commands;
-using Xunit;
-using Xunit.Abstractions;
+using Fabron;
+using Fabron.TestRunner.Commands;
+using FluentAssertions;
 
-namespace Fabron.FunctionalTests.CronJobTests
+namespace Fabron.TestRunner.Scenarios
 {
-    public class ScheduleTests : TestBase
+
+    public class ScheduleCronJobScenario : ScenarioBase
     {
-        public ScheduleTests(DefaultClusterFixture fixture, ITestOutputHelper output) : base(fixture, output)
+
+        public ScheduleCronJobScenario(IServiceProvider _sp) : base(_sp)
         {
         }
 
-        // [Fact(Skip = "Skip")]
-        [Fact]
-        public async Task ShouldCanBeQueried()
+        public async Task RunAsync()
         {
+
             var labels = new Dictionary<string, string>
             {
                 {"foo", "bar" }
             };
 
             Contracts.CronJob<NoopCommand> job = await JobManager.ScheduleCronJob<NoopCommand>(
-                this.GetType().Name + "/" + nameof(ShouldCanBeQueried),
+                this.GetType().Name + "/" + nameof(ScheduleCronJobScenario),
                 "* * * * *",
                 new NoopCommand(),
                 null,
@@ -31,11 +33,12 @@ namespace Fabron.FunctionalTests.CronJobTests
                 labels,
                 null);
             Grains.ICronJobGrain? grain = GetCronJobGrain(job.Metadata.Key);
-
             await grain.WaitEventsConsumed(10);
 
             IEnumerable<Contracts.CronJob<NoopCommand>> queried = await JobManager.GetCronJobByLabel<NoopCommand>("foo", "bar");
-            Assert.NotEmpty(queried);
+            queried.Should().HaveCount(1);
+
         }
+
     }
 }

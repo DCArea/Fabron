@@ -29,6 +29,15 @@ namespace Fabron
         }
 
         public const string CronItemKeyTemplate = Prefix + "cronjobs/{0}/items/{1}";
+
+    }
+
+    public static class Names
+    {
+        public const string StreamProvider = "Fabron";
+        public const string CronJobChangeStream = "CronJobChange";
+
+        public const string HealthCheckTicker = "HealthCheck";
     }
 
 }

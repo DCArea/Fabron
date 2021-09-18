@@ -26,6 +26,10 @@ namespace Fabron.FunctionalTests
             {
                 options.ResponseTimeout = TimeSpan.FromSeconds(5);
             });
+
+            siloBuilder.Configure<CronJobOptions>(options =>{
+                options.UseAsynchronousIndexer = false;
+            });
             siloBuilder.UseInMemory();
 
             siloBuilder.ConfigureServices(ConfigureServices);
