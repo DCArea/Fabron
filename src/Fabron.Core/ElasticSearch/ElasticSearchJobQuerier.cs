@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 using Nest;
+using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace Fabron.ElasticSearch
 {
@@ -71,6 +72,10 @@ namespace Fabron.ElasticSearch
                     .Term(m => m.Field("metadata.key.keyword").Value(key))
                 )
             );
+            if (_logger.IsEnabled(LogLevel.Debug))
+            {
+                _logger.LogDebug($"{res.DebugInformation}");
+            }
             return res;
         }
 
@@ -84,6 +89,10 @@ namespace Fabron.ElasticSearch
                     .Term(m => m.Field($"metadata.labels.{labelName}.keyword").Value(labelValue))
                 )
             );
+            if (_logger.IsEnabled(LogLevel.Debug))
+            {
+                _logger.LogDebug($"{res.DebugInformation}");
+            }
             return res;
         }
 
@@ -99,6 +108,10 @@ namespace Fabron.ElasticSearch
                     .Bool(b => b.Must(must))
                 )
             );
+            if (_logger.IsEnabled(LogLevel.Debug))
+            {
+                _logger.LogDebug($"{res.DebugInformation}");
+            }
             return res;
         }
     }

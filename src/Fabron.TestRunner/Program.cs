@@ -45,4 +45,5 @@ var host = await Host.CreateDefaultBuilder()
     .StartAsync();
 // .RunConsoleAsync();
 
-await new ScheduleCronJobScenario().PlayAsync();
+// await new ScheduleCronJob().PlayAsync();
+await new LabelBasedQuery().PlayAsync();

@@ -17,7 +17,7 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IServiceCollection UseElasticSearch(this IServiceCollection services, IConfiguration config)
         {
             services.Configure<ElasticSearchOptions>(config);
-            services.AddElasticSearchJobReporter();
+            services.AddElasticSearchJobIndexer();
             services.AddElasticSearchJobQuerier();
             return services;
         }
@@ -25,7 +25,8 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IServiceCollection UseElasticSearch(this IServiceCollection services, Action<ElasticSearchOptions> configure)
         {
             services.Configure<ElasticSearchOptions>(configure);
-            services.AddElasticSearchJobReporter();
+            services.AddElasticSearchJobIndexer();
+            services.AddElasticSearchJobQuerier();
             return services;
         }
 
@@ -35,6 +36,7 @@ namespace Microsoft.Extensions.DependencyInjection
             {
                 ElasticSearchOptions options = sp.GetRequiredService<IOptions<ElasticSearchOptions>>().Value;
                 ConnectionSettings settings = new ConnectionSettings(new Uri(options.Server));
+                options.ConfigureConnectionSettings?.Invoke(settings);
                 ElasticClient client = new(settings);
                 return client;
             });
@@ -42,12 +44,13 @@ namespace Microsoft.Extensions.DependencyInjection
             return services;
         }
 
-        internal static IServiceCollection AddElasticSearchJobReporter(this IServiceCollection services)
+        internal static IServiceCollection AddElasticSearchJobIndexer(this IServiceCollection services)
         {
             services.TryAddSingleton<IElasticClient>(sp =>
             {
                 ElasticSearchOptions options = sp.GetRequiredService<IOptions<ElasticSearchOptions>>().Value;
                 ConnectionSettings settings = new ConnectionSettings(new Uri(options.Server));
+                options.ConfigureConnectionSettings?.Invoke(settings);
                 ElasticClient client = new(settings);
                 return client;
             });

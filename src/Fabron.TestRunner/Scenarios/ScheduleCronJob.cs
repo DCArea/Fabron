@@ -8,7 +8,7 @@ using FluentAssertions;
 namespace Fabron.TestRunner.Scenarios
 {
 
-    public class ScheduleCronJobScenario : ScenarioBase
+    public class ScheduleCronJob : ScenarioBase
     {
         public override async Task RunAsync()
         {
@@ -19,7 +19,7 @@ namespace Fabron.TestRunner.Scenarios
             };
 
             Contracts.CronJob<NoopCommand> job = await JobManager.ScheduleCronJob<NoopCommand>(
-                this.GetType().Name + "/" + nameof(ScheduleCronJobScenario),
+                this.GetType().Name + "/" + nameof(ScheduleCronJob),
                 "* * * * *",
                 new NoopCommand(),
                 null,
