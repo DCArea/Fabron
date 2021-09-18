@@ -68,7 +68,7 @@ namespace Fabron.ElasticSearch
             ISearchResponse<TDocument> res = await _esClient.SearchAsync<TDocument>(s => s
                 .Index(indexName)
                 .Query(q => q
-                    .Term(m => m.Field("metadata.key").Value(key))
+                    .Term(m => m.Field("metadata.key.keyword").Value(key))
                 )
             );
             return res;
@@ -81,7 +81,7 @@ namespace Fabron.ElasticSearch
             ISearchResponse<TDocument> res = await _esClient.SearchAsync<TDocument>(s => s
                 .Index(indexName)
                 .Query(q => q
-                    .Term(m => m.Field($"metadata.labels.{labelName}").Value(labelValue))
+                    .Term(m => m.Field($"metadata.labels.{labelName}.keyword").Value(labelValue))
                 )
             );
             return res;
@@ -92,7 +92,7 @@ namespace Fabron.ElasticSearch
         {
             var must = labels
                 .Select<(string, string), Func<QueryContainerDescriptor<TDocument>, QueryContainer>>(label => (QueryContainerDescriptor<TDocument> d)
-                    => d.Term(t => t.Field($"metadata.labels.{label.Item1.ToNormalized()}").Value(label.Item2)));
+                    => d.Term(t => t.Field($"metadata.labels.{label.Item1.ToNormalized()}.keyword").Value(label.Item2)));
             ISearchResponse<TDocument> res = await _esClient.SearchAsync<TDocument>(s => s
                 .Index(_options.JobIndexName)
                 .Query(q => q

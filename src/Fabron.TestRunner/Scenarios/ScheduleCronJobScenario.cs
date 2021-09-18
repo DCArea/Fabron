@@ -10,12 +10,7 @@ namespace Fabron.TestRunner.Scenarios
 
     public class ScheduleCronJobScenario : ScenarioBase
     {
-
-        public ScheduleCronJobScenario(IServiceProvider _sp) : base(_sp)
-        {
-        }
-
-        public async Task RunAsync()
+        public override async Task RunAsync()
         {
 
             var labels = new Dictionary<string, string>

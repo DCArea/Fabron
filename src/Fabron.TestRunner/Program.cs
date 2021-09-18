@@ -45,8 +45,4 @@ var host = await Host.CreateDefaultBuilder()
     .StartAsync();
 // .RunConsoleAsync();
 
-var sp = host.Services;
-await new ScheduleCronJobScenario(sp).RunAsync();
-
-Console.WriteLine("FINISHED");
-await host.StopAsync();
+await new ScheduleCronJobScenario().PlayAsync();
