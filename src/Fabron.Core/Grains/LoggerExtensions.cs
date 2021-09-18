@@ -21,6 +21,7 @@ namespace Fabron.Grains
         private static readonly Action<ILogger, string, Exception?> s_cronJobSchedulerUnhealthy;
         private static readonly Action<ILogger, string, TimeSpan, Exception?> s_tickerRegistered;
         private static readonly Action<ILogger, string, Exception?> s_tickerStopped;
+        private static readonly Action<ILogger, string, Exception?> s_RetryUnregisterReminder;
         private static readonly Action<ILogger, string, Exception?> s_completingCronJob;
         private static readonly Action<ILogger, string, string, Exception?> s_schedulingNewJob;
         private static readonly Action<ILogger, string, string, Exception?> s_scheduledNewJob;
@@ -106,6 +107,11 @@ namespace Fabron.Grains
                 LogLevel.Debug,
                 new EventId(1, nameof(TickerStopped)),
                 "[{Key}]: Ticker stopped");
+
+            s_RetryUnregisterReminder = LoggerMessage.Define<string>(
+                LogLevel.Warning,
+                new EventId(1, nameof(RetryUnregisterReminder)),
+                "[{Key}]: Unregister reminder failed, retry");
 
             s_completingCronJob = LoggerMessage.Define<string>(
                 LogLevel.Information,
@@ -245,6 +251,11 @@ namespace Fabron.Grains
             {
                 s_tickerStopped(logger, key, null);
             }
+        }
+
+        public static void RetryUnregisterReminder(this ILogger logger, string key)
+        {
+            s_RetryUnregisterReminder(logger, key, null);
         }
 
         public static void CompletingCronJob(this ILogger logger, string key)

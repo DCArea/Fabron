@@ -37,7 +37,8 @@ namespace Fabron
         public const string StreamProvider = "Fabron";
         public const string CronJobChangeStream = "CronJobChange";
 
-        public const string HealthCheckTicker = "HealthCheck";
+        public const string HealthCheckReminder = "HealthCheck";
+        public const string TickerReminder = "Ticker";
     }
 
 }

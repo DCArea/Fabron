@@ -240,25 +240,26 @@ namespace Fabron.Grains
 
         public async Task WaitEventsConsumed(int waitSeconds = 5)
         {
-            _logger.LogDebug($"Waiting events consumed for {_key}");
+            // _logger.LogDebug($"Waiting events consumed for {_key}");
             if (!ConsumerNotFollowedUp)
             {
-                _logger.LogDebug($"Consumer already followed up, no need to wait");
+                // _logger.LogDebug($"Consumer already followed up, no need to wait");
                 return;
             }
             if (_consumingCompletionSource is null)
             {
-                _logger.LogDebug($"No current awaiting task, create new one");
+                // _logger.LogDebug($"No current awaiting task, create new one");
                 _consumingCompletionSource = new TaskCompletionSource<bool>();
             }
             int retry = 0;
             while (true)
             {
+                if (!ConsumerNotFollowedUp) { return; }
                 try
                 {
-                    _logger.LogDebug($"Waiting task to finish");
+                    // _logger.LogDebug($"Waiting task to finish");
                     await _consumingCompletionSource.Task.WaitAsync(TimeSpan.FromMilliseconds(100));
-                    _logger.LogDebug($"Waiting completed");
+                    // _logger.LogDebug($"Waiting completed");
                     break;
                 }
                 catch (TimeoutException)
@@ -266,7 +267,7 @@ namespace Fabron.Grains
                     // _logger.LogDebug($"Waiting events consumed for {_key}");
                     if (retry++ > 10 * waitSeconds)
                     {
-                        _logger.LogDebug($"Waiting timeout");
+                        // _logger.LogDebug($"Waiting timeout");
                         throw;
                     }
                     await NotifyConsumer();
@@ -276,7 +277,7 @@ namespace Fabron.Grains
 
         private async Task SetHealthCheck()
         {
-            _hcReminder = await RegisterOrUpdateReminder(Names.HealthCheckTicker, TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(5));
+            _hcReminder = await RegisterOrUpdateReminder(Names.HealthCheckReminder, TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(5));
             SetHealthCheckTimer();
         }
         private void SetHealthCheckTimer()
@@ -318,7 +319,7 @@ namespace Fabron.Grains
         private async Task StopHealthCheck()
         {
 
-            var reminder = _hcReminder ?? await GetReminder(Names.HealthCheckTicker);
+            var reminder = _hcReminder ?? await GetReminder(Names.HealthCheckReminder);
             int retry = 0;
             while (true)
             {
@@ -332,7 +333,7 @@ namespace Fabron.Grains
                 {
                     if (retry++ < 3)
                     {
-                        reminder = await GetReminder(Names.HealthCheckTicker);
+                        reminder = await GetReminder(Names.HealthCheckReminder);
                         continue;
                     }
                     throw;

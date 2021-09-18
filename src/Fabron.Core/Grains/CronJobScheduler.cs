@@ -37,11 +37,11 @@ namespace Fabron.Grains
         private string _key = default!;
         private ICronJobGrain _self = default!;
 
-        public override async Task OnActivateAsync()
+        public override Task OnActivateAsync()
         {
             _key = this.GetPrimaryKeyString();
             _self = GrainFactory.GetGrain<ICronJobGrain>(_key);
-            _tickReminder = await GetReminder("Ticker");
+            return Task.CompletedTask;
         }
 
         public async Task Start()
@@ -54,7 +54,12 @@ namespace Fabron.Grains
             await StopTicker();
         }
 
-        public Task<bool> IsRunning() => Task.FromResult(_tickReminder is not null);
+        public async Task<bool> IsRunning()
+        {
+            if (_tickReminder is null)
+                _tickReminder = await GetReminder(Names.TickerReminder);
+            return _tickReminder is not null;
+        }
 
         public async Task Trigger()
         {
@@ -166,12 +171,12 @@ namespace Fabron.Grains
                 _tickTimer = RegisterTimer(_ => Tick(), null, dueTime, TimeSpan.FromMilliseconds(-1));
                 if (_tickReminder is null)
                 {
-                    _tickReminder = await RegisterOrUpdateReminder("Ticker", dueTime.Add(_defaultTickPeriod), _defaultTickPeriod);
+                    _tickReminder = await RegisterOrUpdateReminder(Names.TickerReminder, dueTime.Add(_defaultTickPeriod), _defaultTickPeriod);
                 }
             }
             else
             {
-                _tickReminder = await RegisterOrUpdateReminder("Ticker", dueTime, _defaultTickPeriod);
+                _tickReminder = await RegisterOrUpdateReminder(Names.TickerReminder, dueTime, _defaultTickPeriod);
             }
             _logger.TickerRegistered(_key, dueTime);
         }
@@ -179,19 +184,15 @@ namespace Fabron.Grains
         private async Task StopTicker()
         {
             _tickTimer?.Dispose();
-            IGrainReminder? reminder = null;
-            if (_tickReminder is null)
-            {
-                _tickReminder = await GetReminder("Ticker");
-            }
-            reminder = _tickReminder;
             int retry = 0;
             while (true)
             {
-                if (reminder is null) break;
+                _tickReminder = await GetReminder(Names.TickerReminder);
+                if (_tickReminder is null) break;
                 try
                 {
-                    await UnregisterReminder(reminder);
+                    await UnregisterReminder(_tickReminder);
+                    _tickReminder = null;
                     _logger.TickerStopped(_key);
                     break;
                 }
@@ -199,8 +200,7 @@ namespace Fabron.Grains
                 {
                     if (retry++ < 3)
                     {
-                        _logger.LogWarning("Unregister reminder failed, retrying");
-                        reminder = await GetReminder("Ticker");
+                        _logger.RetryUnregisterReminder(_key);
                         continue;
                     }
                     throw;
@@ -213,6 +213,13 @@ namespace Fabron.Grains
             }
         }
 
-        public Task ReceiveReminder(string reminderName, TickStatus status) => Tick();
+        public async Task ReceiveReminder(string reminderName, TickStatus status)
+        {
+            if (_tickReminder is null)
+            {
+                _tickReminder = await GetReminder(Names.TickerReminder);
+            }
+            await Tick();
+        }
     }
 }

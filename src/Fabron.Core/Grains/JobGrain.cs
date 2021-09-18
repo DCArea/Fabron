@@ -237,35 +237,43 @@ namespace Fabron.Grains
         private async Task StopTicker()
         {
             _tickTimer?.Dispose();
-            IGrainReminder? reminder = null;
-            if (_tickReminder is null)
-            {
-                _tickReminder = await GetReminder("Ticker");
-            }
-            reminder = _tickReminder;
-            // need retry to resolve tag mismatch
             int retry = 0;
             while (true)
             {
-                if (reminder is null) return;
+                _tickReminder = await GetReminder(Names.TickerReminder);
+                if (_tickReminder is null) break;
                 try
                 {
-                    await UnregisterReminder(reminder);
+                    await UnregisterReminder(_tickReminder);
+                    _tickReminder = null;
+                    _logger.TickerStopped(_key);
                     break;
                 }
                 catch (Orleans.Runtime.ReminderException)
                 {
                     if (retry++ < 3)
                     {
-                        reminder = await GetReminder("Ticker");
+                        _logger.RetryUnregisterReminder(_key);
                         continue;
                     }
                     throw;
                 }
+                catch (OperationCanceledException)
+                {
+                    // ReminderService has been stopped
+                    return;
+                }
             }
         }
 
-        Task IRemindable.ReceiveReminder(string reminderName, TickStatus status) => Tick();
+        public async Task ReceiveReminder(string reminderName, TickStatus status)
+        {
+            if (_tickReminder is null)
+            {
+                _tickReminder = await GetReminder(Names.TickerReminder);
+            }
+            await Tick();
+        }
 
         public async Task CommitOffset(long offset)
         {
