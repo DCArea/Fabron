@@ -47,7 +47,7 @@ namespace Fabron.Grains
 
         Task Purge();
 
-        [ReadOnly]
+        [AlwaysInterleave]
         Task WaitEventsConsumed(int waitSeconds);
     }
 
@@ -209,7 +209,6 @@ namespace Fabron.Grains
 
         public async Task Complete()
         {
-            //
             var state = State;
             DateTime now = DateTime.UtcNow;
             Cronos.CronExpression cron = Cronos.CronExpression.Parse(state.Spec.Schedule);
@@ -229,41 +228,50 @@ namespace Fabron.Grains
             _consumerOffset = offset;
             _logger.ConsumerOffsetUpdated(_key, _consumerOffset);
 
-            if (_consumingCompletionSource != null && _consumerOffset == State.Version)
+            if (_consumerOffset == State.Version)
             {
-                _logger.LogDebug($"Completing wait consuming task");
-                _consumingCompletionSource.SetResult(true);
+                if (_consumingCompletionSource != null && !_consumingCompletionSource.Task.IsCompleted)
+                {
+                    _logger.LogDebug($"Completing wait consuming task");
+                    _consumingCompletionSource.SetResult(true);
+                }
             }
         }
 
         public async Task WaitEventsConsumed(int waitSeconds = 5)
         {
-            if (ConsumerNotFollowedUp)
+            _logger.LogDebug($"Waiting events consumed for {_key}");
+            if (!ConsumerNotFollowedUp)
             {
+                _logger.LogDebug($"Consumer already followed up, no need to wait");
+                return;
+            }
+            if (_consumingCompletionSource is null)
+            {
+                _logger.LogDebug($"No current awaiting task, create new one");
                 _consumingCompletionSource = new TaskCompletionSource<bool>();
-                int retry = 0;
-                _logger.LogDebug($"Waiting events consumed for {_key}");
-                while (true)
+            }
+            int retry = 0;
+            while (true)
+            {
+                try
                 {
-                    try
+                    _logger.LogDebug($"Waiting task to finish");
+                    await _consumingCompletionSource.Task.WaitAsync(TimeSpan.FromMilliseconds(100));
+                    _logger.LogDebug($"Waiting completed");
+                    break;
+                }
+                catch (TimeoutException)
+                {
+                    // _logger.LogDebug($"Waiting events consumed for {_key}");
+                    if (retry++ > 10 * waitSeconds)
                     {
-                        await _consumingCompletionSource.Task.WaitAsync(TimeSpan.FromMilliseconds(100));
-                        _logger.LogDebug($"Waiting completed");
-                        break;
+                        _logger.LogDebug($"Waiting timeout");
+                        throw;
                     }
-                    catch (TimeoutException)
-                    {
-                        // _logger.LogDebug($"Waiting events consumed for {_key}");
-                        if (retry++ > 10 * waitSeconds)
-                        {
-                            _logger.LogDebug($"Waiting timeout");
-                            throw;
-                        }
-                        await NotifyConsumer();
-                    }
+                    await NotifyConsumer();
                 }
             }
-
         }
 
         private async Task SetHealthCheck()

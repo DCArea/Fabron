@@ -16,24 +16,24 @@ namespace Fabron.ElasticSearch
     {
         public static string ToNormalized(this string source)
         {
-            return source.Replace('.', '_');
+            return source.Replace('.', '_').Replace('/', '+');
         }
         public static string ToDenormalized(this string source)
         {
-            return source.Replace('_', '.');
+            return source.Replace('_', '.').Replace('+', '/');
         }
 
         public static Dictionary<string, string> ToNormalized(this Dictionary<string, string> source)
         {
             return source
-                .Select(kv => new KeyValuePair<string, string>(kv.Key.Replace('.', '_'), kv.Value))
+                .Select(kv => new KeyValuePair<string, string>(kv.Key.ToNormalized(), kv.Value))
                 .ToDictionary(kv => kv.Key, kv => kv.Value);
         }
 
         public static Dictionary<string, string> ToDenormalized(this Dictionary<string, string> source)
         {
             return source
-                .Select(kv => new KeyValuePair<string, string>(kv.Key.Replace('_', '.'), kv.Value))
+                .Select(kv => new KeyValuePair<string, string>(kv.Key.ToDenormalized(), kv.Value))
                 .ToDictionary(kv => kv.Key, kv => kv.Value);
         }
 

@@ -114,11 +114,13 @@ namespace Fabron.Grains
                     await TickAfter(tick.Value.Subtract(now));
                     return;
                 }
-                else if(tick.Value <= now.AddSeconds(5))
+                else if (tick.Value <= now.AddSeconds(5))
                 {
                     await TickAfter(TimeSpan.Zero);
                     return;
-                }else{
+                }
+                else
+                {
                     _logger.LogWarning("Missed tick");
                 }
             }
@@ -202,6 +204,11 @@ namespace Fabron.Grains
                         continue;
                     }
                     throw;
+                }
+                catch (OperationCanceledException)
+                {
+                    // ReminderService has been stopped
+                    return;
                 }
             }
         }
