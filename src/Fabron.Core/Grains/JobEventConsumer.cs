@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using Fabron.Events;
 using Fabron.Stores;
 using Microsoft.Extensions.Logging;
-using Microsoft.Toolkit.Diagnostics;
 using Orleans;
 using Orleans.Concurrency;
 
@@ -22,9 +21,7 @@ namespace Fabron.Grains
         private readonly IJobEventListener _eventListener;
         private readonly IJobEventStore _store;
         private readonly IJobIndexer _indexer;
-        private long _currentVersion = -1;
-        private long _committedOffset = -1;
-        private long _consumedOffset = -1;
+        private ConsumerState _state = new();
 
         public JobEventConsumer(
             ILogger<IJobEventConsumer> logger,
@@ -36,86 +33,111 @@ namespace Fabron.Grains
             _eventListener = eventListener;
             _store = store;
             _indexer = reporter;
-
         }
 
         public override Task OnActivateAsync()
         {
-            _id = this.GetPrimaryKeyString();
-            _grain = GrainFactory.GetGrain<IJobGrain>(_id);
+            _key = this.GetPrimaryKeyString();
+            _grain = GrainFactory.GetGrain<IJobGrain>(_key);
             return Task.CompletedTask;
         }
 
-        private string _id = default!;
+        private string _key = default!;
         private IJobGrain _grain = default!;
 
         public Task Reset()
         {
-            _currentVersion = -1;
-            _committedOffset = -1;
-            _consumedOffset = -1;
+            var oldState = _state;
+            var newState = new ConsumerState();
+            _logger.ResettingConsumerState(_key, _state, newState);
+            _state = newState;
             return Task.CompletedTask;
         }
 
-        public Task NotifyChanged(long fromVersion, long currentVersion)
+
+        public async Task NotifyChanged(long committedOffsetFromProducer, long currentVersion)
         {
-            Guard.IsGreaterThanOrEqualTo(currentVersion, _committedOffset, nameof(currentVersion));
-            if (currentVersion > _currentVersion)
+            if (currentVersion < _state.CommittedOffset || currentVersion < _state.ConsumedOffset)
             {
-                _currentVersion = currentVersion;
+                await Reset();
             }
 
-            if (_currentVersion <= _committedOffset)
+            if (currentVersion > _state.CurrentVersion)
             {
-                _logger.LogDebug($"JobEventConsumer[{_id}]: Skipped since current version was committed");
-                return Task.CompletedTask;
+                _state = _state with
+                {
+                    CurrentVersion = currentVersion,
+                };
             }
 
-            if (fromVersion >= _committedOffset)
+            if (currentVersion <= _state.CommittedOffset)
             {
-                _logger.LogDebug($"CronJobEventConsumer[{_id}]: Update invalid _commitedOffset, from {_committedOffset} to {fromVersion}");
-                _committedOffset = fromVersion;
+                _logger.ConsumerIgnoredStateChangedEvent(_key, currentVersion, _state);
+                return;
             }
-            return Consume();
 
+            if (committedOffsetFromProducer > _state.CommittedOffset)
+            {
+                _state = _state with
+                {
+                    CommittedOffset = committedOffsetFromProducer,
+                };
+                _logger.ConsumerUpdatedOffsetFromProducer(_key, committedOffsetFromProducer, _state);
+            }
+
+            await Consume();
         }
 
         private async Task Consume()
         {
-            _consumedOffset = _committedOffset;
-            List<EventLog> eventLogs = await _store.GetEventLogs(_id, _committedOffset);
+            _state = _state with
+            {
+                ConsumedOffset = _state.CommittedOffset
+            };
+
+            List<EventLog> eventLogs = await _store.GetEventLogs(_key, _state.CommittedOffset);
+            if (eventLogs.Count == 0)
+            {
+                return;
+            }
+
             foreach (EventLog eventLog in eventLogs)
             {
                 IJobEvent jobEvent = IJobEvent.Get(eventLog);
-                await _eventListener.On(_id, eventLog.Timestamp, jobEvent);
-                _consumedOffset = eventLog.Version;
+                await _eventListener.On(_key, eventLog.Timestamp, jobEvent);
+                _state = _state with
+                {
+                    ConsumedOffset = eventLog.Version
+                };
             }
 
             await UpdateIndex();
             await CommitOffset();
-
         }
 
         private async Task UpdateIndex()
         {
-            Models.Job? state = await _grain.GetState();
-            if (state is null || state.Status.Deleted)
+            Models.Job? job = await _grain.GetState();
+            if (job is null || job.Status.Deleted)
             {
-                await _indexer.DeleteJob(_id);
-                _logger.LogDebug($"[{_id}]: Job state deleted");
+                await _indexer.DeleteCronJob(_key);
+                _logger.StateIndexDeleted(_key);
             }
             else
             {
-                await _indexer.Index(state);
-                _logger.LogDebug($"[{_id}]: Job state reported");
+                await _indexer.Index(job);
+                _logger.StateIndexed(_key, job.Version);
             }
         }
 
         private async Task CommitOffset()
         {
-            await _grain.CommitOffset(_consumedOffset);
-            _committedOffset = _consumedOffset;
-            _logger.LogDebug($"JobEventConsumer[{_id}]: Offset committed {_committedOffset}");
+            await _grain.CommitOffset(_state.ConsumedOffset);
+            _state = _state with
+            {
+                CommittedOffset = _state.ConsumedOffset
+            };
+            _logger.ConsumerOffsetCommitted(_key, _state.CommittedOffset);
         }
 
     }
