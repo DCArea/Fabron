@@ -28,8 +28,6 @@ namespace Fabron.Grains
         private readonly TimeSpan _defaultTickPeriod = TimeSpan.FromMinutes(2);
         private readonly ILogger<CronJobScheduler> _logger;
         private IGrainReminder? _tickReminder;
-        private IDisposable? _tickTimer;
-
         public CronJobScheduler(ILogger<CronJobScheduler> logger)
         {
             _logger = logger;
@@ -164,26 +162,13 @@ namespace Fabron.Grains
 
         private async Task TickAfter(TimeSpan dueTime)
         {
-            _tickTimer?.Dispose();
             Guard.IsBetweenOrEqualTo(dueTime.Ticks, -1, int.MaxValue, nameof(dueTime));
-            if (dueTime < _defaultTickPeriod)
-            {
-                _tickTimer = RegisterTimer(_ => Tick(), null, dueTime, TimeSpan.FromMilliseconds(-1));
-                if (_tickReminder is null)
-                {
-                    _tickReminder = await RegisterOrUpdateReminder(Names.TickerReminder, dueTime.Add(_defaultTickPeriod), _defaultTickPeriod);
-                }
-            }
-            else
-            {
-                _tickReminder = await RegisterOrUpdateReminder(Names.TickerReminder, dueTime, _defaultTickPeriod);
-            }
+            _tickReminder = await RegisterOrUpdateReminder(Names.TickerReminder, dueTime, _defaultTickPeriod);
             _logger.TickerRegistered(_key, dueTime);
         }
 
         private async Task StopTicker()
         {
-            _tickTimer?.Dispose();
             int retry = 0;
             while (true)
             {

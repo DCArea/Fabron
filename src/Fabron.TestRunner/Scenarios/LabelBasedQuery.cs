@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
@@ -57,6 +58,9 @@ namespace Fabron.TestRunner.Scenarios
 
             IEnumerable<Contracts.CronJob<NoopCommand>> queried = await JobManager.GetCronJobByLabel<NoopCommand>(labels.First().Key, labels.First().Value);
             queried.Should().HaveCount(1);
+            var item = queried.First();
+            item.Metadata.Labels[labels.First().Key].Should().Be(labels.First().Value);
+            Console.WriteLine(item.Metadata.Labels.First().Key);
         }
 
     }

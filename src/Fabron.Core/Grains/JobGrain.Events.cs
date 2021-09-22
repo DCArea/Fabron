@@ -17,8 +17,19 @@ namespace Fabron.Grains
                 type,
                 @event);
 
-        private Task NotifyConsumer()
-            => _consumer.NotifyChanged(_consumerOffset, State.Version);
+        private async Task NotifyConsumer()
+        {
+            long currentVersion = State.Version;
+            Guard.IsGreaterThanOrEqualTo(currentVersion, _consumerOffset, nameof(currentVersion));
+            if (_options.UseAsynchronousIndexer)
+            {
+                _consumer.InvokeOneWay(c => c.NotifyChanged(_consumerOffset, currentVersion));
+            }
+            else
+            {
+                await _consumer.NotifyChanged(_consumerOffset, currentVersion);
+            }
+        }
 
         private async Task CommitAsync(EventLog eventLog)
         {
@@ -70,6 +81,7 @@ namespace Fabron.Grains
         private void TransitionState(EventLog eventLog)
         {
             var @event = IJobEvent.Get(eventLog);
+            _logger.ApplyingEvent(_state?.Version ?? -1, eventLog);
             _state = @event switch
             {
                 JobScheduled e => _state.Apply(e, _key, eventLog.Timestamp),
@@ -79,6 +91,7 @@ namespace Fabron.Grains
                 JobDeleted e => State.Apply(e),
                 _ => ThrowHelper.ThrowInvalidEventName<Job>(eventLog.EntityKey, eventLog.Version, eventLog.Type)
             };
+            _logger.AppliedEvent(State.Version, eventLog);
             Guard.IsEqualTo(State.Version, eventLog.Version, nameof(State.Version));
         }
     }

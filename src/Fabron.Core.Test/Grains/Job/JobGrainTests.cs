@@ -23,7 +23,10 @@ namespace Fabron.Test.Grains.Job
         public JobGrainTests()
         {
             Silo.AddServiceProbe<ILogger<JobGrain>>();
-            Silo.AddService<IOptions<JobOptions>>(Options.Create(new JobOptions()));
+            Silo.AddService<IOptions<JobOptions>>(Options.Create(new JobOptions
+            {
+                UseAsynchronousIndexer = false
+            }));
             Silo.AddServiceProbe<IMediator>();
             Silo.AddService<IJobEventStore>(new InMemoryJobEventStore());
         }
@@ -39,13 +42,6 @@ namespace Fabron.Test.Grains.Job
             state.Metadata.CreationTimestamp.Should().BeCloseTo(state.Spec.Schedule, TimeSpan.FromSeconds(1));
             //Assert.Equal(state.Metadata.CreationTimestamp, state.Spec.Schedule);
 
-            Silo.TimerRegistry.Mock
-                .Verify(m => m.RegisterTimer(
-                    grain,
-                    It.IsAny<Func<object, Task>>(),
-                    null,
-                    TimeSpan.Zero,
-                    TimeSpan.FromMilliseconds(-1)));
             Silo.ReminderRegistry.Mock
                 .Verify(m => m.RegisterOrUpdateReminder("Ticker", TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(2)));
 
@@ -62,18 +58,8 @@ namespace Fabron.Test.Grains.Job
             Assert.Equal(Command.Data, state.Spec.CommandData);
             Assert.Equal(scheduledAt, state.Spec.Schedule);
 
-            Silo.TimerRegistry.Mock
-                .Verify(m => m.RegisterTimer(
-                    grain,
-                    It.IsAny<Func<object, Task>>(),
-                    null,
-                    It.IsInRange<TimeSpan>(
-                        TimeSpan.FromSeconds(6),
-                        TimeSpan.FromSeconds(10),
-                        Moq.Range.Inclusive),
-                    TimeSpan.FromMilliseconds(-1)));
             TestReminder reminder = (TestReminder)await Silo.ReminderRegistry.GetReminder("Ticker");
-            reminder.DueTime.Should().BeCloseTo(TimeSpan.FromSeconds(2 * 60), TimeSpan.FromSeconds(2));
+            reminder.DueTime.Should().BeCloseTo(TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(2));
             reminder.Period.Should().Be(TimeSpan.FromMinutes(2));
         }
 

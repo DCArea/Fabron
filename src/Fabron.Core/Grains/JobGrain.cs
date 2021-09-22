@@ -7,6 +7,7 @@ using Fabron.Mando;
 using Fabron.Models;
 using Fabron.Stores;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.Toolkit.Diagnostics;
 using Orleans;
 using Orleans.Concurrency;
@@ -43,17 +44,19 @@ namespace Fabron.Grains
     public partial class JobGrain : Grain, IJobGrain, IRemindable
     {
         private readonly ILogger _logger;
+        private readonly JobOptions _options;
         private readonly IMediator _mediator;
         private readonly IJobEventStore _eventStore;
         private IGrainReminder? _tickReminder;
-        private IDisposable? _tickTimer;
 
         public JobGrain(
             ILogger<JobGrain> logger,
+            IOptions<JobOptions> options,
             IMediator mediator,
             IJobEventStore store)
         {
             _logger = logger;
+            _options = options.Value;
             _mediator = mediator;
             _eventStore = store;
         }
@@ -155,9 +158,14 @@ namespace Fabron.Grains
             await RaiseAsync(jobScheduled);
 
             utcNow = DateTime.UtcNow;
-            TimeSpan dueTime = schedule_ <= utcNow ? TimeSpan.Zero : schedule_ - utcNow;
-            await TickAfter(dueTime);
-
+            if (schedule_ <= utcNow)
+            {
+                _ = Task.Factory.StartNew(Tick).Unwrap();
+            }
+            else
+            {
+                await TickAfter(schedule_ - utcNow);
+            }
             return State;
         }
 
@@ -170,7 +178,6 @@ namespace Fabron.Grains
                 return;
             }
 
-            _tickTimer?.Dispose();
             Task next = State.Status switch
             {
                 { ExecutionStatus: ExecutionStatus.Scheduled } => Start(),
@@ -216,27 +223,15 @@ namespace Fabron.Grains
 
         private async Task TickAfter(TimeSpan dueTime)
         {
-            _tickTimer?.Dispose();
-            if (dueTime.TotalMinutes < 2)
-            {
-                _tickTimer = RegisterTimer(_ => Tick(), null, dueTime, TimeSpan.FromMilliseconds(-1));
-                if (_tickReminder is null)
-                {
-                    await EnsureTicker(dueTime.Add(TimeSpan.FromMinutes(2)));
-                }
-            }
-            else
-            {
-                await EnsureTicker(dueTime);
-            }
-            _logger.LogDebug($"Job[{_key}]: Tick After {dueTime}");
+            await EnsureTicker(dueTime);
+            _logger.TickerRegistered(_key, dueTime);
         }
 
-        private async Task EnsureTicker(TimeSpan dueTime) => _tickReminder = await RegisterOrUpdateReminder("Ticker", dueTime, TimeSpan.FromMinutes(2));
+        private async Task EnsureTicker(TimeSpan dueTime)
+            => _tickReminder = await RegisterOrUpdateReminder(Names.TickerReminder, dueTime, TimeSpan.FromMinutes(2));
 
         private async Task StopTicker()
         {
-            _tickTimer?.Dispose();
             int retry = 0;
             while (true)
             {
