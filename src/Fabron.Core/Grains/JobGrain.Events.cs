@@ -130,7 +130,7 @@ namespace Fabron.Grains
                 Status = state.Status with
                 {
                     Result = @event.Result,
-                    StartedAt = timestamp,
+                    FinishedAt = timestamp,
                     ExecutionStatus = ExecutionStatus.Succeed
                 },
                 Version = state.Version + 1
@@ -141,7 +141,7 @@ namespace Fabron.Grains
             {
                 Status = state.Status with
                 {
-                    StartedAt = timestamp,
+                    FinishedAt = timestamp,
                     ExecutionStatus = ExecutionStatus.Faulted,
                     Reason = @event.Reason,
                 },
