@@ -162,7 +162,7 @@ namespace Fabron.Grains
 
         private async Task TickAfter(TimeSpan dueTime)
         {
-            Guard.IsBetweenOrEqualTo(dueTime.Ticks, -1, int.MaxValue, nameof(dueTime));
+            Guard.IsBetweenOrEqualTo(dueTime.Ticks, -1, long.MaxValue, nameof(dueTime));
             _tickReminder = await RegisterOrUpdateReminder(Names.TickerReminder, dueTime, _defaultTickPeriod);
             _logger.TickerRegistered(_key, dueTime);
         }
