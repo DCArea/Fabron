@@ -40,12 +40,9 @@ namespace Fabron.Test.Grains.Job
             Assert.Equal(Command.Name, state!.Spec.CommandName);
             Assert.Equal(Command.Data, state.Spec.CommandData);
             state.Metadata.CreationTimestamp.Should().BeCloseTo(state.Spec.Schedule, TimeSpan.FromSeconds(1));
-            //Assert.Equal(state.Metadata.CreationTimestamp, state.Spec.Schedule);
 
             Silo.ReminderRegistry.Mock
                 .Verify(m => m.RegisterOrUpdateReminder("Ticker", TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(2)));
-
-            state.Status.ExecutionStatus.Should().Be(ExecutionStatus.Scheduled);
         }
 
         [Fact]
