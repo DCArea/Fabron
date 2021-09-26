@@ -1,3 +1,5 @@
+using Cronos;
+
 namespace Fabron
 {
     public class JobOptions
@@ -8,6 +10,7 @@ namespace Fabron
     public class CronJobOptions
     {
         public bool UseAsynchronousIndexer { get; set; } = true;
+        public CronFormat CronFormat { get; set; } = CronFormat.Standard;
     }
 
 }

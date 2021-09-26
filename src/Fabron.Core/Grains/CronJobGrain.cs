@@ -211,7 +211,7 @@ namespace Fabron.Grains
         {
             var state = State;
             DateTime now = DateTime.UtcNow;
-            Cronos.CronExpression cron = Cronos.CronExpression.Parse(state.Spec.Schedule);
+            Cronos.CronExpression cron = Cronos.CronExpression.Parse(state.Spec.Schedule, _options.CronFormat);
             var tick = cron.GetNextOccurrence(now.AddSeconds(-5));
             // Completed
             if (tick is null || (state.Spec.ExpirationTime.HasValue && tick.Value > state.Spec.ExpirationTime.Value))

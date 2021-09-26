@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Fabron.Grains;
 using Fabron.Models;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.Toolkit.Diagnostics;
 using Orleans;
 using Orleans.Runtime;
@@ -27,10 +28,14 @@ namespace Fabron.Grains
     {
         private readonly TimeSpan _defaultTickPeriod = TimeSpan.FromMinutes(2);
         private readonly ILogger<CronJobScheduler> _logger;
+        private readonly CronJobOptions _options;
         private IGrainReminder? _tickReminder;
-        public CronJobScheduler(ILogger<CronJobScheduler> logger)
+        public CronJobScheduler(
+            ILogger<CronJobScheduler> logger,
+            IOptions<CronJobOptions> options)
         {
             _logger = logger;
+            _options = options.Value;
         }
         private string _key = default!;
         private ICronJobGrain _self = default!;
@@ -86,9 +91,9 @@ namespace Fabron.Grains
                 return;
             }
 
-            Cronos.CronExpression cron = Cronos.CronExpression.Parse(state.Spec.Schedule);
+            Cronos.CronExpression cron = Cronos.CronExpression.Parse(state.Spec.Schedule, _options.CronFormat);
             DateTime? tick;
-            tick = cron.GetNextOccurrence(now.AddSeconds(-5));
+            tick = cron.GetNextOccurrence(now.AddSeconds(-1));
             // Completed
             if (tick is null || (state.Spec.ExpirationTime.HasValue && tick.Value > state.Spec.ExpirationTime.Value))
             {
