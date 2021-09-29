@@ -122,12 +122,12 @@ namespace Fabron.Grains
             s_schedulingNewJob = LoggerMessage.Define<string, string>(
                 LogLevel.Information,
                 new EventId(1, nameof(SchedulingNewJob)),
-                "[{Key}]: Scheduling new job for cron [{JobKey}]");
+                "[{Key}]: Scheduling new job[{JobKey}]");
 
             s_scheduledNewJob = LoggerMessage.Define<string, string>(
                 LogLevel.Debug,
                 new EventId(1, nameof(ScheduledNewJob)),
-                "[{Key}]: Scheduled new job for cron [{JobKey}]");
+                "[{Key}]: Scheduled new job[{JobKey}]");
 
             s_resettingConsumerState = LoggerMessage.Define<string, ConsumerState, ConsumerState>(
                 LogLevel.Information,

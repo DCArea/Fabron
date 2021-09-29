@@ -39,6 +39,7 @@ namespace Fabron.Grains
         }
         private string _key = default!;
         private ICronJobGrain _self = default!;
+        private DateTime? lastScheduledTick;
 
         public override Task OnActivateAsync()
         {
@@ -93,7 +94,12 @@ namespace Fabron.Grains
 
             Cronos.CronExpression cron = Cronos.CronExpression.Parse(state.Spec.Schedule, _options.CronFormat);
             DateTime? tick;
-            tick = cron.GetNextOccurrence(now.AddSeconds(-1));
+            DateTime from = now.AddSeconds(-2);
+            if (lastScheduledTick.HasValue && lastScheduledTick.Value > from)
+            {
+                from = lastScheduledTick.Value;
+            }
+            tick = cron.GetNextOccurrence(from);
             // Completed
             if (tick is null || (state.Spec.ExpirationTime.HasValue && tick.Value > state.Spec.ExpirationTime.Value))
             {
@@ -105,6 +111,12 @@ namespace Fabron.Grains
             if (tick.Value <= now.AddSeconds(5))
             {
                 await ScheduleJob(state, tick.Value);
+            }
+            else // not at the time
+            {
+                await TickAfter(tick.Value.Subtract(now));
+                _logger.LogWarning("Tick missed");
+                return;
             }
             // Check if we need to set ticker for next schedule
             tick = cron.GetNextOccurrence(tick.Value);
@@ -129,7 +141,7 @@ namespace Fabron.Grains
                 }
                 else
                 {
-                    _logger.LogWarning("Missed tick");
+                    _logger.LogWarning("Tick missed");
                 }
             }
         }
@@ -158,9 +170,11 @@ namespace Fabron.Grains
             Job jobState = await grain.Schedule(
                 state.Spec.CommandName,
                 state.Spec.CommandData,
-                null,
+                schedule,
                 labels,
                 annotations);
+
+            lastScheduledTick = schedule;
 
             _logger.ScheduledNewJob(_key, jobKey);
         }
