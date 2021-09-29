@@ -22,7 +22,8 @@ var host = await Host.CreateDefaultBuilder()
         config.AddInMemoryCollection(new Dictionary<string, string>
             {
                 { "Logging:LogLevel:Default", "Error" },
-                { "Logging:LogLevel:Fabron.Grains.CronJobGrain", "Debug" }
+                // { "Logging:LogLevel:Fabron.Grains.CronJobGrain", "Debug" },
+                { "Logging:LogLevel:Fabron", "Debug" }
             });
     })
     .ConfigureServices(services =>
@@ -46,4 +47,5 @@ var host = await Host.CreateDefaultBuilder()
 // .RunConsoleAsync();
 
 // await new ScheduleCronJob().PlayAsync();
-await new LabelBasedQuery().PlayAsync();
+// await new LabelBasedQuery().PlayAsync();
+await new TimerReentrantConflict().PlayAsync();

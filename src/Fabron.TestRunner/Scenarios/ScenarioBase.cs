@@ -40,8 +40,9 @@ namespace Fabron.TestRunner.Scenarios
                     config.AddInMemoryCollection(new Dictionary<string, string>
                         {
                             { "Logging:LogLevel:Default", "Error" },
-                            { "Logging:LogLevel:Fabron.Grains.CronJobGrain", "Debug" },
-                            { "Logging:LogLevel:Fabron.ElasticSearch.ElasticSearchJobQuerier", "Debug" }
+                            // { "Logging:LogLevel:Fabron.Grains.CronJobGrain", "Debug" },
+                            { "Logging:LogLevel:Fabron", "Debug" },
+                            // { "Logging:LogLevel:Fabron.ElasticSearch.ElasticSearchJobQuerier", "Debug" }
                         });
                 })
                 .ConfigureServices(services =>

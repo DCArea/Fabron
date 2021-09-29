@@ -7,7 +7,7 @@ namespace Fabron.Stores
 {
     public abstract class InMemoryEventStore : IEventStore
     {
-        private readonly Dictionary<string, Dictionary<long, EventLog>> _storage = new();
+        private readonly Dictionary<string, EventLog> _storage = new();
         private readonly Dictionary<string, long> _consumerOffsets = new();
 
         public Task<long> GetConsumerOffset(string entityKey)
@@ -31,41 +31,26 @@ namespace Fabron.Stores
 
         public Task CommitEventLog(EventLog eventLog)
         {
-            if (!_storage.TryGetValue(eventLog.EntityKey, out Dictionary<long, EventLog>? feed))
-            {
-                feed = new Dictionary<long, EventLog>();
-                _storage.Add(eventLog.EntityKey, feed);
-            }
-            feed.Add(eventLog.Version, eventLog);
+            var key = eventLog.EntityKey + "_" + eventLog.Version;
+            _storage.Add(key, eventLog);
             return Task.CompletedTask;
         }
 
         public Task<List<EventLog>> GetEventLogs(string entityKey, long minVersion)
         {
-            if (!_storage.TryGetValue(entityKey, out Dictionary<long, EventLog>? feed))
-            {
-                feed = new Dictionary<long, EventLog>();
-                _storage.Add(entityKey, feed);
-            }
-
-            var eventLogs = feed.Values
+            var eventLogs = _storage.Values
+                .Where(x => x.EntityKey == entityKey && x.Version >= minVersion)
                 .OrderBy(log => log.Version)
-                .Where(log => log.Version >= minVersion)
                 .ToList();
             return Task.FromResult(eventLogs);
         }
 
         public Task ClearEventLogs(string entityKey, long maxVersion)
         {
-            if (!_storage.TryGetValue(entityKey, out Dictionary<long, EventLog>? feed))
+            foreach (var eventLog in _storage.Values.Where(k => k.EntityKey == entityKey && k.Version < maxVersion))
             {
-                feed = new Dictionary<long, EventLog>();
-                _storage.Add(entityKey, feed);
-            }
-
-            foreach (long version in feed.Keys.Where(k => k < maxVersion))
-            {
-                feed.Remove(version);
+                var key = eventLog.EntityKey + "_" + eventLog.Version;
+                _storage.Remove(key);
             }
 
             return Task.CompletedTask;

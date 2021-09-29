@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
+using Fabron.Models;
 
 namespace Fabron
 {
@@ -12,5 +14,8 @@ namespace Fabron
 
         public static void ThrowStartCompletedCronJob(string key)
             => throw new InvalidOperationException($"Can not start a completed cron job");
+
+        public static InvalidOperationException CreateInvalidJobExecutionState(ExecutionStatus status)
+            => new ($"Job state is invalid {status}");
     }
 }

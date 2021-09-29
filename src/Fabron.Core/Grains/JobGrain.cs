@@ -43,6 +43,7 @@ namespace Fabron.Grains
 
     public partial class JobGrain : Grain, IJobGrain, IRemindable
     {
+        private readonly TimeSpan _defaultTickPeriod = TimeSpan.FromMinutes(2);
         private readonly ILogger _logger;
         private readonly JobOptions _options;
         private readonly IMediator _mediator;
@@ -183,7 +184,7 @@ namespace Fabron.Grains
                 { ExecutionStatus: ExecutionStatus.Scheduled } => Start(),
                 { ExecutionStatus: ExecutionStatus.Started } => Execute(),
                 { ExecutionStatus: ExecutionStatus.Succeed or ExecutionStatus.Faulted } => Complete(),
-                _ => throw new InvalidOperationException()
+                _ => Task.FromException(ThrowHelper.CreateInvalidJobExecutionState(State.Status.ExecutionStatus))
             };
             await next;
         }
@@ -228,7 +229,7 @@ namespace Fabron.Grains
         }
 
         private async Task EnsureTicker(TimeSpan dueTime)
-            => _tickReminder = await RegisterOrUpdateReminder(Names.TickerReminder, dueTime, TimeSpan.FromMinutes(2));
+            => _tickReminder = await RegisterOrUpdateReminder(Names.TickerReminder, dueTime, _defaultTickPeriod);
 
         private async Task StopTicker()
         {
