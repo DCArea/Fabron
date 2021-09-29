@@ -39,7 +39,8 @@ namespace Fabron.Grains
         }
         private string _key = default!;
         private ICronJobGrain _self = default!;
-        private DateTime? lastScheduledTick;
+        private DateTime? _lastScheduledTick;
+        private bool _isTicking;
 
         public override Task OnActivateAsync()
         {
@@ -50,6 +51,7 @@ namespace Fabron.Grains
 
         public async Task Start()
         {
+            _lastScheduledTick = DateTime.UtcNow;
             await Tick();
         }
 
@@ -75,74 +77,90 @@ namespace Fabron.Grains
 
         private async Task Tick()
         {
+            if(_isTicking) return;
+            _isTicking = true;
+            try
+            {
+                await TickInternal();
+            }
+            finally
+            {
+                _isTicking = false;
+            }
+        }
 
-            var state = await _self.GetState();
+        private async Task TickInternal()
+        {
+            while (true)
+            {
+                var state = await _self.GetState();
 
-            // Stopped
-            if (state is null || state.Status.Deleted || state.Spec.Suspend || state.Status.CompletionTimestamp.HasValue)
-            {
-                await StopTicker();
-                return;
-            }
+                // Stopped
+                if (state is null || state.Status.Deleted || state.Spec.Suspend || state.Status.CompletionTimestamp.HasValue)
+                {
+                    await StopTicker();
+                    return;
+                }
 
-            DateTime now = DateTime.UtcNow;
-            if (state.Spec.NotBefore.HasValue && now < state.Spec.NotBefore.Value)
-            {
-                await TickAfter(state.Spec.NotBefore.Value.Subtract(now));
-                return;
-            }
+                DateTime now = DateTime.UtcNow;
+                if (state.Spec.NotBefore.HasValue && now < state.Spec.NotBefore.Value)
+                {
+                    await TickAfter(state.Spec.NotBefore.Value.Subtract(now));
+                    return;
+                }
 
-            Cronos.CronExpression cron = Cronos.CronExpression.Parse(state.Spec.Schedule, _options.CronFormat);
-            DateTime? tick;
-            DateTime from = now.AddSeconds(-2);
-            if (lastScheduledTick.HasValue && lastScheduledTick.Value > from)
-            {
-                from = lastScheduledTick.Value;
-            }
-            tick = cron.GetNextOccurrence(from);
-            // Completed
-            if (tick is null || (state.Spec.ExpirationTime.HasValue && tick.Value > state.Spec.ExpirationTime.Value))
-            {
-                await Complete();
-                return;
-            }
+                Cronos.CronExpression cron = Cronos.CronExpression.Parse(state.Spec.Schedule, _options.CronFormat);
+                DateTime? tick;
+                DateTime from = now.AddSeconds(-10);
+                if (_lastScheduledTick.HasValue && _lastScheduledTick.Value > from)
+                {
+                    from = _lastScheduledTick.Value;
+                }
+                tick = cron.GetNextOccurrence(from);
+                // Completed
+                if (tick is null || (state.Spec.ExpirationTime.HasValue && tick.Value > state.Spec.ExpirationTime.Value))
+                {
+                    await Complete();
+                    return;
+                }
 
-            // Just at the time to schedule new job
-            if (tick.Value <= now.AddSeconds(5))
-            {
-                await ScheduleJob(state, tick.Value);
-            }
-            else // not at the time
-            {
-                await TickAfter(tick.Value.Subtract(now));
-                _logger.LogWarning("Tick missed");
-                return;
-            }
-            // Check if we need to set ticker for next schedule
-            tick = cron.GetNextOccurrence(tick.Value);
-            now = DateTime.UtcNow;
-            // Completed
-            if (tick is null || (state.Spec.ExpirationTime.HasValue && tick.Value > state.Spec.ExpirationTime.Value))
-            {
-                await Complete();
-                return;
-            }
-            else
-            {
-                if (tick.Value > now)
+                // Just at the time to schedule new job
+                if (tick.Value <= now.AddSeconds(2))
+                {
+                    await ScheduleJob(state, tick.Value);
+                }
+                else // not at the time
                 {
                     await TickAfter(tick.Value.Subtract(now));
+                    // _logger.LogWarning("Tick missed");
                     return;
                 }
-                else if (tick.Value <= now.AddSeconds(5))
-                {
-                    await TickAfter(TimeSpan.Zero);
-                    return;
-                }
-                else
-                {
-                    _logger.LogWarning("Tick missed");
-                }
+                // // Check if we need to set ticker for next schedule
+                // tick = cron.GetNextOccurrence(tick.Value);
+                // now = DateTime.UtcNow;
+                // // Completed
+                // if (tick is null || (state.Spec.ExpirationTime.HasValue && tick.Value > state.Spec.ExpirationTime.Value))
+                // {
+                //     await Complete();
+                //     return;
+                // }
+                // else
+                // {
+                //     if (tick.Value > now)
+                //     {
+                //         await TickAfter(tick.Value.Subtract(now));
+                //         return;
+                //     }
+                //     else if (tick.Value <= now.AddSeconds(5))
+                //     {
+                //         await TickAfter(TimeSpan.Zero);
+                //         return;
+                //     }
+                //     else
+                //     {
+                //         _logger.LogWarning("Tick missed");
+                //     }
+                // }
             }
         }
 
@@ -174,7 +192,7 @@ namespace Fabron.Grains
                 labels,
                 annotations);
 
-            lastScheduledTick = schedule;
+            _lastScheduledTick = schedule;
 
             _logger.ScheduledNewJob(_key, jobKey);
         }

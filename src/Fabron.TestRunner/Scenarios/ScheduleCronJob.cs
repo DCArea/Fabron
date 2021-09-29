@@ -4,12 +4,21 @@ using System.Threading.Tasks;
 using Fabron;
 using Fabron.TestRunner.Commands;
 using FluentAssertions;
+using Orleans.Hosting;
 
 namespace Fabron.TestRunner.Scenarios
 {
 
     public class ScheduleCronJob : ScenarioBase
     {
+        public override ISiloBuilder ConfigureSilo(ISiloBuilder builder)
+        {
+            builder.Configure<CronJobOptions>(options =>
+            {
+                options.CronFormat = Cronos.CronFormat.IncludeSeconds;
+            });
+            return base.ConfigureSilo(builder);
+        }
         public override async Task RunAsync()
         {
 
@@ -19,8 +28,8 @@ namespace Fabron.TestRunner.Scenarios
             };
 
             Contracts.CronJob<NoopCommand> job = await JobManager.ScheduleCronJob<NoopCommand>(
-                this.GetType().Name + "/" + nameof(ScheduleCronJob),
-                "* * * * *",
+                GetType().Name + "/" + nameof(ScheduleCronJob),
+                "0/1 * * * * *",
                 new NoopCommand(),
                 null,
                 null,
@@ -28,11 +37,12 @@ namespace Fabron.TestRunner.Scenarios
                 labels,
                 null);
             Grains.ICronJobGrain? grain = GetCronJobGrain(job.Metadata.Key);
-            await grain.WaitEventsConsumed(10);
+            // await grain.WaitEventsConsumed(10);
 
-            IEnumerable<Contracts.CronJob<NoopCommand>> queried = await JobManager.GetCronJobByLabel<NoopCommand>("foo", "bar");
-            queried.Should().HaveCount(1);
+            // IEnumerable<Contracts.CronJob<NoopCommand>> queried = await JobManager.GetCronJobByLabel<NoopCommand>("foo", "bar");
+            // queried.Should().HaveCount(1);
 
+            await Task.Delay(TimeSpan.FromSeconds(10));
         }
 
     }

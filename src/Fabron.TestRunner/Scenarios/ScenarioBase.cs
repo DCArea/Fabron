@@ -41,7 +41,8 @@ namespace Fabron.TestRunner.Scenarios
                         {
                             { "Logging:LogLevel:Default", "Error" },
                             // { "Logging:LogLevel:Fabron.Grains.CronJobGrain", "Debug" },
-                            { "Logging:LogLevel:Fabron", "Debug" },
+                            // { "Logging:LogLevel:Fabron", "Debug" },
+                            { "Logging:LogLevel:Fabron.Grains.CronJobScheduler", "Debug" },
                             // { "Logging:LogLevel:Fabron.ElasticSearch.ElasticSearchJobQuerier", "Debug" }
                         });
                 })

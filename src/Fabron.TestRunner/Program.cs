@@ -43,6 +43,6 @@ var host = await Host.CreateDefaultBuilder()
     .StartAsync();
 // .RunConsoleAsync();
 
-// await new ScheduleCronJob().PlayAsync();
+await new ScheduleCronJob().PlayAsync();
 // await new LabelBasedQuery().PlayAsync();
-await new ErrorOnListeners().PlayAsync();
+// await new ErrorOnListeners().PlayAsync();
