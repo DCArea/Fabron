@@ -202,13 +202,11 @@ namespace Fabron.Grains
 
         private async Task Execute()
         {
+            string? result;
             try
             {
-                string? result = await _mediator.Handle(State.Spec.CommandName, State.Spec.CommandData);
+                result = await _mediator.Handle(State.Spec.CommandName, State.Spec.CommandData);
                 Guard.IsNotNull(result, nameof(result));
-                JobExecutionSucceed jobExecutionSucceed = new JobExecutionSucceed(result);
-                await RaiseAsync(jobExecutionSucceed);
-                MetricsHelper.JobCount_RanToCompletion.Inc();
             }
             catch (Exception e)
             {
@@ -217,7 +215,14 @@ namespace Fabron.Grains
                     JobExecutionFailed jobExecutionFailed = new JobExecutionFailed(e.Message);
                     await RaiseAsync(jobExecutionFailed);
                 }
+
+                await Tick();
+                return;
             }
+
+            JobExecutionSucceed jobExecutionSucceed = new(result);
+            await RaiseAsync(jobExecutionSucceed);
+            MetricsHelper.JobCount_RanToCompletion.Inc();
 
             await Tick();
         }
