@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Fabron;
+using Fabron.Events;
 using Fabron.Models;
 using Fabron.TestRunner.Commands;
 using FluentAssertions;
@@ -10,14 +11,21 @@ using Orleans.Hosting;
 namespace Fabron.TestRunner.Scenarios
 {
 
-    public class TimerReentrantConflict : ScenarioBase
+    public class ExceptionJobEventListener : IJobEventListener
+    {
+        public Task On(string key, DateTime timestamp, IJobEvent @event) => throw new NotImplementedException();
+    }
+
+
+    public class ErrorOnListeners : ScenarioBase
     {
         public override ISiloBuilder ConfigureSilo(ISiloBuilder builder)
         {
             builder.Configure<CronJobOptions>(options =>
             {
                 options.CronFormat = Cronos.CronFormat.IncludeSeconds;
-            });
+            })
+            .SetEventListener<ExceptionJobEventListener, NoopCronJobEventListener>();
             return base.ConfigureSilo(builder);
         }
 
@@ -40,9 +48,7 @@ namespace Fabron.TestRunner.Scenarios
                 null);
             Grains.ICronJobGrain? grain = GetCronJobGrain(job.Metadata.Key);
 
-
             await Task.Delay(1000 * 60 * 3);
-
         }
 
     }

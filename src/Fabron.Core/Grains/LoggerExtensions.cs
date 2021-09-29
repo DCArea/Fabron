@@ -31,6 +31,7 @@ namespace Fabron.Grains
         private static readonly Action<ILogger, string, long, Exception?> s_stateIndexed;
         private static readonly Action<ILogger, string, Exception?> s_stateIndexDeleted;
         private static readonly Action<ILogger, string, long, Exception?> s_consumerOffsetCommitted;
+        private static readonly Action<ILogger, string, string, long, Exception> s_exceptionOnConsumingEvents;
 
         static LoggerExtensions()
         {
@@ -157,6 +158,11 @@ namespace Fabron.Grains
                 LogLevel.Information,
                 new EventId(1, nameof(ConsumerOffsetCommitted)),
                 "[{Key}]: Committed offset({offset}) ");
+
+            s_exceptionOnConsumingEvents = LoggerMessage.Define<string, string, long>(
+                LogLevel.Error,
+                new EventId(1, nameof(ExceptionOnConsumingEvents)),
+                "[{Key}]: Exception on consuming event '{EventType}'({EventVersion})");
         }
 
         public static void EventRaised(this ILogger logger, EventLog eventLog)
@@ -319,6 +325,11 @@ namespace Fabron.Grains
             {
                 s_consumerOffsetCommitted(logger, key, version, null);
             }
+        }
+
+        public static void ExceptionOnConsumingEvents(this ILogger logger, string key, EventLog eventLog, Exception e)
+        {
+            s_exceptionOnConsumingEvents(logger, key, eventLog.Type, eventLog.Version, e);
         }
     }
 }

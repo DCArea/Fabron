@@ -8,10 +8,7 @@ using Fabron.Events;
 using Fabron.TestRunner.Scenarios;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Orleans;
 using Orleans.Configuration;
 using Orleans.Hosting;
@@ -48,4 +45,4 @@ var host = await Host.CreateDefaultBuilder()
 
 // await new ScheduleCronJob().PlayAsync();
 // await new LabelBasedQuery().PlayAsync();
-await new TimerReentrantConflict().PlayAsync();
+await new ErrorOnListeners().PlayAsync();

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Fabron.Events;
 using Fabron.Stores;
@@ -45,7 +46,6 @@ namespace Fabron.Grains
 
         public Task Reset()
         {
-            var oldState = _state;
             var newState = new ConsumerState();
             _logger.ResettingConsumerState(_key, _state, newState);
             _state = newState;
@@ -91,6 +91,17 @@ namespace Fabron.Grains
             {
                 ConsumedOffset = _state.CommittedOffset
             };
+
+            var consumeEventsTask = ConsumeEvents();
+            var updateIndexTask = UpdateIndex();
+            await consumeEventsTask;
+            await updateIndexTask;
+
+            await CommitOffset();
+        }
+
+        private async Task ConsumeEvents()
+        {
             List<EventLog> eventLogs = await _store.GetEventLogs(_key, _state.CommittedOffset);
             if (eventLogs.Count == 0)
             {
@@ -101,15 +112,20 @@ namespace Fabron.Grains
             foreach (EventLog eventLog in eventLogs)
             {
                 lastEvent = ICronJobEvent.Get(eventLog);
-                await _eventListener.On(_key, eventLog.Timestamp, lastEvent);
+                try
+                {
+                    await _eventListener.On(_key, eventLog.Timestamp, lastEvent);
+                }
+                catch (Exception e)
+                {
+                    _logger.ExceptionOnConsumingEvents(_key, eventLog, e);
+                }
+
                 _state = _state with
                 {
                     ConsumedOffset = eventLog.Version
                 };
             }
-
-            await UpdateIndex();
-            await CommitOffset();
         }
 
         private async Task UpdateIndex()
