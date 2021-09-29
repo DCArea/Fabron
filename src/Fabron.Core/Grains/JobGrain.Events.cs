@@ -40,6 +40,7 @@ namespace Fabron.Grains
             catch (Exception e)
             {
                 _logger.FailedToCommitEvent(eventLog, e);
+                throw;
                 // reset state
             }
             TransitionState(eventLog);
