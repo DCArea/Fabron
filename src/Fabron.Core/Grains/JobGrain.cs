@@ -67,13 +67,18 @@ namespace Fabron.Grains
             _key = this.GetPrimaryKeyString();
             _consumer = GrainFactory.GetGrain<IJobEventConsumer>(_key);
 
+            _logger.LogInformation("[{Key}]: Loading state", _key);
+
+            var getConsumerOffsetTask = _eventStore.GetConsumerOffset(_key);
+
             List<EventLog> eventLogs = await _eventStore.GetEventLogs(_key, 0);
             foreach (EventLog? eventLog in eventLogs)
             {
                 TransitionState(eventLog);
             }
+            _consumerOffset = await getConsumerOffsetTask;
 
-            _consumerOffset = await _eventStore.GetConsumerOffset(_key);
+            _logger.LogInformation("[{Key}]: Loaded state", _key);
         }
 
         private string _key = default!;
@@ -145,9 +150,12 @@ namespace Fabron.Grains
             Dictionary<string, string>? labels,
             Dictionary<string, string>? annotations)
         {
+            _logger.LogInformation("[{Key}]: Scheduling", _key);
+
             DateTime utcNow = DateTime.UtcNow;
             DateTime schedule_ = schedule is null || schedule.Value < utcNow ? utcNow : (DateTime)schedule;
             await EnsureTicker(TimeSpan.FromMinutes(2));
+            _logger.LogInformation("[{Key}]: Ticker registered (1)", _key);
 
             JobScheduled jobScheduled = new JobScheduled(
                 labels ?? new Dictionary<string, string>(),
@@ -166,6 +174,7 @@ namespace Fabron.Grains
             else
             {
                 await TickAfter(schedule_ - utcNow);
+                _logger.LogInformation("[{Key}]: Ticker registered (2)", _key);
             }
             return State;
         }
