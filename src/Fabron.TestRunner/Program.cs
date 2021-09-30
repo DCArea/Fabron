@@ -17,4 +17,5 @@ using Orleans.Hosting;
 // await new ScheduleCronJob().PlayAsync();
 // await new LabelBasedQuery().PlayAsync();
 // await new ErrorOnListeners().PlayAsync();
-await new PgsqlScheduleCronJob().PlayAsync();
+// await new PgsqlScheduleCronJob().PlayAsync();
+await new CassandraScheduleCronJob().PlayAsync();
