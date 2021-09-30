@@ -79,6 +79,8 @@ namespace Fabron.Grains
             _scheduler = GrainFactory.GetGrain<ICronJobScheduler>(_key);
             _consumer = GrainFactory.GetGrain<ICronJobEventConsumer>(_key);
 
+            var getConsumerOffsetTask = _eventStore.GetConsumerOffset(_key);
+
             var snapshot = await _querier.GetCronJobByKey(_key);
             if (snapshot is not null)
             {
@@ -94,7 +96,7 @@ namespace Fabron.Grains
                 TransitionState(eventLog);
             }
 
-            _consumerOffset = await _eventStore.GetConsumerOffset(_key);
+            _consumerOffset = await getConsumerOffsetTask;
             _logger.ConsumerOffsetLoaded(_key, _consumerOffset);
         }
 

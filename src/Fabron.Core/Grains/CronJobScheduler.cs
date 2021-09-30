@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Toolkit.Diagnostics;
 using Orleans;
+using Orleans.Placement;
 using Orleans.Runtime;
 using static Fabron.FabronConstants;
 
@@ -24,6 +25,7 @@ namespace Fabron.Grains
         Task Trigger();
     }
 
+    [PreferLocalPlacement]
     public class CronJobScheduler : Grain, ICronJobScheduler, IRemindable
     {
         private readonly TimeSpan _defaultTickPeriod = TimeSpan.FromMinutes(2);
