@@ -6,6 +6,7 @@ using Fabron.Stores;
 using Microsoft.Extensions.Logging;
 using Orleans;
 using Orleans.Concurrency;
+using Orleans.Placement;
 
 namespace Fabron.Grains
 {
@@ -16,6 +17,7 @@ namespace Fabron.Grains
         Task Reset();
     }
 
+    [PreferLocalPlacement]
     public class JobEventConsumer : Grain, IJobEventConsumer
     {
         private readonly ILogger<IJobEventConsumer> _logger;

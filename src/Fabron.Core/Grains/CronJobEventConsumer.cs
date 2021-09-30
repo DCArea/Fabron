@@ -5,6 +5,7 @@ using Fabron.Events;
 using Fabron.Stores;
 using Microsoft.Extensions.Logging;
 using Orleans;
+using Orleans.Placement;
 
 namespace Fabron.Grains
 {
@@ -15,6 +16,7 @@ namespace Fabron.Grains
         Task Reset();
     }
 
+    [PreferLocalPlacement]
     public class CronJobEventConsumer : Grain, ICronJobEventConsumer
     {
         private readonly ILogger _logger;
