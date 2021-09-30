@@ -18,10 +18,11 @@ namespace Fabron.Grains
         private static readonly Action<ILogger, string, long, Exception?> s_loadingEvents;
         private static readonly Action<ILogger, string, long, Exception?> s_consumerOffsetLoaded;
         private static readonly Action<ILogger, string, long, Exception?> s_consumerOffsetUpdated;
+        private static readonly Action<ILogger, string, long, long, long, Exception?> s_consumerOffsetInvalid;
         private static readonly Action<ILogger, string, Exception?> s_cronJobSchedulerUnhealthy;
         private static readonly Action<ILogger, string, TimeSpan, Exception?> s_tickerRegistered;
         private static readonly Action<ILogger, string, Exception?> s_tickerStopped;
-        private static readonly Action<ILogger, string, Exception?> s_RetryUnregisterReminder;
+        private static readonly Action<ILogger, string, Exception?> s_retryUnregisterReminder;
         private static readonly Action<ILogger, string, Exception?> s_completingCronJob;
         private static readonly Action<ILogger, string, string, Exception?> s_schedulingNewJob;
         private static readonly Action<ILogger, string, string, Exception?> s_scheduledNewJob;
@@ -94,6 +95,11 @@ namespace Fabron.Grains
                 new EventId(1, nameof(ConsumerOffsetUpdated)),
                 "[{Key}]: Consumer offset updated at: {Offset}");
 
+            s_consumerOffsetInvalid = LoggerMessage.Define<string, long, long, long>(
+                LogLevel.Warning,
+                new EventId(1, nameof(ConsumerOffsetInvalid)),
+                "[{Key}]: Offset({Offset}) to commit should between commited offset({CommittedOffset}) and current version({CurrentVersion})");
+
             s_cronJobSchedulerUnhealthy = LoggerMessage.Define<string>(
                 LogLevel.Debug,
                 new EventId(1, nameof(CronJobSchedulerUnhealthy)),
@@ -109,7 +115,7 @@ namespace Fabron.Grains
                 new EventId(1, nameof(TickerStopped)),
                 "[{Key}]: Ticker stopped");
 
-            s_RetryUnregisterReminder = LoggerMessage.Define<string>(
+            s_retryUnregisterReminder = LoggerMessage.Define<string>(
                 LogLevel.Warning,
                 new EventId(1, nameof(RetryUnregisterReminder)),
                 "[{Key}]: Unregister reminder failed, retry");
@@ -237,6 +243,11 @@ namespace Fabron.Grains
             }
         }
 
+        public static void ConsumerOffsetInvalid(this ILogger logger, string key, long offset, long committedOffset, long currentVersion)
+        {
+            s_consumerOffsetInvalid(logger, key, offset, committedOffset, currentVersion, null);
+        }
+
         public static void CronJobSchedulerUnhealthy(this ILogger logger, string key)
         {
             s_cronJobSchedulerUnhealthy(logger, key, null);
@@ -261,7 +272,7 @@ namespace Fabron.Grains
 
         public static void RetryUnregisterReminder(this ILogger logger, string key)
         {
-            s_RetryUnregisterReminder(logger, key, null);
+            s_retryUnregisterReminder(logger, key, null);
         }
 
         public static void CompletingCronJob(this ILogger logger, string key)

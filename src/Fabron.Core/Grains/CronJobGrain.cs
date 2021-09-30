@@ -225,7 +225,17 @@ namespace Fabron.Grains
 
         public async Task CommitOffset(long offset)
         {
-            Guard.IsBetweenOrEqualTo(offset, _consumerOffset, State.Version, nameof(offset));
+            long currentVersion = State.Version;
+            if (offset < _consumerOffset || offset > currentVersion)
+            {
+                _logger.ConsumerOffsetInvalid(_key, offset, _consumerOffset, currentVersion);
+                return;
+            }
+            if (offset == _consumerOffset || offset == currentVersion)
+            {
+                return;
+            }
+
             await _eventStore.SaveConsumerOffset(State.Metadata.Key, offset);
             _consumerOffset = offset;
             _logger.ConsumerOffsetUpdated(_key, _consumerOffset);
