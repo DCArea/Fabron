@@ -45,7 +45,7 @@ VALUES (
     :timestamp,
     :data
 );
-            ");
+").SetConsistencyLevel(ConsistencyLevel.Quorum);
         }
         public async Task CommitEventLog(EventLog eventLog)
         {
@@ -68,7 +68,7 @@ SELECT * FROM {tableName}
 WHERE entity_key = :entity_key
     AND version >= :min_version
 ORDER BY version ASC;
-            ");
+").SetConsistencyLevel(ConsistencyLevel.Quorum);
         }
         public async Task<List<EventLog>> GetEventLogs(string entityKey, long minVersion)
         {
@@ -97,7 +97,7 @@ ORDER BY version ASC;
 DELETE FROM {tableName}
 WHERE
     entity_key = :entity_key
-");
+").SetConsistencyLevel(ConsistencyLevel.Quorum);
         }
         public async Task ClearEventLogs(string entityKey, long maxVersion)
         {
@@ -115,7 +115,7 @@ WHERE
 SELECT * FROM {tableName}
 WHERE
     entity_key = :entity_key
-");
+").SetConsistencyLevel(ConsistencyLevel.Quorum);
         }
         public async Task<long> GetConsumerOffset(string entityKey)
         {
@@ -137,7 +137,7 @@ SET
     offset = :offset
 WHERE
     entity_key = :entity_key;
-");
+").SetConsistencyLevel(ConsistencyLevel.Quorum);
         }
         public async Task SaveConsumerOffset(string entityKey, long consumerOffset)
         {
@@ -155,7 +155,7 @@ WHERE
 DELETE FROM {tableName}
 WHERE
     entity_key = :entity_key
-");
+").SetConsistencyLevel(ConsistencyLevel.Quorum);
         }
         public async Task ClearConsumerOffset(string entityKey)
         {

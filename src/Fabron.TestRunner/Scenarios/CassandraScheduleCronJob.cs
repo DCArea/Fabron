@@ -19,11 +19,12 @@ namespace Fabron.TestRunner.Scenarios
         protected override IEnumerable<KeyValuePair<string, string>> Configs => base.Configs.Concat(new Dictionary<string, string>
         {
             { "Logging:LogLevel:Fabron.Grains.CronJobScheduler", "Information" },
+            { "Logging:LogLevel:Fabron.Grains.CronJobGrain", "Debug" },
         });
 
         public override ISiloBuilder ConfigureSilo(ISiloBuilder builder)
         {
-            var connectionString = "Contact Point=172.23.26.158;KeySpace=fabron_testrunner;Compression=LZ4";
+            string connectionString = "Contact Point=172.23.26.158;KeySpace=fabron_testrunner;Compression=LZ4";
             builder.Configure<CronJobOptions>(options =>
             {
                 options.CronFormat = Cronos.CronFormat.IncludeSeconds;
