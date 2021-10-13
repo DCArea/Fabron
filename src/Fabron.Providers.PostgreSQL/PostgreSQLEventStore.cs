@@ -12,7 +12,7 @@ namespace Fabron.Providers.PostgreSQL
     public class PostgreSQLJobEventStore : PostgreSQLEventStore, IJobEventStore
     {
         public PostgreSQLJobEventStore(IOptions<PostgreSQLOptions> options)
-            : base(options.Value.ConnectionString, options.Value.CronJobEventLogsTableName, options.Value.CronJobConsumersTableName)
+            : base(options.Value.ConnectionString, options.Value.JobEventLogsTableName, options.Value.JobConsumersTableName)
         { }
     }
 
@@ -26,8 +26,6 @@ namespace Fabron.Providers.PostgreSQL
     public class PostgreSQLEventStore : IEventStore
     {
         private readonly string _connStr;
-        private readonly string _eventLogsTableName;
-        private readonly string _consumersTableName;
         private readonly string _sql_GetEventLogs;
         private readonly string _sql_CommitEventLog;
         private readonly string _sql_ClearEventLogs;
@@ -38,18 +36,16 @@ namespace Fabron.Providers.PostgreSQL
         public PostgreSQLEventStore(string connStr, string eventLogsTableName, string consumersTableName)
         {
             _connStr = connStr;
-            _eventLogsTableName = eventLogsTableName;
-            _consumersTableName = consumersTableName;
 
             _sql_GetEventLogs = $@"
 SELECT *
-FROM {_eventLogsTableName}
+FROM {eventLogsTableName}
 WHERE entity_key = @entityKey
     AND version >= @minVersion
 ";
 
             _sql_CommitEventLog = $@"
-INSERT INTO {_eventLogsTableName} (
+INSERT INTO {eventLogsTableName} (
     entity_key,
     version,
     timestamp,
@@ -66,7 +62,7 @@ VALUES (
 ";
 
             _sql_ClearEventLogs = $@"
-DELETE FROM {_eventLogsTableName}
+DELETE FROM {eventLogsTableName}
 WHERE
     entity_key = @entityKey
 ";

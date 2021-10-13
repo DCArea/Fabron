@@ -27,7 +27,7 @@ namespace Fabron.TestRunner.Scenarios
             })
             .UsePostgreSQLEventStores(options =>
             {
-                options.ConnectionString = "Server=172.23.26.158;Port=5432;Database=fabron_testrunner;User Id=postgres;Password=11223344;Multiplexing=true";
+                options.ConnectionString = "Server=172.31.174.235;Port=5432;Database=fabron_testrunner;User Id=postgres;Password=11223344;Multiplexing=true";
             });
             return base.ConfigureSilo(builder);
         }

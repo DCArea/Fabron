@@ -6,7 +6,7 @@ CREATE TABLE fabron_job_eventlogs
     type varchar(150) NOT NULL,
     data text NOT NULL,
 
-    CONSTRAINT pk_entitykey_version PRIMARY KEY(entity_key, Version)
+    PRIMARY KEY(entity_key, Version)
 );
 
 CREATE TABLE fabron_cronjob_eventlogs
@@ -17,7 +17,7 @@ CREATE TABLE fabron_cronjob_eventlogs
     type varchar(150) NOT NULL,
     data text NOT NULL,
 
-    CONSTRAINT pk_entitykey_version PRIMARY KEY(entity_key, Version)
+    PRIMARY KEY(entity_key, Version)
 );
 
 
@@ -26,7 +26,7 @@ CREATE TABLE fabron_job_consumers
     entity_key varchar(150) NOT NULL,
     _offset integer NOT NULL,
 
-    CONSTRAINT pk_entitykey PRIMARY KEY(entity_key)
+    PRIMARY KEY(entity_key)
 );
 
 CREATE TABLE fabron_cronjob_consumers
@@ -34,5 +34,5 @@ CREATE TABLE fabron_cronjob_consumers
     entity_key varchar(150) NOT NULL,
     _offset integer NOT NULL,
 
-    CONSTRAINT pk_entitykey PRIMARY KEY(entity_key)
+    PRIMARY KEY(entity_key)
 );
