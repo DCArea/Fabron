@@ -49,7 +49,6 @@ namespace Orleans.Hosting
             siloBuilder.ConfigureServices(services =>
             {
                 services.UseInMemoryJobQuerier();
-                services.AddSingleton<IJobIndexer, GrainBasedInMemoryJobIndexer>();
             });
             return siloBuilder;
         }

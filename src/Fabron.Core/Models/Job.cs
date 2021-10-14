@@ -47,7 +47,7 @@ namespace Fabron.Models
         bool Deleted)
     {
         public static JobStatus Initial
-            => new JobStatus(
+            => new (
                 ExecutionStatus.Scheduled,
                 null,
                 null,

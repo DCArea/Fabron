@@ -5,14 +5,12 @@ using Fabron.Events;
 using Fabron.Stores;
 using Microsoft.Extensions.Logging;
 using Orleans;
-using Orleans.Concurrency;
 using Orleans.Placement;
 
 namespace Fabron.Grains
 {
     public interface IJobEventConsumer : IGrainWithStringKey
     {
-        [OneWay]
         Task NotifyChanged(long fromVersion, long currentVersion);
         Task Reset();
     }
@@ -27,15 +25,15 @@ namespace Fabron.Grains
         private ConsumerState _state = new();
 
         public JobEventConsumer(
-            ILogger<IJobEventConsumer> logger,
+            ILogger<JobEventConsumer> logger,
             IJobEventListener eventListener,
             IJobEventStore store,
-            IJobIndexer reporter)
+            IJobIndexer indexer)
         {
             _logger = logger;
             _eventListener = eventListener;
             _store = store;
-            _indexer = reporter;
+            _indexer = indexer;
         }
 
         public override Task OnActivateAsync()

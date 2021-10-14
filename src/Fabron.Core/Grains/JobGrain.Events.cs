@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Fabron.Events;
 using Fabron.Models;
+using Microsoft.Extensions.Logging;
 using Microsoft.Toolkit.Diagnostics;
 using Orleans;
 

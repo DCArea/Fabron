@@ -148,7 +148,7 @@ namespace Fabron.Grains
             s_consumerUpdatedOffsetFromProducer = LoggerMessage.Define<string, long, ConsumerState>(
                 LogLevel.Information,
                 new EventId(1, nameof(ConsumerUpdatedOffsetFromProducer)),
-                "[{Key}]: Updated offset as ({Offset}), consumer state: {state} ");
+                "[{Key}]: Updated offset from producer as ({Offset}), consumer state: {state} ");
 
             s_stateIndexed = LoggerMessage.Define<string, long>(
                 LogLevel.Information,

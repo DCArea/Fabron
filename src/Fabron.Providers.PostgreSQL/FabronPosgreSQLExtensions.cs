@@ -2,7 +2,6 @@ using System;
 using Fabron.Stores;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using Orleans;
 using Orleans.Hosting;
 
@@ -11,6 +10,7 @@ namespace Fabron.Providers.PostgreSQL
     public static class FabronPosgreSQLExtensions
     {
         const string Invariant = "Npgsql";
+
         public static IClientBuilder UsePostgreSQLClustering(this IClientBuilder client, string connectionString)
         {
             client.UseAdoNetClustering(options =>
@@ -48,24 +48,53 @@ namespace Fabron.Providers.PostgreSQL
                 options.Invariant = Invariant;
                 options.ConnectionString = connectionString;
             });
-            silo.UsePostgreSQLEventStores();
+            silo.UsePostgreSQLEventStore();
+            silo.UsePostgreSQLIndexStore();
             return silo;
         }
 
-        public static ISiloBuilder UsePostgreSQLEventStores(this ISiloBuilder silo, Action<PostgreSQLOptions> configureOptions)
+        public static ISiloBuilder UsePostgreSQLEventStore(this ISiloBuilder silo, Action<PostgreSQLOptions> configureOptions)
         {
             silo.Configure(configureOptions);
-            silo.UsePostgreSQLEventStores();
+            silo.UsePostgreSQLEventStore();
             return silo;
         }
-        public static ISiloBuilder UsePostgreSQLEventStores(this ISiloBuilder silo)
+        public static ISiloBuilder UsePostgreSQLEventStore(this ISiloBuilder silo)
         {
             silo.ConfigureServices(services =>
             {
-                services.AddSingleton<IJobEventStore, PostgreSQLJobEventStore>();
-                services.AddSingleton<ICronJobEventStore, PostgreSQLCronJobEventStore>();
+                services.AddPostgreSQLEventStore();
             });
             return silo;
+        }
+
+        public static ISiloBuilder UsePostgreSQLIndexStore(this ISiloBuilder silo, Action<PostgreSQLOptions> configureOptions)
+        {
+            silo.Configure(configureOptions);
+            silo.UsePostgreSQLIndexStore();
+            return silo;
+        }
+        public static ISiloBuilder UsePostgreSQLIndexStore(this ISiloBuilder silo)
+        {
+            silo.ConfigureServices(services =>
+            {
+                services.AddPostgreSQLIndexStore();
+            });
+            return silo;
+        }
+
+        public static IServiceCollection AddPostgreSQLEventStore(this IServiceCollection services)
+        {
+            services.AddSingleton<IJobEventStore, PostgreSQLJobEventStore>();
+            services.AddSingleton<ICronJobEventStore, PostgreSQLCronJobEventStore>();
+            return services;
+        }
+
+        public static IServiceCollection AddPostgreSQLIndexStore(this IServiceCollection services)
+        {
+            services.AddSingleton<IJobIndexer, PostgreSQLIndexer>();
+            services.AddSingleton<IJobQuerier, PostgreSQLQuerier>();
+            return services;
         }
     }
 

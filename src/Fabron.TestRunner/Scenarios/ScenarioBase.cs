@@ -5,6 +5,7 @@ using Fabron.Grains;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Orleans;
 using Orleans.Configuration;
 using Orleans.Hosting;
@@ -16,7 +17,9 @@ namespace Fabron.TestRunner.Scenarios
     {
         private IHost _host = default!;
         private IServiceProvider ServiceProvider => _host.Services;
+        public ILogger Logger => ServiceProvider.GetRequiredService<ILogger<ScenarioBase>>();
         public IJobManager JobManager => ServiceProvider.GetRequiredService<IJobManager>();
+        public IJobQuerier JobQuerier => ServiceProvider.GetRequiredService<IJobQuerier>();
         public IClusterClient ClusterClient => ServiceProvider.GetRequiredService<IClusterClient>();
         public IGrainFactory GrainFactory => ClusterClient;
 
@@ -34,7 +37,7 @@ namespace Fabron.TestRunner.Scenarios
 
         protected virtual IEnumerable<KeyValuePair<string, string>> Configs => new Dictionary<string, string>
         {
-            { "Logging:LogLevel:Default", "Error" },
+            { "Logging:LogLevel:Default", "Warning" },
         };
 
         public virtual IHost CreateHost()
