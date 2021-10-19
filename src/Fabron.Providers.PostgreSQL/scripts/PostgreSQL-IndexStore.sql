@@ -6,7 +6,7 @@ CREATE TABLE fabron_jobs
     PRIMARY KEY(key)
 );
 
-CREATE INDEX idx_labels ON fabron_jobs USING gin (data->'metadata'->'labels')
+CREATE INDEX idx_fabron_jobs_labels ON fabron_jobs USING gin ((data->'Metadata'->'Labels'));
 
 CREATE TABLE fabron_cronjobs
 (
@@ -16,4 +16,4 @@ CREATE TABLE fabron_cronjobs
     PRIMARY KEY(key)
 );
 
-CREATE INDEX idx_labels ON fabron_cronjobs USING gin (data->'metadata'->'labels')
+CREATE INDEX idx_fabron_cronjobs_labels ON fabron_cronjobs USING gin ((data->'Metadata'->'Labels'));

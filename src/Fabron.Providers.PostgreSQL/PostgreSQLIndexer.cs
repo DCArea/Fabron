@@ -39,7 +39,7 @@ DO
 
             _sql_DeleteJob = $@"
 DELETE FROM {jobIndexesTableName}
-WHERE key = @key
+WHERE key = @key;
 ";
 
             _sql_InsertCronJob = $@"
@@ -103,7 +103,7 @@ WHERE key = @key
             await using var conn = new NpgsqlConnection(_options.ConnectionString);
             await conn.OpenAsync();
             await using var cmd = new NpgsqlCommand(_sql_DeleteCronJob, conn);
-            cmd.Parameters.AddWithValue("@key", NpgsqlDbType.Jsonb, key);
+            cmd.Parameters.AddWithValue("@key", key);
 
             await cmd.ExecuteNonQueryAsync();
         }
