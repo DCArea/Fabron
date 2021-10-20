@@ -8,9 +8,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Orleans.Clustering.AdoNet" Version="3.5.0" />
-    <PackageReference Include="Microsoft.Orleans.Reminders.AdoNet" Version="3.5.0" />
-    <PackageReference Include="Npgsql" Version="5.0.10" />
+    <PackageReference Include="Microsoft.Orleans.Clustering.AdoNet" Version="$(OrleansVersion)" />
+    <PackageReference Include="Microsoft.Orleans.Reminders.AdoNet" Version="$(OrleansVersion)" />
+    <PackageReference Include="Npgsql" Version="$(NpgsqlVersion)" />
   </ItemGroup>
 
   <ItemGroup>

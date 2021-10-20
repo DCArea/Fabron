@@ -7,7 +7,7 @@
 
   <ItemGroup>
     <PackageReference Include="FluentAssertions" Version="$(FluentAssertionsVersion)" />
-    <PackageReference Include="MartinCostello.Logging.XUnit" Version="0.1.2" />
+    <PackageReference Include="MartinCostello.Logging.XUnit" Version="$(MartinCostelloLoggingXUnitVersion)" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MicrosoftTestSdkVersion)" />
     <PackageReference Include="Microsoft.Orleans.TestingHost" Version="$(OrleansVersion)" />
     <PackageReference Include="Moq" Version="$(MoqVersion)" />
@@ -27,5 +27,5 @@
   <ItemGroup>
     <ProjectReference Include="..\Fabron.Server\Fabron.Server.csproj" />
   </ItemGroup>
-  
+
 </Project>

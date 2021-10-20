@@ -147,11 +147,6 @@ public static class AppConfigureExtensions
         return services;
     }
 
-    public static IServiceCollection AddApiKeyAuth(this IServiceCollection services, Configuration configuration)
-    {
-        services.AddApiKeyAuth(configuration["ApiKey"]);
-        return services;
-    }
     public static IServiceCollection AddApiKeyAuth(this IServiceCollection services, string validApiKey)
     {
         services.AddAuthentication(ApiKeyDefaults.AuthenticationScheme)

@@ -14,8 +14,8 @@
 
   <!-- framework versions -->
   <PropertyGroup>
-    <AspNetCoreVersion>6.0.0-preview.6.21355.2</AspNetCoreVersion>
-    <MEXVersion>6.0.0-preview.6.21352.12</MEXVersion>
+    <AspNetCoreVersion>6.0.0-rc.2.21480.10</AspNetCoreVersion>
+    <MEXVersion>6.0.0-rc.2.21480.5</MEXVersion>
     <OrleansVersion>3.5.0</OrleansVersion>
   </PropertyGroup>
 
@@ -23,26 +23,26 @@
   <PropertyGroup>
     <AspNetCoreAuthenticationApiKeyVersion>5.1.0</AspNetCoreAuthenticationApiKeyVersion>
     <CronosVersion>0.7.1</CronosVersion>
-    <MicrosoftToolkitDiagnostics>7.0.2</MicrosoftToolkitDiagnostics>
-    <NpgsqlVersion>5.0.7</NpgsqlVersion>
+    <MicrosoftToolkitDiagnostics>7.1.1</MicrosoftToolkitDiagnostics>
+    <NpgsqlVersion>6.0.0-rc.2</NpgsqlVersion>
     <OrleansClusteringRedisVersion>3.1.1</OrleansClusteringRedisVersion>
     <OrleansProvidersMongoDBVersion>3.3.1</OrleansProvidersMongoDBVersion>
-    <PrometheusNetVersion>4.2.0</PrometheusNetVersion>
+    <PrometheusNetVersion>5.0.1</PrometheusNetVersion>
     <StyleCopAnalyzersVersion>1.0.0</StyleCopAnalyzersVersion>
-    <SwashbuckleAspNetCoreVersion>6.1.4</SwashbuckleAspNetCoreVersion>
-    <NESTVersion>7.13.2</NESTVersion>
+    <SwashbuckleAspNetCoreVersion>6.2.3</SwashbuckleAspNetCoreVersion>
+    <NESTVersion>7.15.0</NESTVersion>
   </PropertyGroup>
 
   <!-- test pkgs -->
   <PropertyGroup>
     <CoverletCollectorVersion>3.1.0</CoverletCollectorVersion>
-    <FakeItEasyVersion>7.1.0</FakeItEasyVersion>
-    <FluentAssertionsVersion>6.0.0-beta0002</FluentAssertionsVersion>
-    <MartinCostelloLoggingXUnitVersion>0.1.0</MartinCostelloLoggingXUnitVersion>
-    <MicrosoftTestSdkVersion>16.10.0</MicrosoftTestSdkVersion>
+    <FakeItEasyVersion>7.2.0</FakeItEasyVersion>
+    <FluentAssertionsVersion>6.1.0</FluentAssertionsVersion>
+    <MartinCostelloLoggingXUnitVersion>0.2.0</MartinCostelloLoggingXUnitVersion>
+    <MicrosoftTestSdkVersion>16.11.0</MicrosoftTestSdkVersion>
     <MoqContribHttpClientVersion>1.3.0</MoqContribHttpClientVersion>
     <MoqVersion>4.16.1</MoqVersion>
-    <OrleansTestKitVersion>3.1.6</OrleansTestKitVersion>
+    <OrleansTestKitVersion>3.1.7</OrleansTestKitVersion>
     <xUnitRunnerVisualStudio>2.4.3</xUnitRunnerVisualStudio>
     <xUnitVersion>2.4.1</xUnitVersion>
   </PropertyGroup>
