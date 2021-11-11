@@ -14,32 +14,35 @@
 
   <!-- framework versions -->
   <PropertyGroup>
-    <AspNetCoreVersion>6.0.0-rc.2.21480.10</AspNetCoreVersion>
-    <MEXVersion>6.0.0-rc.2.21480.5</MEXVersion>
-    <OrleansVersion>3.5.0</OrleansVersion>
+    <AspNetCoreVersion>6.0.0</AspNetCoreVersion>
+    <MEXVersion>6.0.0</MEXVersion>
+    <OrleansVersion>3.5.1</OrleansVersion>
   </PropertyGroup>
 
   <!-- library versions -->
   <PropertyGroup>
     <AspNetCoreAuthenticationApiKeyVersion>5.1.0</AspNetCoreAuthenticationApiKeyVersion>
+    <CassandraCSharpDriverVersion>3.17.0</CassandraCSharpDriverVersion>
     <CronosVersion>0.7.1</CronosVersion>
+    <MapsterVersion>7.2.0</MapsterVersion>
     <MicrosoftToolkitDiagnostics>7.1.1</MicrosoftToolkitDiagnostics>
-    <NpgsqlVersion>6.0.0-rc.2</NpgsqlVersion>
+    <NpgsqlVersion>6.0.0</NpgsqlVersion>
+    <OrleansCassandraUtilsVersion>1.0.1</OrleansCassandraUtilsVersion>
     <OrleansClusteringRedisVersion>3.1.1</OrleansClusteringRedisVersion>
-    <OrleansProvidersMongoDBVersion>3.3.1</OrleansProvidersMongoDBVersion>
+    <OrleansProvidersMongoDBVersion>3.4.0</OrleansProvidersMongoDBVersion>
     <PrometheusNetVersion>5.0.1</PrometheusNetVersion>
     <StyleCopAnalyzersVersion>1.0.0</StyleCopAnalyzersVersion>
     <SwashbuckleAspNetCoreVersion>6.2.3</SwashbuckleAspNetCoreVersion>
-    <NESTVersion>7.15.0</NESTVersion>
+    <NESTVersion>7.15.2</NESTVersion>
   </PropertyGroup>
 
   <!-- test pkgs -->
   <PropertyGroup>
     <CoverletCollectorVersion>3.1.0</CoverletCollectorVersion>
     <FakeItEasyVersion>7.2.0</FakeItEasyVersion>
-    <FluentAssertionsVersion>6.1.0</FluentAssertionsVersion>
+    <FluentAssertionsVersion>6.2.0</FluentAssertionsVersion>
     <MartinCostelloLoggingXUnitVersion>0.2.0</MartinCostelloLoggingXUnitVersion>
-    <MicrosoftTestSdkVersion>16.11.0</MicrosoftTestSdkVersion>
+    <MicrosoftTestSdkVersion>17.0.0</MicrosoftTestSdkVersion>
     <MoqContribHttpClientVersion>1.3.0</MoqContribHttpClientVersion>
     <MoqVersion>4.16.1</MoqVersion>
     <OrleansTestKitVersion>3.1.7</OrleansTestKitVersion>
