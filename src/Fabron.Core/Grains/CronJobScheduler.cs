@@ -1,8 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Diagnostics;
 using System.Threading.Tasks;
-using Fabron.Grains;
 using Fabron.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -28,6 +27,8 @@ namespace Fabron.Grains
     [PreferLocalPlacement]
     public class CronJobScheduler : Grain, ICronJobScheduler, IRemindable
     {
+        private static readonly ActivitySource s_activitySource = new("fabron.schedule");
+
         private readonly TimeSpan _defaultTickPeriod = TimeSpan.FromMinutes(2);
         private readonly ILogger<CronJobScheduler> _logger;
         private readonly CronJobOptions _options;
@@ -79,7 +80,7 @@ namespace Fabron.Grains
 
         private async Task Tick()
         {
-            if(_isTicking) return;
+            if (_isTicking) return;
             _isTicking = true;
             try
             {
@@ -137,32 +138,6 @@ namespace Fabron.Grains
                     // _logger.LogWarning("Tick missed");
                     return;
                 }
-                // // Check if we need to set ticker for next schedule
-                // tick = cron.GetNextOccurrence(tick.Value);
-                // now = DateTime.UtcNow;
-                // // Completed
-                // if (tick is null || (state.Spec.ExpirationTime.HasValue && tick.Value > state.Spec.ExpirationTime.Value))
-                // {
-                //     await Complete();
-                //     return;
-                // }
-                // else
-                // {
-                //     if (tick.Value > now)
-                //     {
-                //         await TickAfter(tick.Value.Subtract(now));
-                //         return;
-                //     }
-                //     else if (tick.Value <= now.AddSeconds(5))
-                //     {
-                //         await TickAfter(TimeSpan.Zero);
-                //         return;
-                //     }
-                //     else
-                //     {
-                //         _logger.LogWarning("Tick missed");
-                //     }
-                // }
             }
         }
 

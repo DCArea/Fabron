@@ -173,6 +173,7 @@ namespace Fabron.Grains
             }
             else
             {
+                // throw new Exception($"Invalid !!!!!! Schedule:{schedule_} Now:{utcNow}");
                 await TickAfter(schedule_ - utcNow);
                 _logger.LogInformation("[{Key}]: Ticker registered (2)", _key);
             }
@@ -238,7 +239,14 @@ namespace Fabron.Grains
 
         private async Task TickAfter(TimeSpan dueTime)
         {
-            await EnsureTicker(dueTime);
+            if (dueTime.TotalMinutes > 1)
+            {
+                await EnsureTicker(dueTime);
+            }
+            else
+            {
+                RegisterTimer(obj => Tick(), null, dueTime, TimeSpan.FromMilliseconds(-1));
+            }
             _logger.TickerRegistered(_key, dueTime);
         }
 

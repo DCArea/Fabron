@@ -9,6 +9,8 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="$(MEXVersion)" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="$(MEXVersion)" />
     <PackageReference Include="FluentAssertions" Version="$(FluentAssertionsVersion)" />
+    <PackageReference Include="OpenTelemetry.Exporter.Console" Version="$(OpenTelemetryCoreVersion)" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="$(OpenTelemetryNonCoreVersion)" />
   </ItemGroup>
 
   <ItemGroup>

@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using OpenTelemetry.Trace;
 using Orleans;
 using Orleans.Configuration;
 using Orleans.Hosting;
@@ -46,17 +47,13 @@ namespace Fabron.TestRunner.Scenarios
                 .ConfigureHostConfiguration(config =>
                 {
                     config.AddInMemoryCollection(Configs);
-                    // config.AddInMemoryCollection(new Dictionary<string, string>
-                    //     {
-                    //         { "Logging:LogLevel:Default", "Error" },
-                    //         // { "Logging:LogLevel:Fabron.Grains.CronJobGrain", "Debug" },
-                    //         // { "Logging:LogLevel:Fabron", "Debug" },
-                    //         { "Logging:LogLevel:Fabron.Grains.CronJobScheduler", "Debug" },
-                    //         // { "Logging:LogLevel:Fabron.ElasticSearch.ElasticSearchJobQuerier", "Debug" }
-                    //     });
                 })
                 .ConfigureServices(services =>
                 {
+                    services.AddOpenTelemetryTracing(options=> options
+                        .AddSource("orleans.runtime.graincall")
+                        .AddConsoleExporter()
+                    );
                     services.AddFabron();
                 });
 
@@ -65,6 +62,7 @@ namespace Fabron.TestRunner.Scenarios
             builder.UseFabron((context, silo) =>
             {
                 silo
+                    .AddActivityPropagation()
                     .Configure<StatisticsOptions>(options =>
                     {
                         options.LogWriteInterval = TimeSpan.FromMilliseconds(-1);

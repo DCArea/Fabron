@@ -56,7 +56,7 @@ namespace Fabron.Test.Grains.Job
             Assert.Equal(scheduledAt, state.Spec.Schedule);
 
             TestReminder reminder = (TestReminder)await Silo.ReminderRegistry.GetReminder("Ticker");
-            reminder.DueTime.Should().BeCloseTo(TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(2));
+            reminder.DueTime.Should().BeCloseTo(TimeSpan.FromMinutes(2), TimeSpan.FromSeconds(2));
             reminder.Period.Should().Be(TimeSpan.FromMinutes(2));
         }
 

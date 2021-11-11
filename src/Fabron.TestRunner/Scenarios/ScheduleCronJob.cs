@@ -29,7 +29,7 @@ namespace Fabron.TestRunner.Scenarios
 
             Contracts.CronJob<NoopCommand> job = await JobManager.ScheduleCronJob<NoopCommand>(
                 GetType().Name + "/" + nameof(ScheduleCronJob),
-                "0/1 * * * * *",
+                "0/2 * * * * *",
                 new NoopCommand(),
                 null,
                 null,
