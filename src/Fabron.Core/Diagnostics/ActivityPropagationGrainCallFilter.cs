@@ -37,6 +37,8 @@ namespace Orleans.Runtime
                 };
             }
 
+            var currentActivity = Activity.Current;
+            Activity.Current = null;
             using var activity = activitySource.StartActivity(activityName, activityKind, activityContext, tags);
             if (activity is not null)
             {
@@ -64,6 +66,10 @@ namespace Orleans.Runtime
                 }
                 throw;
             }
+            finally
+            {
+                Activity.Current = currentActivity;
+            }
         }
     }
 
@@ -71,11 +77,8 @@ namespace Orleans.Runtime
     {
         public Task Invoke(IOutgoingGrainCallContext context)
         {
-            if (context.InterfaceMethod.Name == "ReceiveReminder")
-            {
-                return context.Invoke(); // Do not propagate activity for ReceiveReminder
-            }
-            if (Activity.Current != null)
+            if (Activity.Current != null
+                && context.InterfaceMethod.Name != "ReceiveReminder") // Do not propagate activity for ReceiveReminder
             {
                 return ProcessCurrentActivity(context); // Copy existing activity to RequestContext
             }
