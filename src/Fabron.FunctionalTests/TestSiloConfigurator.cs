@@ -30,6 +30,9 @@ namespace Fabron.FunctionalTests
             siloBuilder.Configure<CronJobOptions>(options =>{
                 options.UseAsynchronousIndexer = false;
             });
+            siloBuilder.Configure<JobOptions>(options =>{
+                options.UseAsynchronousIndexer = false;
+            });
             siloBuilder.UseInMemory();
 
             siloBuilder.ConfigureServices(ConfigureServices);

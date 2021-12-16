@@ -135,7 +135,7 @@ namespace Fabron.Grains
             Models.Job? job = await _grain.GetState();
             if (job is null || job.Status.Deleted)
             {
-                await _indexer.DeleteCronJob(_key);
+                await _indexer.DeleteJob(_key);
                 _logger.StateIndexDeleted(_key);
             }
             else
