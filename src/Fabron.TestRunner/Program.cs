@@ -1,6 +1,7 @@
 ﻿using Fabron.TestRunner.Scenarios;
 
-await new ScheduleCronJob().PlayAsync();
+// await new ScheduleCronJob().PlayAsync();
+await new ScheduleCronJobNonUtc().PlayAsync();
 // await new LabelBasedQuery().PlayAsync();
 // await new ErrorOnListeners().PlayAsync();
 // await new PgsqlScheduleCronJob().PlayAsync();

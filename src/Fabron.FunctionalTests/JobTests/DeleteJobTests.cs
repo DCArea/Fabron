@@ -34,7 +34,6 @@ namespace Fabron.FunctionalTests.JobTests
             Assert.Empty(queried);
 
             Assert.Null(await JobQuerier.GetJobByKey(job.Metadata.Key));
-
         }
     }
 

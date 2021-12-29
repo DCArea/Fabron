@@ -29,7 +29,7 @@ namespace Fabron.TestRunner.Scenarios
 
             Contracts.CronJob<NoopCommand> job = await JobManager.ScheduleCronJob<NoopCommand>(
                 GetType().Name + "/" + nameof(ScheduleCronJob),
-                "0/2 * * * * *",
+                "0/3 * * * * *",
                 new NoopCommand(),
                 null,
                 null,
@@ -37,12 +37,12 @@ namespace Fabron.TestRunner.Scenarios
                 labels,
                 null);
             Grains.ICronJobGrain? grain = GetCronJobGrain(job.Metadata.Key);
-            // await grain.WaitEventsConsumed(10);
 
-            // IEnumerable<Contracts.CronJob<NoopCommand>> queried = await JobManager.GetCronJobByLabel<NoopCommand>("foo", "bar");
-            // queried.Should().HaveCount(1);
+            await Task.Delay(TimeSpan.FromSeconds(5));
+            IEnumerable<Contracts.CronJob<NoopCommand>> queried = await JobManager.GetCronJobByLabel<NoopCommand>("foo", "bar");
+            queried.Should().HaveCount(1);
 
-            await Task.Delay(TimeSpan.FromSeconds(10));
+            // await Task.Delay(TimeSpan.FromSeconds(10));
         }
 
     }

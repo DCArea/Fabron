@@ -12,8 +12,7 @@ namespace Fabron.FunctionalTests.JobTests
         {
         }
 
-        [Fact(Skip = "Skip")]
-        // [Fact]
+        [Fact]
         public async Task ShouldCanBeQueried()
         {
             var labels = new Dictionary<string, string>
@@ -27,12 +26,10 @@ namespace Fabron.FunctionalTests.JobTests
                 labels,
                 null);
 
-
-            await GetJobGrain(job.Metadata.Key).WaitEventsConsumed(10);
-
             IEnumerable<Contracts.Job<NoopCommand, NoopCommandResult>> queried = await JobManager.GetJobByLabel<NoopCommand, NoopCommandResult>("foo", "bar");
 
             Assert.NotEmpty(queried);
         }
+
     }
 }

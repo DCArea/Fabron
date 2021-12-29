@@ -12,8 +12,7 @@ namespace Fabron.FunctionalTests.CronJobTests
         {
         }
 
-        [Fact(Skip = "Skip")]
-        // [Fact]
+        [Fact]
         public async Task ShouldCanBeQueried()
         {
             var labels = new Dictionary<string, string>
@@ -22,7 +21,7 @@ namespace Fabron.FunctionalTests.CronJobTests
             };
 
             Contracts.CronJob<NoopCommand> job = await JobManager.ScheduleCronJob<NoopCommand>(
-                this.GetType().Name + "/" + nameof(ShouldCanBeQueried),
+                GetType().Name + "/" + nameof(ShouldCanBeQueried),
                 "* * * * *",
                 new NoopCommand(),
                 null,
@@ -32,10 +31,9 @@ namespace Fabron.FunctionalTests.CronJobTests
                 null);
             Grains.ICronJobGrain? grain = GetCronJobGrain(job.Metadata.Key);
 
-            await grain.WaitEventsConsumed(20);
-
             IEnumerable<Contracts.CronJob<NoopCommand>> queried = await JobManager.GetCronJobByLabel<NoopCommand>("foo", "bar");
             Assert.NotEmpty(queried);
         }
+
     }
 }

@@ -9,12 +9,11 @@ using Orleans.TestingHost;
 
 namespace Fabron.FunctionalTests
 {
-    public class DefaultClusterFixture: ClusterFixture<TestSiloConfigurator>
-    {
+    public class DefaultClusterFixture : ClusterFixture<TestSiloConfigurator>
+    { }
 
-    }
     public class ClusterFixture<TSiloConfigurator> : Xunit.IAsyncLifetime
-        where TSiloConfigurator: ISiloConfigurator, new()
+        where TSiloConfigurator : ISiloConfigurator, new()
     {
 
         public TestCluster HostedCluster { get; private set; } = default!;

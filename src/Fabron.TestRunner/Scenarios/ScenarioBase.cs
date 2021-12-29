@@ -39,6 +39,7 @@ namespace Fabron.TestRunner.Scenarios
         protected virtual IEnumerable<KeyValuePair<string, string>> Configs => new Dictionary<string, string>
         {
             { "Logging:LogLevel:Default", "Warning" },
+            { "Logging:LogLevel:Fabron", "Information"}
         };
 
         public virtual IHost CreateHost()
@@ -50,9 +51,9 @@ namespace Fabron.TestRunner.Scenarios
                 })
                 .ConfigureServices(services =>
                 {
-                    services.AddOpenTelemetryTracing(options=> options
+                    services.AddOpenTelemetryTracing(options => options
                         .AddSource("orleans.runtime.graincall")
-                        .AddConsoleExporter()
+                    // .AddConsoleExporter()
                     );
                     services.AddFabron();
                 });
@@ -83,7 +84,7 @@ namespace Fabron.TestRunner.Scenarios
             _host = CreateHost();
             await _host.StartAsync();
             await RunAsync();
-            await _host.StopAsync().WaitAsync(TimeSpan.FromSeconds(3));
+            await _host.StopAsync().WaitAsync(TimeSpan.FromSeconds(10));
             Console.WriteLine("FINISHED");
         }
     }
