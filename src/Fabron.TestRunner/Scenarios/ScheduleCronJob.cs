@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Fabron;
 using Fabron.TestRunner.Commands;
 using FluentAssertions;
 using Orleans.Hosting;
@@ -19,6 +18,7 @@ namespace Fabron.TestRunner.Scenarios
             });
             return base.ConfigureSilo(builder);
         }
+
         public override async Task RunAsync()
         {
 
