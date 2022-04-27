@@ -82,7 +82,7 @@ namespace Fabron
         public async Task<IEnumerable<Job<TJobCommand, TResult>>> GetJobByCron<TJobCommand, TResult>(string key)
             where TJobCommand : ICommand<TResult>
         {
-            (string, string)[]? labels = new[] { ( LabelNames.OwnerType, OwnerTypes.CronJob ), (LabelNames.OwnerKey, key) };
+            (string, string)[]? labels = new[] { (LabelNames.OwnerType, OwnerTypes.CronJob), (LabelNames.OwnerKey, key) };
             IEnumerable<Job> jobs = await _querier.GetJobByLabels(labels);
             return jobs.Select(job => job.Map<TJobCommand, TResult>());
         }

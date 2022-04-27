@@ -68,7 +68,7 @@ namespace Fabron.FunctionalTests.JobTests
         }
 
 
-        [Fact(Skip ="SKIP")]
+        [Fact(Skip = "SKIP")]
         public async Task DeleteTwice()
         {
             var labels = new Dictionary<string, string>

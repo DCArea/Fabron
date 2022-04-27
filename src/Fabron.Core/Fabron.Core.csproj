@@ -14,11 +14,11 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Orleans.Core" Version="$(OrleansVersion)" />
-    <PackageReference Include="Microsoft.Orleans.OrleansProviders" Version="$(OrleansVersion)" />
-    <PackageReference Include="Microsoft.Orleans.OrleansRuntime" Version="$(OrleansVersion)" />
+    <PackageReference Include="Microsoft.Orleans.Sdk" Version="$(OrleansVersion)" />
+    <PackageReference Include="Microsoft.Orleans.Streaming" Version="$(OrleansVersion)" />
+    <!-- <PackageReference Include="Microsoft.Orleans.Core" Version="$(OrleansVersion)" />
+    <PackageReference Include="Microsoft.Orleans.OrleansRuntime" Version="$(OrleansVersion)" /> -->
     <PackageReference Include="Microsoft.Toolkit.Diagnostics" Version="$(MicrosoftToolkitDiagnostics)" />
-    <PackageReference Include="NEST" Version="$(NESTVersion)" />
     <PackageReference Include="prometheus-net" Version="$(PrometheusNetVersion)" />
   </ItemGroup>
 

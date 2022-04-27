@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Fabron.Events;
 using Fabron.Stores;
@@ -36,7 +37,7 @@ namespace Fabron.Grains
             _indexer = indexer;
         }
 
-        public override Task OnActivateAsync()
+        public override Task OnActivateAsync(CancellationToken cancellationToken)
         {
             _key = this.GetPrimaryKeyString();
             _grain = GrainFactory.GetGrain<IJobGrain>(_key);

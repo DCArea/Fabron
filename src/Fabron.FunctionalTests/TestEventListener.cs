@@ -5,7 +5,7 @@ using Fabron.Events;
 
 namespace Fabron.FunctionalTests
 {
-    public class BlockedEventListener: IJobEventListener, ICronJobEventListener
+    public class BlockedEventListener : IJobEventListener, ICronJobEventListener
     {
         public Task On(string key, DateTime timestamp, IJobEvent @event)
         {

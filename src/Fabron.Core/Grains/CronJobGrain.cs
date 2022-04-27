@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Fabron.Events;
 using Fabron.Models;
@@ -73,7 +74,7 @@ namespace Fabron.Grains
         private CronJob? _state;
         private long _consumerOffset;
         private ICronJobScheduler _scheduler = default!;
-        public override async Task OnActivateAsync()
+        public override async Task OnActivateAsync(CancellationToken cancellationToken)
         {
             _key = this.GetPrimaryKeyString();
             _scheduler = GrainFactory.GetGrain<ICronJobScheduler>(_key);

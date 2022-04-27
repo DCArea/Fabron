@@ -9,12 +9,12 @@ namespace Fabron.Events
         public static ICronJobEvent Get(EventLog eventLog)
             => eventLog.Type switch
             {
-                nameof(CronJobScheduled)  => eventLog.GetPayload<CronJobScheduled>(),
-                nameof(CronJobSuspended)  => eventLog.GetPayload<CronJobSuspended>(),
-                nameof(CronJobResumed)  => eventLog.GetPayload<CronJobResumed>(),
+                nameof(CronJobScheduled) => eventLog.GetPayload<CronJobScheduled>(),
+                nameof(CronJobSuspended) => eventLog.GetPayload<CronJobSuspended>(),
+                nameof(CronJobResumed) => eventLog.GetPayload<CronJobResumed>(),
                 nameof(CronJobItemsStatusChanged) => eventLog.GetPayload<CronJobItemsStatusChanged>(),
-                nameof(CronJobCompleted)  => eventLog.GetPayload<CronJobCompleted>(),
-                nameof(CronJobDeleted)  => eventLog.GetPayload<CronJobDeleted>(),
+                nameof(CronJobCompleted) => eventLog.GetPayload<CronJobCompleted>(),
+                nameof(CronJobDeleted) => eventLog.GetPayload<CronJobDeleted>(),
                 _ => ThrowHelper.ThrowInvalidEventName<ICronJobEvent>(eventLog.EntityKey, eventLog.Version, eventLog.Type)
             };
     };
@@ -31,9 +31,9 @@ namespace Fabron.Events
     public record CronJobSuspended() : ICronJobEvent;
     public record CronJobResumed() : ICronJobEvent;
 
-    public record CronJobItemsStatusChanged(List<JobItem> Items): ICronJobEvent;
-    public record CronJobCompleted(): ICronJobEvent;
-    public record CronJobDeleted(): ICronJobEvent;
+    public record CronJobItemsStatusChanged(List<JobItem> Items) : ICronJobEvent;
+    public record CronJobCompleted() : ICronJobEvent;
+    public record CronJobDeleted() : ICronJobEvent;
 
     public interface IFabronEvent { };
 

@@ -9,7 +9,6 @@
     <PackageReference Include="Microsoft.Orleans.TestingHost" Version="$(OrleansVersion)" />
     <PackageReference Include="FluentAssertions" Version="$(FluentAssertionsVersion)" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MicrosoftTestSdkVersion)" />
-    <PackageReference Include="OrleansTestKit" Version="$(OrleansTestKitVersion)" />
     <PackageReference Include="xunit" Version="$(xUnitVersion)" />
     <PackageReference Include="xunit.runner.visualstudio" Version="$(xUnitRunnerVisualStudio)">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 using Fabron.Models;
 using Microsoft.Extensions.Logging;
@@ -42,7 +43,7 @@ public class CronJobScheduler : Grain, ICronJobScheduler, IRemindable
     private DateTime? _lastScheduledTick;
     private bool _isTicking;
 
-    public override Task OnActivateAsync()
+    public override Task OnActivateAsync(CancellationToken cancellationToken)
     {
         _key = this.GetPrimaryKeyString();
         _self = GrainFactory.GetGrain<ICronJobGrain>(_key);

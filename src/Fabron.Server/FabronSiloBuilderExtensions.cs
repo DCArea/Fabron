@@ -15,9 +15,8 @@ namespace Orleans.Hosting
         public static ISiloBuilder AddFabron(this ISiloBuilder siloBuilder, IEnumerable<Assembly>? commandAssemblies = null)
         {
             siloBuilder
-                .ConfigureServices((ctx, services) =>
+                .ConfigureServices(services =>
                 {
-                    // services.AddOptions<CronJobOptions>();
                     services.AddScoped<IMediator, Mediator>()
                         .RegisterJobCommandHandlers(commandAssemblies);
                 })

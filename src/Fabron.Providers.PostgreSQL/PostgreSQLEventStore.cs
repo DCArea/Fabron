@@ -142,7 +142,7 @@ WHERE
             cmd.Parameters.AddWithValue("@entityKey", entityKey);
             await using var reader = await cmd.ExecuteReaderAsync();
             await reader.ReadAsync();
-            if(reader.HasRows)
+            if (reader.HasRows)
                 return reader.GetInt64(0);
             else return -1L;
         }

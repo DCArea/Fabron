@@ -15,11 +15,11 @@ namespace Fabron.Stores
         Task ClearEventLogs(string entityKey, long maxVersion);
     }
 
-    public interface IJobEventStore: IEventStore
+    public interface IJobEventStore : IEventStore
     {
     }
 
-    public interface ICronJobEventStore: IEventStore
+    public interface ICronJobEventStore : IEventStore
     {
     }
 }

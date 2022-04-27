@@ -1,6 +1,7 @@
 ﻿
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Fabron.Events;
 using Fabron.Mando;
@@ -62,7 +63,7 @@ public partial class JobGrain : Grain, IJobGrain, IRemindable
         _eventStore = store;
     }
 
-    public override async Task OnActivateAsync()
+    public override async Task OnActivateAsync(CancellationToken cancellationToken)
     {
         _key = this.GetPrimaryKeyString();
         _consumer = GrainFactory.GetGrain<IJobEventConsumer>(_key);

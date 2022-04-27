@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Fabron.Events;
 using Fabron.FunctionalTests.Commands;
+using Fabron.Grains;
 using Fabron.Models;
 using Xunit;
 using Xunit.Abstractions;
-using Fabron.Grains;
 
 namespace Fabron.FunctionalTests.JobTests
 {

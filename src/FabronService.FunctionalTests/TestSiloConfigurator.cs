@@ -6,13 +6,14 @@ using Microsoft.Extensions.DependencyInjection;
 
 using Orleans.Configuration;
 using Orleans.Hosting;
+using Orleans.Serialization;
 using Orleans.TestingHost;
 
 namespace FabronService.FunctionalTests
 {
     public class TestSiloConfigurator : ISiloConfigurator
     {
-        public virtual void ConfigureServices(Microsoft.Extensions.Hosting.HostBuilderContext context, IServiceCollection services) => services.AddHttpClient();
+        public virtual void ConfigureServices(IServiceCollection services) => services.AddHttpClient();
 
         public void Configure(ISiloBuilder siloBuilder)
         {

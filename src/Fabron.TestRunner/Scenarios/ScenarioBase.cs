@@ -60,7 +60,7 @@ namespace Fabron.TestRunner.Scenarios
 
             builder = ConfigureHost(builder);
 
-            builder.UseFabron((context, silo) =>
+            builder.UseFabron((ctx, silo) =>
             {
                 silo
                     .AddActivityPropagation()

@@ -6,4 +6,3 @@ await new ScheduleJob().PlayAsync();
 // await new LabelBasedQuery().PlayAsync();
 // await new ErrorOnListeners().PlayAsync();
 // await new PgsqlScheduleCronJob().PlayAsync();
-// await new CassandraScheduleCronJob().PlayAsync();

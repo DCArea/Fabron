@@ -16,6 +16,6 @@ namespace Fabron
             => throw new InvalidOperationException($"Can not start a completed cron job");
 
         public static InvalidOperationException CreateInvalidJobExecutionState(ExecutionStatus status)
-            => new ($"Job state is invalid {status}");
+            => new($"Job state is invalid {status}");
     }
 }

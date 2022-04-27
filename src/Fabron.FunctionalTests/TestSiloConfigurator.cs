@@ -12,9 +12,10 @@ namespace Fabron.FunctionalTests
     {
         public override void ConfigureSilo(ISiloBuilder silo) => silo.SetEventListener<BlockedEventListener, BlockedEventListener>();
     }
+
     public class TestSiloConfigurator : ISiloConfigurator
     {
-        public virtual void ConfigureServices(Microsoft.Extensions.Hosting.HostBuilderContext context, IServiceCollection services) => services.AddHttpClient();
+        public virtual void ConfigureServices(IServiceCollection services) => services.AddHttpClient();
 
         public virtual void ConfigureSilo(ISiloBuilder siloBuilder)
         {
@@ -27,11 +28,13 @@ namespace Fabron.FunctionalTests
                 options.ResponseTimeout = TimeSpan.FromSeconds(5);
             });
 
-            siloBuilder.Configure<CronJobOptions>(options =>{
-                options.UseAsynchronousIndexer = false;
+            siloBuilder.Configure<CronJobOptions>(options =>
+            {
+                options.UseAsynchronousIndexer = true;
             });
-            siloBuilder.Configure<JobOptions>(options =>{
-                options.UseAsynchronousIndexer = false;
+            siloBuilder.Configure<JobOptions>(options =>
+            {
+                options.UseAsynchronousIndexer = true;
             });
             siloBuilder.UseInMemory();
 

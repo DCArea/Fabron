@@ -21,14 +21,8 @@ namespace Fabron.Grains
         {
             long currentVersion = State.Version;
             Guard.IsGreaterThanOrEqualTo(currentVersion, _consumerOffset, nameof(currentVersion));
-            if (_options.UseAsynchronousIndexer)
-            {
-                _consumer.InvokeOneWay(c => c.NotifyChanged(_consumerOffset, currentVersion));
-            }
-            else
-            {
-                await _consumer.NotifyChanged(_consumerOffset, currentVersion);
-            }
+            // await _consumer.NotifyChanged(_consumerOffset, currentVersion);
+            await Task.Yield();
         }
 
         private async Task CommitAsync(EventLog eventLog)

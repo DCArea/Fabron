@@ -10,7 +10,7 @@ namespace FabronService.FunctionalTests
 {
     public class HttpReminderTestSiloConfigurator : TestSiloConfigurator
     {
-        public override void ConfigureServices(Microsoft.Extensions.Hosting.HostBuilderContext context, IServiceCollection services)
+        public override void ConfigureServices(IServiceCollection services)
         {
             Mock<HttpMessageHandler>? handlerhMock = new();
             HttpClient? client = handlerhMock.CreateClient();

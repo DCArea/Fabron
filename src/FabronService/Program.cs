@@ -14,11 +14,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 
-using Newtonsoft.Json;
-
 using Orleans.Configuration;
 using Orleans.Hosting;
-using Orleans.Providers.MongoDB.Configuration;
 
 using Prometheus;
 
@@ -30,56 +27,9 @@ IHostBuilder hostBuilder = Host.CreateDefaultBuilder(args)
             {
                 options.LogWriteInterval = TimeSpan.FromMilliseconds(-1);
             });
-        if (ctx.HostingEnvironment.IsEnvironment("Localhost"))
-        {
-            siloBuilder.UseLocalhostClustering()
-                .AddMemoryGrainStorageAsDefault()
-                .UseInMemory();
-        }
-        else
-        {
-            siloBuilder.UseKubernetesHosting()
-                .UseMongoDBClient(ctx.Configuration["MongoDbConnectionString"])
-                .UseMongoDBClustering(options =>
-                {
-                    options.DatabaseName = "Fabron";
-                    options.Strategy = MongoDBMembershipStrategy.SingleDocument;
-                })
-                .UseMongoDBReminders(options =>
-                {
-                    options.DatabaseName = "Fabron";
-                })
-                .AddMongoDBGrainStorage("JobStore", configure =>
-                {
-                    configure.Configure(options =>
-                    {
-                        options.DatabaseName = "Fabron";
-                        options.ConfigureJsonSerializerSettings = settings =>
-                        {
-                            settings.NullValueHandling = NullValueHandling.Include;
-                            settings.ObjectCreationHandling = ObjectCreationHandling.Replace;
-                            settings.DefaultValueHandling = DefaultValueHandling.Populate;
-                        };
-                    });
-                })
-                .AddMongoDBGrainStorageAsDefault(configure =>
-                {
-                    configure.Configure(options =>
-                    {
-                        options.DatabaseName = "Fabron";
-                        options.ConfigureJsonSerializerSettings = settings =>
-                        {
-                            settings.NullValueHandling = NullValueHandling.Include;
-                            settings.ObjectCreationHandling = ObjectCreationHandling.Replace;
-                            settings.DefaultValueHandling = DefaultValueHandling.Populate;
-                        };
-                    });
-                })
-                .ConfigureServices(services =>
-                {
-                    services.UseElasticSearch(ctx.Configuration.GetSection("Reporters:ElasticSearch"));
-                }); ;
-        }
+        siloBuilder.UseLocalhostClustering()
+            .AddMemoryGrainStorageAsDefault()
+            .UseInMemory();
     })
     .ConfigureWebHostDefaults(builder =>
     {
