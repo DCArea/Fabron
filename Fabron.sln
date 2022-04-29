@@ -27,11 +27,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{7D1F17CB-08F2-4C8E-B5C9-FE6B4146650D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fabron.FunctionalTests", "src\Fabron.FunctionalTests\Fabron.FunctionalTests.csproj", "{FB106A10-DF42-40CD-91DD-65DF046EE3F2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fabron.FunctionalTests", "src\Fabron.FunctionalTests\Fabron.FunctionalTests.csproj", "{FB106A10-DF42-40CD-91DD-65DF046EE3F2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fabron.TestRunner", "src\Fabron.TestRunner\Fabron.TestRunner.csproj", "{EF48A0B1-9924-4A91-B4A4-DCA856903D1F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fabron.TestRunner", "src\Fabron.TestRunner\Fabron.TestRunner.csproj", "{EF48A0B1-9924-4A91-B4A4-DCA856903D1F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fabron.Providers.PostgreSQL", "src\Fabron.Providers.PostgreSQL\Fabron.Providers.PostgreSQL.csproj", "{A82CAF10-F438-4F53-B6FD-DB8C21EE9D61}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fabron.Providers.PostgreSQL", "src\Fabron.Providers.PostgreSQL\Fabron.Providers.PostgreSQL.csproj", "{A82CAF10-F438-4F53-B6FD-DB8C21EE9D61}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -163,7 +163,7 @@ Global
 		{2F7A9B06-8FF1-4098-89CC-564EDFE8DD42} = {69206C38-EB1E-4CE2-9961-FC1D1D6609FE}
 		{D27DA44E-BE17-4A37-BC5C-B1FE92B4CF06} = {7D1F17CB-08F2-4C8E-B5C9-FE6B4146650D}
 		{FB106A10-DF42-40CD-91DD-65DF046EE3F2} = {7D1F17CB-08F2-4C8E-B5C9-FE6B4146650D}
-		{EF48A0B1-9924-4A91-B4A4-DCA856903D1F} = {69206C38-EB1E-4CE2-9961-FC1D1D6609FE}
+		{EF48A0B1-9924-4A91-B4A4-DCA856903D1F} = {7D1F17CB-08F2-4C8E-B5C9-FE6B4146650D}
 		{A82CAF10-F438-4F53-B6FD-DB8C21EE9D61} = {69206C38-EB1E-4CE2-9961-FC1D1D6609FE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution

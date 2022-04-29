@@ -5,8 +5,9 @@ namespace Fabron
 {
     public class CommonOptions
     {
+        public bool UseSynchronousTicker { get; set; } = false;
         public TimeZoneInfo TimeZone { get; set; } = TimeZoneInfo.Utc;
-        public bool UseAsynchronousIndexer { get; set; } = true;
+        public TimeSpan TickerInterval { get; set; } = TimeSpan.FromMinutes(2);
     }
 
     public class JobOptions : CommonOptions

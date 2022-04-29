@@ -46,7 +46,7 @@ namespace FabronService.FunctionalTests
                 })
                 .ConfigureServices((ctx, services) =>
                 {
-                    services.AddFabron();
+                    services.AddFabronClient();
                     services.AddSingleton(TestCluster);
                     services.AddSingleton(TestCluster.Client);
                     services.AddSingleton<IGrainFactory>(TestCluster.Client);

@@ -3,10 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Fabron.Events;
 using Fabron.Mando;
 using Fabron.Models;
-using Fabron.Stores;
+using Fabron.Store;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Toolkit.Diagnostics;
@@ -22,316 +21,187 @@ public interface IJobGrain : IGrainWithStringKey
     Task<Job?> GetState();
 
     [ReadOnly]
-    Task<ExecutionStatus> GetStatus();
+    Task<JobExecutionStatus> GetStatus();
 
     Task<Job> Schedule(
-        string commandName,
-        string commandData,
-        DateTime? schedule,
+        DateTimeOffset? schedule,
+        CommandSpec command,
         Dictionary<string, string>? labels,
-        Dictionary<string, string>? annotations);
+        Dictionary<string, string>? annotations,
+        OwnerReference? owner
+    );
 
     Task Delete();
-
-    [AlwaysInterleave]
-    Task CommitOffset(long version);
-
-    Task Purge();
-
-    [ReadOnly]
-    Task WaitEventsConsumed(int timeoutSeconds);
 }
 
-public partial class JobGrain : Grain, IJobGrain, IRemindable
+public partial class JobGrain : TickerGrain, IGrainBase, IJobGrain
 {
-    private readonly TimeSpan _defaultTickPeriod = TimeSpan.FromMinutes(2);
+    private readonly IGrainRuntime _runtime;
     private readonly ILogger _logger;
     private readonly JobOptions _options;
     private readonly IMediator _mediator;
-    private readonly IJobEventStore _eventStore;
-    private IGrainReminder? _tickReminder;
+    private readonly IJobStore _store;
 
     public JobGrain(
+        IGrainContext context,
+        IGrainRuntime runtime,
         ILogger<JobGrain> logger,
         IOptions<JobOptions> options,
         IMediator mediator,
-        IJobEventStore store)
+        IJobStore store) : base(context, runtime, logger, options.Value.TickerInterval)
     {
         _logger = logger;
         _options = options.Value;
         _mediator = mediator;
-        _eventStore = store;
+        _store = store;
+        _runtime = runtime;
     }
 
-    public override async Task OnActivateAsync(CancellationToken cancellationToken)
+    private Job? _job;
+    async Task IGrainBase.OnActivateAsync(CancellationToken cancellationToken)
     {
-        _key = this.GetPrimaryKeyString();
-        _consumer = GrainFactory.GetGrain<IJobEventConsumer>(_key);
-
-        _logger.LogInformation("[{Key}]: Loading state", _key);
-
-        var getConsumerOffsetTask = _eventStore.GetConsumerOffset(_key);
-
-        List<EventLog> eventLogs = await _eventStore.GetEventLogs(_key, 0);
-        foreach (EventLog? eventLog in eventLogs)
-        {
-            TransitionState(eventLog);
-        }
-        _consumerOffset = await getConsumerOffsetTask;
-
-        _logger.LogInformation("[{Key}]: Loaded state", _key);
+        _key = GrainContext.GrainReference.GetPrimaryKeyString();
+        var (name, @namespace) = KeyUtils.ParseJobKey(_key);
+        _job = await _store.FindAsync(name, @namespace);
     }
 
-    private string _key = default!;
-    private IJobEventConsumer _consumer = default!;
-    private long _consumerOffset;
-    private Job? _state;
-    private TaskCompletionSource<bool>? _consumingCompletionSource;
+    public Task<Job?> GetState() => Task.FromResult(_job);
 
-    private Job State
+    public Task<JobExecutionStatus> GetStatus()
     {
-        get
+        if (_job is null)
         {
-            Guard.IsNotNull(_state, nameof(State));
-            return _state;
+            throw new InvalidOperationException("Job is not scheduled");
         }
-    }
-    private bool ConsumerNotFollowedUp => _state is not null && _state.Version != _consumerOffset;
-    private bool Deleted => _state is null || _state.Status.Deleted;
-    private bool Purged => _state is null && _consumerOffset == -1;
-    private bool DeletedButNotPurged => Deleted && !Purged;
-
-    public Task<Job?> GetState() => Task.FromResult(_state);
-
-    public Task<ExecutionStatus> GetStatus()
-    {
-        return Task.FromResult(_state is not null ? State.Status.ExecutionStatus : ExecutionStatus.NotScheduled);
-    }
-
-    public async Task Purge()
-    {
-        if (ConsumerNotFollowedUp)
+        if (_job.Deleted)
         {
-            await NotifyConsumer();
-            await WaitEventsConsumed(10);
-            return;
+            throw new InvalidOperationException("Job was deleted");
         }
-
-        if (_state != null)
-        {
-            await _eventStore.ClearEventLogs(_key, long.MaxValue);
-            _state = null;
-        }
-        if (_consumerOffset != -1)
-        {
-            await _eventStore.ClearConsumerOffset(_key);
-            await _consumer.Reset();
-            _consumerOffset = -1;
-        }
-        await StopTicker();
-        _logger.Purged(_key);
+        return Task.FromResult(_job.Status.ExecutionStatus);
     }
 
     public async Task Delete()
     {
-        if (Deleted)
+        if (_job is not null)
         {
-            return;
+            await _store.DeleteAsync(_job.Metadata.Name, _job.Metadata.Namespace);
         }
-        JobDeleted? @event = new JobDeleted();
-        await RaiseAsync(@event, nameof(JobDeleted));
     }
 
-    private async Task Complete() => await StopTicker();
-
     public async Task<Job> Schedule(
-        string commandName,
-        string commandData,
-        DateTime? schedule,
+        DateTimeOffset? schedule,
+        CommandSpec command,
         Dictionary<string, string>? labels,
-        Dictionary<string, string>? annotations)
+        Dictionary<string, string>? annotations,
+        OwnerReference? owner)
     {
-        // _logger.LogInformation("[{Key}]: Scheduling", _key);
+        var utcNow = DateTimeOffset.UtcNow;
+        var schedule_ = schedule is null || schedule.Value < utcNow ? utcNow : schedule.Value;
+        await TickAfter(_options.TickerInterval);
+        var (name, @namespace) = KeyUtils.ParseJobKey(_key);
 
-        DateTime utcNow = DateTime.UtcNow;
-        DateTime schedule_ = schedule is null || schedule.Value < utcNow ? utcNow : (DateTime)schedule;
-        await EnsureTicker(TimeSpan.FromMinutes(2));
-        // _logger.LogInformation("[{Key}]: Ticker registered (1)", _key);
+        _job = new Job
+        {
+            Metadata = new ObjectMetadata
+            {
+                Name = name,
+                Namespace = @namespace,
+                UID = Guid.NewGuid().ToString(),
+                CreationTimestamp = DateTimeOffset.UtcNow,
+                DeletionTimestamp = null,
+                Labels = labels,
+                Annotations = annotations,
+                Owner = owner
+            },
+            Spec = new JobSpec()
+            {
+                Command = command,
+                Schedule = schedule
+            },
+            Status = new JobStatus()
+            {
+                ExecutionStatus = JobExecutionStatus.Scheduled
+            }
+        };
+        await _store.SaveAsync(_job);
 
-        JobScheduled jobScheduled = new JobScheduled(
-            labels ?? new Dictionary<string, string>(),
-            annotations ?? new Dictionary<string, string>(),
-            schedule_,
-            commandName,
-            commandData
-        );
-        await RaiseAsync(jobScheduled);
-
-        utcNow = DateTime.UtcNow;
+        utcNow = DateTimeOffset.UtcNow;
         if (schedule_ <= utcNow)
         {
-            _ = Task.Factory.StartNew(Tick).Unwrap();
+            _ = Task.Factory.StartNew(() => Tick(utcNow)).Unwrap();
         }
         else
         {
-            // throw new Exception($"Invalid !!!!!! Schedule:{schedule_} Now:{utcNow}");
             await TickAfter(schedule_ - utcNow);
-            // _logger.LogInformation("[{Key}]: Ticker registered (2)", _key);
         }
-        return State;
+        return _job;
     }
 
-    private async Task Tick()
+    protected override async Task Tick(DateTimeOffset? expectedTickTime)
     {
-        if (Deleted)
+        if (_job is null || _job.Deleted)
         {
-            if (!Purged)
-                await Purge();
+            // TODO: add log
+            await StopTicker();
             return;
         }
 
-        Task next = State.Status switch
+        if (_job.Status.ExecutionStatus == JobExecutionStatus.Scheduled)
         {
-            { ExecutionStatus: ExecutionStatus.Scheduled } => Start(),
-            { ExecutionStatus: ExecutionStatus.Started } => Execute(),
-            { ExecutionStatus: ExecutionStatus.Succeed or ExecutionStatus.Faulted } => Complete(),
-            _ => Task.FromException(ThrowHelper.CreateInvalidJobExecutionState(State.Status.ExecutionStatus))
-        };
-        await next;
+            await Start();
+        }
+
+        // TODO: invalid state, tring to recover
+        if (_job.Status.ExecutionStatus == JobExecutionStatus.Started)
+        {
+            await Execute();
+        }
+
+        // TODO: log inconsistent state
     }
 
     private async Task Start()
     {
-        _logger.StartingJobExecution(State.Metadata.Key);
-        JobExecutionStarted jobExecutionStarted = new();
-        await RaiseAsync(jobExecutionStarted);
+        Guard.IsNotNull(_job, nameof(_job));
+        if (_job.Status.ExecutionStatus != JobExecutionStatus.Scheduled)
+        {
+            // TODO: Log or throw exception
+            return;
+        }
 
-        await Tick();
+        _job.Status.ExecutionStatus = JobExecutionStatus.Started;
+        await _store.SaveAsync(_job);
+
+        await Execute();
     }
 
     private async Task Execute()
     {
+        Guard.IsNotNull(_job, nameof(_job));
         string? result;
         var sw = ValueStopwatch.StartNew();
         try
         {
-            result = await _mediator.Handle(State.Spec.CommandName, State.Spec.CommandData);
-            MetricsHelper.JobExecutionDuration.Observe(sw.GetElapsedTime().TotalSeconds);
-            Guard.IsNotNull(result, nameof(result));
+            result = await _mediator.Handle(_job.Spec.Command.Name, _job.Spec.Command.Data);
+
+            _job.Status.ExecutionStatus = JobExecutionStatus.Complete;
+            _job.Status.Result = result;
         }
         catch (Exception e)
         {
-            MetricsHelper.JobExecutionDuration.Observe(sw.GetElapsedTime().TotalSeconds);
-            if (e is not TaskCanceledException || State.Status.ExecutionStatus != ExecutionStatus.Canceled)
-            {
-                JobExecutionFailed jobExecutionFailed = new(e.Message);
-                await RaiseAsync(jobExecutionFailed);
-            }
-
-            await Tick();
-            return;
+            _job.Status.ExecutionStatus = JobExecutionStatus.Started;
+            _job.Status.Reason = "ExceptionOccurred";
+            _job.Status.Message = e.ToString();
         }
 
-        JobExecutionSucceed jobExecutionSucceed = new(result);
-        await RaiseAsync(jobExecutionSucceed);
-        await Tick();
+        MetricsHelper.JobExecutionDuration.Observe(sw.GetElapsedTime().TotalSeconds);
+        await _store.SaveAsync(_job);
+
+        await StopTicker();
     }
 
-    private async Task TickAfter(TimeSpan dueTime)
+    public static partial class Log
     {
-        if (dueTime.TotalMinutes > 1)
-        {
-            await EnsureTicker(dueTime);
-        }
-        else
-        {
-            RegisterTimer(obj => Tick(), null, dueTime, TimeSpan.FromMilliseconds(-1));
-        }
-        _logger.TickerRegistered(_key, dueTime);
-    }
-
-    private async Task EnsureTicker(TimeSpan dueTime)
-        => _tickReminder = await RegisterOrUpdateReminder(Names.TickerReminder, dueTime, _defaultTickPeriod);
-
-    private async Task StopTicker()
-    {
-        int retry = 0;
-        while (true)
-        {
-            _tickReminder = await GetReminder(Names.TickerReminder);
-            if (_tickReminder is null) break;
-            try
-            {
-                await UnregisterReminder(_tickReminder);
-                _tickReminder = null;
-                _logger.TickerStopped(_key);
-                break;
-            }
-            catch (ReminderException)
-            {
-                if (retry++ < 3)
-                {
-                    _logger.RetryUnregisterReminder(_key);
-                    continue;
-                }
-                throw;
-            }
-            catch (OperationCanceledException)
-            {
-                // ReminderService has been stopped
-                return;
-            }
-        }
-    }
-
-    public async Task ReceiveReminder(string reminderName, TickStatus status)
-    {
-        if (_tickReminder is null)
-        {
-            _tickReminder = await GetReminder(Names.TickerReminder);
-        }
-        await Tick();
-    }
-
-    public async Task CommitOffset(long offset)
-    {
-        long currentVersion = State.Version;
-        if (offset < _consumerOffset || offset > currentVersion)
-        {
-            _logger.ConsumerOffsetInvalid(_key, offset, _consumerOffset, currentVersion);
-            return;
-        }
-        if (offset == _consumerOffset || offset == currentVersion)
-        {
-            return;
-        }
-
-        await _eventStore.SaveConsumerOffset(State.Metadata.Key, offset);
-        _consumerOffset = offset;
-        _logger.ConsumerOffsetUpdated(_key, _consumerOffset);
-
-        if (_consumingCompletionSource != null && _consumerOffset == State.Version)
-        {
-            _consumingCompletionSource.SetResult(true);
-        }
-    }
-
-    public async Task WaitEventsConsumed(int timeoutSeconds)
-    {
-        if (ConsumerNotFollowedUp)
-        {
-            _consumingCompletionSource = new TaskCompletionSource<bool>();
-            try
-            {
-                await _consumingCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(timeoutSeconds));
-            }
-            catch (TimeoutException)
-            {
-            }
-            if (ConsumerNotFollowedUp)
-            {
-                ThrowHelper.ThrowConsumerNotFollowedUp(_key, State.Version, _consumerOffset);
-            }
-        }
     }
 }
+

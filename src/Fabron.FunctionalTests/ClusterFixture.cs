@@ -34,7 +34,7 @@ namespace Fabron.FunctionalTests
                 config.AddInMemoryCollection(new Dictionary<string, string>
                 {
                     { "Logging:LogLevel:Default", "Error" },
-                    { "Logging:LogLevel:Fabron", "Debug" }
+                    // { "Logging:LogLevel:Fabron", "Debug" }
                 });
             });
             builder.AddSiloBuilderConfigurator<TSiloConfigurator>();

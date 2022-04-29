@@ -8,31 +8,33 @@ namespace Fabron.FunctionalTests.CronJobTests
 {
     public class ScheduleTests : TestBase
     {
-        public ScheduleTests(DefaultClusterFixture fixture, ITestOutputHelper output) : base(fixture, output)
-        {
-        }
+        private const string Namespace = nameof(CronJobTests) + "." + nameof(ScheduleTests);
 
-        [Fact(Skip = "TODO: Fix this test")]
-        public async Task ShouldCanBeQueried()
+        public ScheduleTests(DefaultClusterFixture fixture, ITestOutputHelper output) : base(fixture, output)
+        { }
+
+        [Fact]
+        public async Task ScheduleAndGet()
         {
             var labels = new Dictionary<string, string>
             {
                 {"foo", "bar" }
             };
 
-            Contracts.CronJob<NoopCommand> job = await JobManager.ScheduleCronJob<NoopCommand>(
-                GetType().Name + "/" + nameof(ShouldCanBeQueried),
-                "* * * * *",
-                new NoopCommand(),
+            Contracts.CronJob<NoopCommand> job = await JobManager.ScheduleCronJob(
+                name: nameof(ScheduleAndGet),
+                @namespace: Namespace,
+                command: new NoopCommand(),
+                cronExp: "* * * * *",
                 null,
                 null,
                 false,
                 labels,
                 null);
-            Grains.ICronJobGrain? grain = GetCronJobGrain(job.Metadata.Key);
 
-            IEnumerable<Contracts.CronJob<NoopCommand>> queried = await JobManager.GetCronJobByLabel<NoopCommand>("foo", "bar");
-            Assert.NotEmpty(queried);
+            var queried = await JobManager.GetCronJob<NoopCommand>(nameof(ScheduleAndGet), Namespace);
+
+            Assert.NotNull(queried);
         }
 
     }

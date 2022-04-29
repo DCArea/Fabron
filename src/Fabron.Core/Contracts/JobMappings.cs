@@ -1,21 +1,18 @@
-
 using System;
 using System.Text.Json;
 using Fabron.Contracts;
 using Fabron.Mando;
+using Fabron.Models;
 
 namespace Fabron
 {
     public static class JobMappings
     {
-        public static Job<TCommand, TResult> Map<TCommand, TResult>(this Models.Job job)
+        public static Job<TCommand, TResult> Map<TCommand, TResult>(this Job job)
             where TCommand : ICommand<TResult>
         {
-            TCommand? cmdData = JsonSerializer.Deserialize<TCommand>(job.Spec.CommandData);
-            if (cmdData is null)
-            {
-                throw new InvalidOperationException();
-            }
+            TCommand? cmdData = JsonSerializer.Deserialize<TCommand>(job.Spec.Command.Data)
+                ?? throw new InvalidOperationException();
 
             TResult? cmdResult = job.Status.Result is null
                     ? default
@@ -24,15 +21,17 @@ namespace Fabron
             Job<TCommand, TResult> typedJob = new(
                 job.Metadata,
                 new JobSpec<TCommand>(
-                    job.Spec.Schedule,
-                    job.Spec.CommandName,
-                    cmdData),
+                    new(
+                        job.Spec.Command.Name,
+                        cmdData
+                    ),
+                    job.Spec.Schedule
+                ),
                 new JobStatus<TResult>(
                     job.Status.ExecutionStatus,
-                    job.Status.StartedAt,
-                    job.Status.FinishedAt,
                     cmdResult,
-                    job.Status.Reason)
+                    job.Status.Reason,
+                    job.Status.Message)
             );
             return typedJob;
         }
@@ -40,18 +39,17 @@ namespace Fabron
         public static CronJob<TCommand> Map<TCommand>(this Models.CronJob cronJob)
             where TCommand : ICommand
         {
-            TCommand? cmdData = JsonSerializer.Deserialize<TCommand>(cronJob.Spec.CommandData);
-            if (cmdData is null)
-            {
-                throw new InvalidOperationException();
-            }
+            TCommand? cmdData = JsonSerializer.Deserialize<TCommand>(cronJob.Spec.Command.Data)
+                ?? throw new InvalidOperationException();
 
             CronJob<TCommand> typedCronJob = new(
                 cronJob.Metadata,
-                new TypedCronJobSpec<TCommand>(
+                new CronJobSpec<TCommand>(
+                    new CommandSpec<TCommand>(
+                        cronJob.Spec.Command.Name,
+                        cmdData
+                    ),
                     cronJob.Spec.Schedule,
-                    cronJob.Spec.CommandName,
-                    cmdData,
                     cronJob.Spec.NotBefore,
                     cronJob.Spec.ExpirationTime,
                     cronJob.Spec.Suspend),

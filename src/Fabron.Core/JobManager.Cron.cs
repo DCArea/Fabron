@@ -1,7 +1,6 @@
 ﻿
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -15,23 +14,28 @@ namespace Fabron
     public partial class JobManager
     {
         public async Task<CronJob<TCommand>> ScheduleCronJob<TCommand>(
-            string key,
-            string cronExp,
+            string name,
+            string @namespace,
             TCommand command,
-            DateTime? notBefore,
-            DateTime? expirationTime,
-            bool suspend,
-            Dictionary<string, string>? labels,
-            Dictionary<string, string>? annotations) where TCommand : ICommand
+            string cronExp,
+            DateTimeOffset? notBefore = null,
+            DateTimeOffset? expirationTime = null,
+            bool suspend = false,
+            Dictionary<string, string>? labels = null,
+            Dictionary<string, string>? annotations = null) where TCommand : ICommand
         {
-            string commandName = _registry.CommandNameRegistrations[typeof(TCommand)];
-            string commandData = JsonSerializer.Serialize(command);
+            string key = KeyUtils.BuildCronJobKey(name, @namespace);
+
+            var cmd = new CommandSpec
+            {
+                Name = _registry.CommandNameRegistrations[typeof(TCommand)],
+                Data = JsonSerializer.Serialize(command)
+            };
 
             ICronJobGrain grain = _client.GetGrain<ICronJobGrain>(key);
             await grain.Schedule(
                 cronExp,
-                commandName,
-                commandData,
+                cmd,
                 notBefore,
                 expirationTime,
                 suspend,
@@ -41,51 +45,17 @@ namespace Fabron
             return state!.Map<TCommand>();
         }
 
-        public Task TriggerCronJob(string key)
+        public async Task<CronJob<TCommand>?> GetCronJob<TCommand>(string name, string @namespace) where TCommand : ICommand
         {
-            ICronJobGrain grain = _client.GetGrain<ICronJobGrain>(key);
-            return grain.Trigger();
-        }
+            string key = KeyUtils.BuildCronJobKey(name, @namespace);
 
-        public Task SuspendCronJob(string key)
-        {
-            ICronJobGrain grain = _client.GetGrain<ICronJobGrain>(key);
-            return grain.Suspend();
-        }
-
-        public Task ResumeCronJob(string key)
-        {
-            ICronJobGrain grain = _client.GetGrain<ICronJobGrain>(key);
-            return grain.Resume();
-        }
-
-        public async Task<CronJob<TCommand>?> GetCronJob<TCommand>(string key)
-            where TCommand : ICommand
-        {
             ICronJobGrain grain = _client.GetGrain<ICronJobGrain>(key);
             CronJob? jobState = await grain.GetState();
-            if (jobState is null || jobState.Status.Deleted)
+            if (jobState is null || jobState.Deleted)
             {
                 return null;
             }
             return jobState.Map<TCommand>();
-        }
-
-        public Task DeleteCronJob(string key)
-            => _client.GetGrain<ICronJobGrain>(key).Delete();
-
-        public async Task<IEnumerable<CronJob<TJobCommand>>> GetCronJobByLabel<TJobCommand>(string labelName, string labelValue)
-            where TJobCommand : ICommand
-        {
-            IEnumerable<CronJob> jobs = await _querier.GetCronJobByLabel(labelName, labelValue);
-            return jobs.Select(job => job.Map<TJobCommand>());
-        }
-
-        public async Task<IEnumerable<CronJob<TJobCommand>>> GetCronJobByLabels<TJobCommand>(params (string, string)[] labels)
-            where TJobCommand : ICommand
-        {
-            IEnumerable<CronJob> jobs = await _querier.GetCronJobByLabels(labels);
-            return jobs.Select(job => job.Map<TJobCommand>());
         }
 
     }

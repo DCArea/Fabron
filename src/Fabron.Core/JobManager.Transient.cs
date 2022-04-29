@@ -15,20 +15,22 @@ using static Fabron.FabronConstants;
 
 namespace Fabron
 {
+
     public partial class JobManager
     {
         public async Task<Job<TCommand, TResult>> ScheduleJob<TCommand, TResult>(
-            string key,
+            string name,
+            string @namespace,
             TCommand command,
-            DateTime? scheduledAt,
-            Dictionary<string, string>? labels,
-            Dictionary<string, string>? annotations)
+            DateTimeOffset schedule,
+            Dictionary<string, string>? labels = null,
+            Dictionary<string, string>? annotations = null)
             where TCommand : ICommand<TResult>
         {
+            string key = KeyUtils.BuildJobKey(name, @namespace);
             string commandName = _registry.CommandNameRegistrations[typeof(TCommand)];
             string commandData = JsonSerializer.Serialize(command);
-
-            Job state = await Schedule(key, commandName, commandData, scheduledAt, labels, annotations);
+            Job state = await Schedule(key, commandName, commandData, schedule, labels, annotations);
             return state.Map<TCommand, TResult>();
         }
 
@@ -36,55 +38,54 @@ namespace Fabron
             string key,
             string commandName,
             string commandData,
-            DateTime? scheduledAt,
+            DateTimeOffset scheduledAt,
             Dictionary<string, string>? labels,
             Dictionary<string, string>? annotations)
         {
-            _logger.LogInformation($"Creating Job[{key}]");
             IJobGrain grain = _client.GetGrain<IJobGrain>(key);
-            await grain.Schedule(commandName, commandData, scheduledAt, labels, annotations);
-            _logger.LogInformation($"Job[{key}] Created");
-
-            Job? state = await grain.GetState();
-            return state!;
+            var cmd = new CommandSpec
+            {
+                Name = commandName,
+                Data = commandData
+            };
+            var state = await grain.Schedule(scheduledAt, cmd, labels, annotations, null);
+            return state;
         }
 
-        public async Task<Job<TJobCommand, TResult>?> GetJob<TJobCommand, TResult>(string key)
+        public async Task<Job<TJobCommand, TResult>?> GetJob<TJobCommand, TResult>(
+            string name,
+            string @namespace)
             where TJobCommand : ICommand<TResult>
         {
+            string key = KeyUtils.BuildJobKey(name, @namespace);
             IJobGrain grain = _client.GetGrain<IJobGrain>(key);
             Job? jobState = await grain.GetState();
-            if (jobState is null || jobState.Status.Deleted)
+            if (jobState is null || jobState.Deleted)
             {
                 return null;
             }
-
             return jobState.Map<TJobCommand, TResult>();
         }
 
         public Task DeleteJob(string key)
             => _client.GetGrain<IJobGrain>(key).Delete();
 
-        public async Task<IEnumerable<Job<TJobCommand, TResult>>> GetJobByLabel<TJobCommand, TResult>(string labelName, string labelValue)
+        public Task<IEnumerable<Job<TJobCommand, TResult>>> GetJobByLabel<TJobCommand, TResult>(string labelName, string labelValue)
             where TJobCommand : ICommand<TResult>
         {
-            IEnumerable<Job> jobs = await _querier.GetJobByLabel(labelName, labelValue);
-            return jobs.Select(job => job.Map<TJobCommand, TResult>());
+            throw new NotImplementedException();
         }
 
-        public async Task<IEnumerable<Job<TJobCommand, TResult>>> GetJobByLabels<TJobCommand, TResult>(params (string, string)[] labels)
+        public Task<IEnumerable<Job<TJobCommand, TResult>>> GetJobByLabels<TJobCommand, TResult>(params (string, string)[] labels)
             where TJobCommand : ICommand<TResult>
         {
-            IEnumerable<Job> jobs = await _querier.GetJobByLabels(labels);
-            return jobs.Select(job => job.Map<TJobCommand, TResult>());
+            throw new NotImplementedException();
         }
 
-        public async Task<IEnumerable<Job<TJobCommand, TResult>>> GetJobByCron<TJobCommand, TResult>(string key)
+        public Task<IEnumerable<Job<TJobCommand, TResult>>> GetJobByCron<TJobCommand, TResult>(string key)
             where TJobCommand : ICommand<TResult>
         {
-            (string, string)[]? labels = new[] { (LabelNames.OwnerType, OwnerTypes.CronJob), (LabelNames.OwnerKey, key) };
-            IEnumerable<Job> jobs = await _querier.GetJobByLabels(labels);
-            return jobs.Select(job => job.Map<TJobCommand, TResult>());
+            throw new NotImplementedException();
         }
     }
 }

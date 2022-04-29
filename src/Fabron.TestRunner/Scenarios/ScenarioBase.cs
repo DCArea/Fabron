@@ -20,11 +20,11 @@ namespace Fabron.TestRunner.Scenarios
         private IServiceProvider ServiceProvider => _host.Services;
         public ILogger Logger => ServiceProvider.GetRequiredService<ILogger<ScenarioBase>>();
         public IJobManager JobManager => ServiceProvider.GetRequiredService<IJobManager>();
-        public IJobQuerier JobQuerier => ServiceProvider.GetRequiredService<IJobQuerier>();
+        // public IJobQuerier JobQuerier => ServiceProvider.GetRequiredService<IJobQuerier>();
         public IClusterClient ClusterClient => ServiceProvider.GetRequiredService<IClusterClient>();
         public IGrainFactory GrainFactory => ClusterClient;
 
-        public ICronJobGrain GetCronJobGrain(string id) => ClusterClient.GetGrain<ICronJobGrain>(id);
+        // public ICronJobGrain GetCronJobGrain(string id) => ClusterClient.GetGrain<ICronJobGrain>(id);
 
         public virtual IHostBuilder ConfigureHost(IHostBuilder builder)
         {
@@ -55,7 +55,7 @@ namespace Fabron.TestRunner.Scenarios
                         .AddSource("orleans.runtime.graincall")
                     // .AddConsoleExporter()
                     );
-                    services.AddFabron();
+                    services.AddFabronClient();
                 });
 
             builder = ConfigureHost(builder);

@@ -8,11 +8,6 @@ using Orleans.TestingHost;
 
 namespace Fabron.FunctionalTests
 {
-    public class TestSiloConfiguratorWithBlockedEventListeners : TestSiloConfigurator
-    {
-        public override void ConfigureSilo(ISiloBuilder silo) => silo.SetEventListener<BlockedEventListener, BlockedEventListener>();
-    }
-
     public class TestSiloConfigurator : ISiloConfigurator
     {
         public virtual void ConfigureServices(IServiceCollection services) => services.AddHttpClient();

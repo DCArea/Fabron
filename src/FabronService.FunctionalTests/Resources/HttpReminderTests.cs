@@ -8,8 +8,9 @@ using System.Threading.Tasks;
 
 using AspNetCore.Authentication.ApiKey;
 using Fabron.Models;
+using FabronService.Resources.CronHttpReminders;
 using FabronService.Resources.HttpReminders.Models;
-
+using Microsoft.AspNetCore.Routing;
 using Moq;
 using Moq.Contrib.HttpClient;
 
@@ -19,13 +20,13 @@ namespace FabronService.FunctionalTests.Resources
 {
     public class HttpReminderTests : IClassFixture<WAF<HttpReminderTestSiloConfigurator>>
     {
-        private const string Route = "/HttpReminders";
         private readonly WAF<HttpReminderTestSiloConfigurator> _waf;
         public HttpReminderTests(WAF<HttpReminderTestSiloConfigurator> waf) => _waf = waf;
 
         [Fact]
         public async Task Create_Get()
         {
+            string route = "/http-reminders";
             RegisterHttpReminderRequest request = new(
                 "Test_Get",
                 DateTime.UtcNow,
@@ -37,10 +38,10 @@ namespace FabronService.FunctionalTests.Resources
             handler.SetupRequest(HttpMethod.Get, request.Command.Url)
                 .ReturnsResponse(HttpStatusCode.OK);
 
-            HttpResponseMessage? response = await client.PostAsJsonAsync(Route, request);
+            HttpResponseMessage? response = await client.PutAsJsonAsync($"{route}/{request.Name}", request);
 
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-            Assert.Equal(new Uri(_waf.Server.BaseAddress, $"{Route}/{request.Name}"), response.Headers.Location);
+            Assert.Equal(new Uri(_waf.Server.BaseAddress, $"{route}/{request.Name}"), response.Headers.Location);
             HttpReminder? reminder = await response.Content.ReadFromJsonAsync<HttpReminder>(_waf.JsonSerializerOptions);
             Assert.NotNull(reminder);
             Assert.Equal(request.Command.Url, reminder!.Command.Url);
@@ -49,7 +50,7 @@ namespace FabronService.FunctionalTests.Resources
 
             Assert.NotNull(reminder);
             Assert.Equal(request.Command.Url, reminder!.Command.Url);
-            Assert.Equal(ExecutionStatus.Succeed, reminder!.Status);
+            Assert.Equal(JobExecutionStatus.Complete, reminder!.Status);
             await Task.Delay(300);
             Assert.Equal(200, reminder!.Result);
         }

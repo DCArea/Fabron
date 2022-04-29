@@ -1,5 +1,4 @@
 
-using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
@@ -9,62 +8,43 @@ using Fabron;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 
-using Orleans.Configuration;
 using Orleans.Hosting;
 
 using Prometheus;
 
-IHostBuilder hostBuilder = Host.CreateDefaultBuilder(args)
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Host
     .UseFabron((ctx, siloBuilder) =>
     {
-        siloBuilder.AddPrometheusTelemetryConsumer()
-            .Configure<StatisticsOptions>(options =>
-            {
-                options.LogWriteInterval = TimeSpan.FromMilliseconds(-1);
-            });
+        siloBuilder.AddPrometheusTelemetryConsumer();
         siloBuilder.UseLocalhostClustering()
-            .AddMemoryGrainStorageAsDefault()
             .UseInMemory();
-    })
-    .ConfigureWebHostDefaults(builder =>
-    {
-        builder
-            .ConfigureServices(ConfigureServices)
-            .Configure(ConfigureWebApplication);
     });
-IHost host = hostBuilder.Build();
-await host.RunAsync();
 
+builder.Services
+    .ConfigureFramework()
+    .AddApiKeyAuth(builder.Configuration["ApiKey"])
+    .AddSwagger()
+    .AddSingleton<IJobManager, JobManager>()
+    .RegisterJobCommandHandlers();
 
-static void ConfigureServices(WebHostBuilderContext context, IServiceCollection services)
-{
-    services.ConfigureFramework()
-        .AddApiKeyAuth(context.Configuration["ApiKey"])
-        .AddSwagger();
-    services.AddSingleton<IJobManager, JobManager>()
-        .RegisterJobCommandHandlers();
-}
+var app = builder.Build();
 
-static void ConfigureWebApplication(IApplicationBuilder app)
-{
-    app.UseCustomSwagger()
-        .UseRouting()
-        .UseAuthentication()
-        .UseAuthorization()
-        .UseEndpoints(endpoints =>
-        {
-            endpoints.MapHealthChecks("/health")
-                .AllowAnonymous();
-            endpoints.MapMetrics();
-            endpoints.MapControllers()
-                .RequireAuthorization();
-        });
-}
+app.UseCustomSwagger()
+    .UseRouting()
+    .UseAuthentication()
+    .UseAuthorization();
+
+app.MapHealthChecks("/health").AllowAnonymous();
+app.MapMetrics().AllowAnonymous();
+app.MapCronHttpReminders();
+app.MapHttpReminders();
 
 
 #pragma warning disable CA1050 // Declare types in namespaces

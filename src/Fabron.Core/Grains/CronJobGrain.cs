@@ -1,365 +1,251 @@
-﻿
+
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Fabron.Events;
 using Fabron.Models;
-using Fabron.Stores;
+using Fabron.Store;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Toolkit.Diagnostics;
 using Orleans;
 using Orleans.Concurrency;
 using Orleans.Runtime;
-using Orleans.Streams;
-using static Fabron.FabronConstants;
+using Orleans.Timers;
+using OrleansCodeGen.Orleans.Runtime;
 
-namespace Fabron.Grains
+namespace Fabron.Grains;
+
+public interface ICronJobGrain : IGrainWithStringKey
 {
-    public interface ICronJobGrain : IGrainWithStringKey
+    [ReadOnly]
+    Task<CronJob?> GetState();
+
+    Task Schedule(
+        string cronExp,
+        CommandSpec command,
+        DateTimeOffset? start,
+        DateTimeOffset? end,
+        bool suspend,
+        Dictionary<string, string>? labels,
+        Dictionary<string, string>? annotations);
+
+    Task Trigger();
+
+    Task Suspend();
+
+    Task Resume();
+
+    Task Delete();
+}
+
+public partial class CronJobGrain : TickerGrain, IGrainBase, ICronJobGrain
+{
+    private readonly IGrainRuntime _runtime;
+    private readonly ILogger _logger;
+    private readonly ISystemClock _clock;
+    private readonly CronJobOptions _options;
+    private readonly ICronJobStore _store;
+
+    public CronJobGrain(
+        IGrainContext context,
+        IGrainRuntime runtime,
+        ILogger<CronJobGrain> logger,
+        ISystemClock clock,
+        IOptions<CronJobOptions> options,
+        ICronJobStore store) : base(context, runtime, logger, options.Value.TickerInterval)
     {
-        [ReadOnly]
-        Task<CronJob?> GetState();
-
-        Task Schedule(
-            string cronExp,
-            string commandName,
-            string commandData,
-            DateTime? start,
-            DateTime? end,
-            bool suspend,
-            Dictionary<string, string>? labels,
-            Dictionary<string, string>? annotations);
-
-        Task Trigger();
-
-        Task Suspend();
-
-        Task Resume();
-
-        Task Complete();
-
-        Task Delete();
-
-        [AlwaysInterleave]
-        Task CommitOffset(long version);
-
-        Task Purge();
-
-        [AlwaysInterleave]
-        Task WaitEventsConsumed(int waitSeconds);
+        _logger = logger;
+        _options = options.Value;
+        _store = store;
+        _clock = clock;
+        _runtime = runtime;
     }
 
-    public partial class CronJobGrain : Grain, ICronJobGrain, IRemindable
+    private string _name = default!;
+    private string _namespace = default!;
+    private CronJob? _job;
+    async Task IGrainBase.OnActivateAsync(CancellationToken cancellationToken)
     {
-        private readonly ILogger _logger;
-        private readonly CronJobOptions _options;
-        private readonly ICronJobEventStore _eventStore;
-        private readonly IJobQuerier _querier;
-        public CronJobGrain(
-            ILogger<CronJobGrain> logger,
-            IOptions<CronJobOptions> options,
-            ICronJobEventStore eventStore,
-            IJobQuerier querier)
+        _key = this.GetPrimaryKeyString();
+        var (name, @namespace) = KeyUtils.ParseCronJobKey(_key);
+        _name = name;
+        _namespace = @namespace;
+        _job = await _store.FindAsync(_name, _namespace);
+    }
+
+    private DateTimeOffset? _lastSchedule;
+
+    public Task<CronJob?> GetState() => Task.FromResult(_job);
+
+    public async Task Schedule(
+        string cronExp,
+        CommandSpec command,
+        DateTimeOffset? start,
+        DateTimeOffset? end,
+        bool suspend,
+        Dictionary<string, string>? labels,
+        Dictionary<string, string>? annotations)
+    {
+        await TickAfter(_options.TickerInterval);
+        _job = new CronJob
         {
-            _logger = logger;
-            _options = options.Value;
-            _eventStore = eventStore;
-            _querier = querier;
-        }
+            Metadata = new ObjectMetadata
+            {
+                Name = _name,
+                Namespace = _namespace,
+                UID = Guid.NewGuid().ToString(),
+                CreationTimestamp = _clock.UtcNow,
+                DeletionTimestamp = null,
+                Labels = labels,
+                Annotations = annotations,
+                Owner = null
+            },
+            Spec = new CronJobSpec
+            {
+                Command = command,
+                Schedule = cronExp,
+                NotBefore = start,
+                ExpirationTime = end,
+                Suspend = suspend,
+            },
+            Status = new CronJobStatus
+            { }
+        };
+        await _store.SaveAsync(_job);
 
-        private string _key = default!;
-        private CronJob? _state;
-        private long _consumerOffset;
-        private ICronJobScheduler _scheduler = default!;
-        public override async Task OnActivateAsync(CancellationToken cancellationToken)
+        var now = _clock.UtcNow;
+        if (!_job.Spec.Suspend && (_job.Spec.NotBefore is null || _job.Spec.NotBefore.Value <= now))
         {
-            _key = this.GetPrimaryKeyString();
-            _scheduler = GrainFactory.GetGrain<ICronJobScheduler>(_key);
-            _consumer = GrainFactory.GetGrain<ICronJobEventConsumer>(_key);
-
-            var getConsumerOffsetTask = _eventStore.GetConsumerOffset(_key);
-
-            var snapshot = await _querier.GetCronJobByKey(_key);
-            if (snapshot is not null)
+            if (_options.UseSynchronousTicker)
             {
-                _state = snapshot;
-                _logger.StateSnapshotLoaded(_key, _state.Version);
-            }
-            var from = _state is null ? 0L : _state.Version + 1;
-
-            _logger.LoadingEvents(_key, from);
-            List<EventLog> eventLogs = await _eventStore.GetEventLogs(_key, from);
-            foreach (EventLog? eventLog in eventLogs)
-            {
-                TransitionState(eventLog);
-            }
-
-            _consumerOffset = await getConsumerOffsetTask;
-            _logger.ConsumerOffsetLoaded(_key, _consumerOffset);
-        }
-
-        private ICronJobEventConsumer _consumer = default!;
-        private TaskCompletionSource<bool>? _consumingCompletionSource;
-        private IDisposable? _hcTimer = null;
-        private IGrainReminder? _hcReminder = null;
-
-        private CronJob State
-        {
-            get
-            {
-                Guard.IsNotNull(_state, nameof(State));
-                return _state;
-            }
-        }
-        private bool ConsumerNotFollowedUp => _state is not null && _state.Version != _consumerOffset;
-        private bool Deleted => _state is null || _state.Status.Deleted;
-        private bool Purged => _state is null && _consumerOffset == -1;
-
-        public Task<CronJob?> GetState() => Task.FromResult(_state);
-
-        public async Task Purge()
-        {
-            if (ConsumerNotFollowedUp)
-            {
-                await NotifyConsumer();
-                await WaitEventsConsumed();
-                return;
-            }
-
-            if (_state != null)
-            {
-                await _eventStore.ClearEventLogs(_key, long.MaxValue);
-                _state = null;
-            }
-            if (_consumerOffset != -1)
-            {
-                await _eventStore.ClearConsumerOffset(_key);
-                await _consumer.Reset();
-                _consumerOffset = -1;
-            }
-            _logger.Purged(_key);
-        }
-
-        public async Task Delete()
-        {
-            if (Deleted)
-            {
-                return;
-            }
-            CronJobDeleted? @event = new CronJobDeleted();
-            await RaiseAsync(@event, nameof(CronJobDeleted));
-        }
-
-        public async Task Schedule(
-            string cronExp,
-            string commandName,
-            string commandData,
-            DateTime? notBefore,
-            DateTime? expirationTime,
-            bool suspend,
-            Dictionary<string, string>? labels,
-            Dictionary<string, string>? annotations)
-        {
-            var @event = new CronJobScheduled(
-                labels ?? new Dictionary<string, string>(),
-                annotations ?? new Dictionary<string, string>(),
-                cronExp,
-                commandName,
-                commandData,
-                notBefore,
-                expirationTime
-            );
-            await RaiseAsync(@event, nameof(CronJobScheduled));
-
-            if (!suspend)
-            {
-                await Resume();
-            }
-        }
-
-        public async Task Trigger() => await _scheduler.Trigger();
-
-        public async Task Suspend()
-        {
-            if (State.Spec.Suspend)
-            {
-                return;
-            }
-            var @event = new CronJobSuspended();
-            await RaiseAsync(@event, nameof(CronJobSuspended));
-        }
-
-        public async Task Resume()
-        {
-            var state = State;
-            if (state.Status.CompletionTimestamp.HasValue)
-            {
-                ThrowHelper.ThrowStartCompletedCronJob(_key);
-                return;
-            }
-
-            await SetHealthCheck();
-            if (state.Spec.Suspend)
-            {
-                var @event = new CronJobResumed();
-                await RaiseAsync(@event, nameof(CronJobResumed));
-            }
-            await _scheduler.Start();
-        }
-
-        public async Task Complete()
-        {
-            var state = State;
-            DateTime now = DateTime.UtcNow;
-            Cronos.CronExpression cron = Cronos.CronExpression.Parse(state.Spec.Schedule, _options.CronFormat);
-            var tick = cron.GetNextOccurrence(now.AddSeconds(-5));
-            // Completed
-            if (tick is null || (state.Spec.ExpirationTime.HasValue && tick.Value > state.Spec.ExpirationTime.Value))
-            {
-                var @event = new CronJobCompleted();
-                await RaiseAsync(@event, nameof(CronJobCompleted));
-            }
-        }
-
-        public async Task CommitOffset(long offset)
-        {
-            long currentVersion = State.Version;
-            if (offset < _consumerOffset || offset > currentVersion)
-            {
-                _logger.ConsumerOffsetInvalid(_key, offset, _consumerOffset, currentVersion);
-                return;
-            }
-            if (offset == _consumerOffset || offset == currentVersion)
-            {
-                return;
-            }
-
-            await _eventStore.SaveConsumerOffset(State.Metadata.Key, offset);
-            _consumerOffset = offset;
-            _logger.ConsumerOffsetUpdated(_key, _consumerOffset);
-
-            if (_consumerOffset == State.Version)
-            {
-                if (_consumingCompletionSource != null && !_consumingCompletionSource.Task.IsCompleted)
-                {
-                    _logger.LogDebug($"Completing wait consuming task");
-                    _consumingCompletionSource.SetResult(true);
-                }
-            }
-        }
-
-        public async Task WaitEventsConsumed(int waitSeconds = 5)
-        {
-            // _logger.LogDebug($"Waiting events consumed for {_key}");
-            if (!ConsumerNotFollowedUp)
-            {
-                // _logger.LogDebug($"Consumer already followed up, no need to wait");
-                return;
-            }
-            if (_consumingCompletionSource is null)
-            {
-                // _logger.LogDebug($"No current awaiting task, create new one");
-                _consumingCompletionSource = new TaskCompletionSource<bool>();
-            }
-            int retry = 0;
-            while (true)
-            {
-                if (!ConsumerNotFollowedUp) { return; }
-                try
-                {
-                    // _logger.LogDebug($"Waiting task to finish");
-                    await _consumingCompletionSource.Task.WaitAsync(TimeSpan.FromMilliseconds(100));
-                    // _logger.LogDebug($"Waiting completed");
-                    break;
-                }
-                catch (TimeoutException)
-                {
-                    // _logger.LogDebug($"Waiting events consumed for {_key}");
-                    if (retry++ > 10 * waitSeconds)
-                    {
-                        // _logger.LogDebug($"Waiting timeout");
-                        throw;
-                    }
-                    await NotifyConsumer();
-                }
-            }
-        }
-
-        private async Task SetHealthCheck()
-        {
-            _hcReminder = await RegisterOrUpdateReminder(Names.HealthCheckReminder, TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(5));
-            SetHealthCheckTimer();
-        }
-        private void SetHealthCheckTimer()
-        {
-            if (_hcTimer is null)
-            {
-                _hcTimer = RegisterTimer(_ => HealthCheck(), null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
-            }
-        }
-
-        private async Task HealthCheck()
-        {
-            bool isHealthy = false;
-            if (_state is null || _state.Status.Deleted || _state.Spec.Suspend)
-            {
-                isHealthy = true;
+                await Tick(now);
             }
             else
             {
-                if (await _scheduler.IsRunning())
-                {
-                    isHealthy = true;
-                }
+                _ = Task.Factory.StartNew(() => Tick(now)).Unwrap();
             }
-
-            if (isHealthy)
-            {
-                await StopHealthCheck();
-
-            }
-            else
-            {
-                _logger.CronJobSchedulerUnhealthy(_key);
-                await _scheduler.Start();
-            }
-
-        }
-
-        private async Task StopHealthCheck()
-        {
-
-            var reminder = _hcReminder ?? await GetReminder(Names.HealthCheckReminder);
-            int retry = 0;
-            while (true)
-            {
-                if (reminder is null) return;
-                try
-                {
-                    await UnregisterReminder(reminder);
-                    break;
-                }
-                catch (Orleans.Runtime.ReminderException)
-                {
-                    if (retry++ < 3)
-                    {
-                        reminder = await GetReminder(Names.HealthCheckReminder);
-                        continue;
-                    }
-                    throw;
-                }
-            }
-            _hcReminder = null;
-            _hcTimer?.Dispose();
-        }
-
-        public Task ReceiveReminder(string reminderName, TickStatus status)
-        {
-            SetHealthCheckTimer();
-            return Task.CompletedTask;
         }
     }
+
+    public Task Trigger()
+    {
+        return ScheduleNewRun(_clock.UtcNow);
+    }
+
+    public async Task Suspend()
+    {
+        Guard.IsNotNull(_job, nameof(_job));
+        _job.Spec.Suspend = true;
+        await _store.SaveAsync(_job);
+    }
+
+    public async Task Resume()
+    {
+        Guard.IsNotNull(_job, nameof(_job));
+        _job.Spec.Suspend = false;
+        await _store.SaveAsync(_job);
+    }
+
+    public async Task Delete()
+    {
+        if (_job is not null)
+        {
+            await _store.DeleteAsync(_job.Metadata.Name, _job.Metadata.Namespace);
+        }
+    }
+
+    protected override async Task Tick(DateTimeOffset? expectedTickTime)
+    {
+        if (_job is null || _job.Deleted || _job.Spec.Suspend)
+        {
+            await StopTicker();
+            return;
+        }
+
+        DateTimeOffset now = _clock.UtcNow;
+        if (now > _job.Spec.ExpirationTime)
+        {
+            await StopTicker();
+            return;
+        }
+
+        if (_job.Spec.NotBefore.HasValue && now < _job.Spec.NotBefore.Value)
+        {
+            await TickAfter(_job.Spec.NotBefore.Value.Subtract(now));
+            return;
+        }
+
+        Cronos.CronExpression cron = Cronos.CronExpression.Parse(_job.Spec.Schedule, _options.CronFormat);
+        DateTimeOffset? tick;
+        DateTimeOffset from = now.AddSeconds(-10);
+        if (_lastSchedule.HasValue && _lastSchedule.Value > from)
+        {
+            from = _lastSchedule.Value;
+        }
+        tick = cron.GetNextOccurrence(from, _options.TimeZone);
+
+        // Completed
+        if (tick is null || (_job.Spec.ExpirationTime.HasValue && tick.Value > _job.Spec.ExpirationTime.Value))
+        {
+            await StopTicker();
+            return;
+        }
+
+        // Just at the time to schedule new job
+        if (tick.Value <= now.AddSeconds(2))
+        {
+            await ScheduleNewRun(tick.Value);
+        }
+        else // not at the time
+        {
+            await TickAfter(tick.Value.Subtract(now));
+            if (expectedTickTime.HasValue)
+            {
+                TickerLog.UnexpectedTick(_logger, _key, expectedTickTime.Value.ToString("yyyy-MM-ddTHH:mm:ssZ"));
+            }
+            return;
+        }
+    }
+
+    private async Task ScheduleNewRun(DateTimeOffset schedule)
+    {
+        Guard.IsNotNull(_job, nameof(_job));
+
+        string runKey = KeyUtils.BuildCronJobItemKey(_name, _namespace, schedule);
+        Log.SchedulingNewRun(_logger, _key, runKey);
+
+        IJobGrain grain = _runtime.GrainFactory.GetGrain<IJobGrain>(runKey);
+        var labels = _job.Metadata.Labels;
+        var annotations = _job.Metadata.Annotations;
+        await grain.Schedule(
+            schedule,
+            _job.Spec.Command,
+            labels,
+            annotations,
+            new OwnerReference
+            {
+                Kind = "CronJob",
+                Name = _name
+            });
+
+        _lastSchedule = schedule;
+        Log.ScheduledNewRun(_logger, _key, runKey);
+    }
+
+    public static partial class Log
+    {
+        [LoggerMessage(
+            EventId = 10004,
+            Level = LogLevel.Debug,
+            Message = "[{key}]: Scheduling new run[{runKey}]")]
+        public static partial void SchedulingNewRun(ILogger logger, string key, string runKey);
+
+        [LoggerMessage(
+            EventId = 10005,
+            Level = LogLevel.Information,
+            Message = "[{key}]: Scheduled new run[{runKey}]")]
+        public static partial void ScheduledNewRun(ILogger logger, string key, string runKey);
+    }
+
 }
