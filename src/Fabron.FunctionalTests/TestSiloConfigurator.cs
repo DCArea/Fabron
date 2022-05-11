@@ -1,5 +1,7 @@
 
 using System;
+using Fabron.Mando;
+using Fabron.Store;
 using Microsoft.Extensions.DependencyInjection;
 
 using Orleans.Configuration;
@@ -10,7 +12,10 @@ namespace Fabron.FunctionalTests
 {
     public class TestSiloConfigurator : ISiloConfigurator
     {
-        public virtual void ConfigureServices(IServiceCollection services) => services.AddHttpClient();
+        public virtual void ConfigureServices(IServiceCollection services)
+        {
+            services.AddHttpClient();
+        }
 
         public virtual void ConfigureSilo(ISiloBuilder siloBuilder)
         {
@@ -23,18 +28,17 @@ namespace Fabron.FunctionalTests
                 options.ResponseTimeout = TimeSpan.FromSeconds(5);
             });
 
-            siloBuilder.Configure<CronJobOptions>(options =>
+            siloBuilder.UseLocalhostClustering();
+            siloBuilder.ConfigureServices(services =>
             {
-                options.UseAsynchronousIndexer = true;
+                services.AddSingleton<IJobStore, InMemoryJobStore>();
+                services.AddSingleton<ICronJobStore, InMemoryJobStore>();
+                services.AddScoped<IMediator, Mediator>()
+                    .RegisterJobCommandHandlers();
+                services.AddSingleton<ISystemClock, SystemClock>();
             });
-            siloBuilder.Configure<JobOptions>(options =>
-            {
-                options.UseAsynchronousIndexer = true;
-            });
-            siloBuilder.UseInMemory();
 
             siloBuilder.ConfigureServices(ConfigureServices);
-            siloBuilder.AddFabron();
         }
     }
 }

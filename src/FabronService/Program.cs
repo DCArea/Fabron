@@ -13,25 +13,19 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 
-using Orleans.Hosting;
-
 using Prometheus;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Host
-    .UseFabron((ctx, siloBuilder) =>
-    {
-        siloBuilder.AddPrometheusTelemetryConsumer();
-        siloBuilder.UseLocalhostClustering()
-            .UseInMemory();
-    });
+    .UseFabron()
+    .UseLocalhostClustering()
+    .UseInMemory();
 
 builder.Services
     .ConfigureFramework()
     .AddApiKeyAuth(builder.Configuration["ApiKey"])
     .AddSwagger()
-    .AddSingleton<IJobManager, JobManager>()
     .RegisterJobCommandHandlers();
 
 var app = builder.Build();

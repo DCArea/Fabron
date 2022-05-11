@@ -10,16 +10,6 @@ namespace Fabron.Providers.PostgreSQL
     {
         const string Invariant = "Npgsql";
 
-        public static IClientBuilder UsePostgreSQLClustering(this IClientBuilder client, string connectionString)
-        {
-            client.UseAdoNetClustering(options =>
-            {
-                options.Invariant = Invariant;
-                options.ConnectionString = connectionString;
-            });
-            return client;
-        }
-
         public static ISiloBuilder UsePosgreSQL(this ISiloBuilder silo, IConfiguration configuration)
         {
             silo.Configure<PostgreSQLOptions>(configuration);
@@ -50,6 +40,60 @@ namespace Fabron.Providers.PostgreSQL
             // silo.UsePostgreSQLEventStore();
             // silo.UsePostgreSQLIndexStore();
             return silo;
+        }
+
+        public static FabronClientBuilder UsePostgreSQLClustering(this FabronClientBuilder client, string connectionString)
+        {
+            client.ConfigureOrleansClient((ctx, cb) =>
+            {
+                cb.UseAdoNetClustering(options =>
+                {
+                    options.Invariant = Invariant;
+                    options.ConnectionString = connectionString;
+                });
+            });
+            return client;
+        }
+
+        public static FabronServerBuilder UsePostgreSQL(this FabronServerBuilder server, string connectionString)
+        {
+            server.UsePostgreSQLClustering(connectionString);
+            server.UsePosgreSQLReminder(connectionString);
+            server.UsePosgreSQLStore(connectionString);
+
+            return server;
+        }
+
+
+        public static FabronServerBuilder UsePostgreSQLClustering(this FabronServerBuilder server, string connectionString)
+        {
+            server.ConfigureOrleans((ctx, sb) =>
+            {
+                sb.UseAdoNetClustering(options =>
+                {
+                    options.Invariant = Invariant;
+                    options.ConnectionString = connectionString;
+                });
+            });
+            return server;
+        }
+
+        public static FabronServerBuilder UsePosgreSQLReminder(this FabronServerBuilder server, string connectionString)
+        {
+            server.ConfigureOrleans((ctx, sb) =>
+            {
+                sb.UseAdoNetReminderService(options =>
+                {
+                    options.Invariant = Invariant;
+                    options.ConnectionString = connectionString;
+                });
+            });
+            return server;
+        }
+
+        public static FabronServerBuilder UsePosgreSQLStore(this FabronServerBuilder server, string connectionString)
+        {
+            return server;
         }
     }
 

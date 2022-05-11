@@ -1,35 +1,15 @@
 
-using System;
 using System.Collections.Generic;
 using System.Reflection;
-using Microsoft.Extensions.DependencyInjection;
-using Orleans.Hosting;
+using Fabron;
 
 namespace Microsoft.Extensions.Hosting
 {
     public static class FabronHostBuilderExtensions
     {
-        public static IHostBuilder UseFabron(
-            this IHostBuilder hostBuilder,
-            Action<HostBuilderContext, ISiloBuilder> configureDelegate)
-        => hostBuilder.UseFabron(configureDelegate, null);
-
-        public static IHostBuilder UseFabron(
-            this IHostBuilder hostBuilder,
-            Action<HostBuilderContext, ISiloBuilder> configureDelegate,
-            IEnumerable<Assembly>? assemblies)
+        public static FabronServerBuilder UseFabron(this IHostBuilder hostBuilder, IEnumerable<Assembly>? commandAssemblies = null)
         {
-            hostBuilder.ConfigureServices((ctx, services) =>
-            {
-            });
-
-            hostBuilder.UseOrleans((ctx, siloBuilder) =>
-            {
-                siloBuilder.AddFabron(assemblies);
-                configureDelegate(ctx, siloBuilder);
-            });
-
-            return hostBuilder;
+            return new FabronServerBuilder(hostBuilder);
         }
     }
 }

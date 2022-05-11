@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Fabron.Core\Fabron.Core.csproj" />
+    <ProjectReference Include="..\Fabron.Server\Fabron.Server.csproj" />
   </ItemGroup>
 
 </Project>

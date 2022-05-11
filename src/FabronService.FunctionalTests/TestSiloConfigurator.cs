@@ -1,12 +1,12 @@
 
 using System;
 using Fabron;
-
+using Fabron.Mando;
+using Fabron.Store;
 using Microsoft.Extensions.DependencyInjection;
 
 using Orleans.Configuration;
 using Orleans.Hosting;
-using Orleans.Serialization;
 using Orleans.TestingHost;
 
 namespace FabronService.FunctionalTests
@@ -21,9 +21,18 @@ namespace FabronService.FunctionalTests
             {
                 options.ResponseTimeout = TimeSpan.FromSeconds(5);
             });
-            siloBuilder.UseInMemory();
+
+            siloBuilder.UseLocalhostClustering()
+                .UseInMemoryReminderService();
+            siloBuilder.ConfigureServices(services =>
+            {
+                services.AddSingleton<IJobStore, InMemoryJobStore>();
+                services.AddSingleton<ICronJobStore, InMemoryJobStore>();
+                services.AddScoped<IMediator, Mediator>()
+                    .RegisterJobCommandHandlers();
+                services.AddSingleton<ISystemClock, SystemClock>();
+            });
             siloBuilder.ConfigureServices(ConfigureServices);
-            siloBuilder.AddFabron();
         }
     }
 }
