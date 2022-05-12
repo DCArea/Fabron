@@ -1,6 +1,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Fabron.Models;
@@ -11,8 +12,6 @@ using Microsoft.Toolkit.Diagnostics;
 using Orleans;
 using Orleans.Concurrency;
 using Orleans.Runtime;
-using Orleans.Timers;
-using OrleansCodeGen.Orleans.Runtime;
 
 namespace Fabron.Grains;
 
@@ -87,7 +86,7 @@ public partial class CronJobGrain : TickerGrain, IGrainBase, ICronJobGrain
         Dictionary<string, string>? labels,
         Dictionary<string, string>? annotations)
     {
-        await TickAfter(_options.TickerInterval);
+        // await TickAfter(_options.TickerInterval);
         _job = new CronJob
         {
             Metadata = new ObjectMetadata
@@ -157,8 +156,16 @@ public partial class CronJobGrain : TickerGrain, IGrainBase, ICronJobGrain
 
     protected override async Task Tick(DateTimeOffset? expectedTickTime)
     {
-        if (_job is null || _job.Deleted || _job.Spec.Suspend)
+        if (_job is null || _job.Deleted)
         {
+            TickerLog.UnexpectedTick(_logger, _key, expectedTickTime, "NotExisting");
+            await StopTicker();
+            return;
+        }
+
+        if (_job.Spec.Suspend)
+        {
+            TickerLog.UnexpectedTick(_logger, _key, expectedTickTime, "Suspended");
             await StopTicker();
             return;
         }
@@ -166,46 +173,50 @@ public partial class CronJobGrain : TickerGrain, IGrainBase, ICronJobGrain
         DateTimeOffset now = _clock.UtcNow;
         if (now > _job.Spec.ExpirationTime)
         {
+            TickerLog.UnexpectedTick(_logger, _key, expectedTickTime, "Expired");
             await StopTicker();
             return;
         }
 
         if (_job.Spec.NotBefore.HasValue && now < _job.Spec.NotBefore.Value)
         {
+            TickerLog.UnexpectedTick(_logger, _key, expectedTickTime, "NotStarted");
             await TickAfter(_job.Spec.NotBefore.Value.Subtract(now));
             return;
         }
 
         Cronos.CronExpression cron = Cronos.CronExpression.Parse(_job.Spec.Schedule, _options.CronFormat);
-        DateTimeOffset? tick;
+
         DateTimeOffset from = now.AddSeconds(-10);
         if (_lastSchedule.HasValue && _lastSchedule.Value > from)
         {
             from = _lastSchedule.Value;
         }
-        tick = cron.GetNextOccurrence(from, _options.TimeZone);
-
-        // Completed
-        if (tick is null || (_job.Spec.ExpirationTime.HasValue && tick.Value > _job.Spec.ExpirationTime.Value))
+        var to = now.AddSeconds(10);
+        if (to > _job.Spec.ExpirationTime)
         {
+            to = _job.Spec.ExpirationTime.Value;
+        }
+
+        var schedules = cron.GetOccurrences(from, to, _options.TimeZone, fromInclusive: false, toInclusive: true);
+        if (!schedules.Any())
+        {
+            // no more schedules
+            await StopTicker();
+            return;
+        }
+        var scheduleTasks = schedules.Select(ScheduleNewRun);
+        await Task.WhenAll(scheduleTasks);
+
+        var nextTick = cron.GetNextOccurrence(schedules.Last(), _options.TimeZone);
+        if (!nextTick.HasValue || (_job.Spec.ExpirationTime.HasValue && nextTick.Value > _job.Spec.ExpirationTime.Value))
+        {
+            // no more next tick
             await StopTicker();
             return;
         }
 
-        // Just at the time to schedule new job
-        if (tick.Value <= now.AddSeconds(2))
-        {
-            await ScheduleNewRun(tick.Value);
-        }
-        else // not at the time
-        {
-            await TickAfter(tick.Value.Subtract(now));
-            if (expectedTickTime.HasValue)
-            {
-                TickerLog.UnexpectedTick(_logger, _key, expectedTickTime.Value.ToString("yyyy-MM-ddTHH:mm:ssZ"));
-            }
-            return;
-        }
+        await TickAfter(nextTick.Value.Subtract(now));
     }
 
     private async Task ScheduleNewRun(DateTimeOffset schedule)

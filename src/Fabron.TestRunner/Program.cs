@@ -1,8 +1,19 @@
-﻿using Fabron.TestRunner.Scenarios;
+﻿using System;
+using Fabron.TestRunner.Scenarios;
 
-await new ScheduleJob().PlayAsync();
-// await new ScheduleCronJob().PlayAsync();
-// await new ScheduleCronJobNonUtc().PlayAsync();
-// await new LabelBasedQuery().PlayAsync();
-// await new ErrorOnListeners().PlayAsync();
-// await new PgsqlScheduleCronJob().PlayAsync();
+if (args.Length > 0)
+{
+    string scenarioName = args[0];
+    ScenarioBase scenario = scenarioName.ToLowerInvariant() switch
+    {
+        "schedulejob" => new ScheduleJob(),
+        "schedulecronjob" => new ScheduleCronJob(),
+        _ => throw new ArgumentNullException($"Unknown scenario: {scenarioName}")
+    };
+
+    await scenario.PlayAsync();
+}
+else
+{
+    throw new ArgumentNullException($"Unknown scenario");
+}

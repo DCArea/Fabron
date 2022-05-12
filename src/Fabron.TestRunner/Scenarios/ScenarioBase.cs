@@ -18,20 +18,20 @@ namespace Fabron.TestRunner.Scenarios
     {
         private IHost _host = default!;
         private IServiceProvider ServiceProvider => _host.Services;
-        public ILogger Logger => ServiceProvider.GetRequiredService<ILogger<ScenarioBase>>();
-        public IJobManager JobManager => ServiceProvider.GetRequiredService<IJobManager>();
+        protected ILogger Logger => ServiceProvider.GetRequiredService<ILogger<ScenarioBase>>();
+        protected IJobManager JobManager => ServiceProvider.GetRequiredService<IJobManager>();
         // public IJobQuerier JobQuerier => ServiceProvider.GetRequiredService<IJobQuerier>();
-        public IClusterClient ClusterClient => ServiceProvider.GetRequiredService<IClusterClient>();
-        public IGrainFactory GrainFactory => ClusterClient;
+        protected IClusterClient ClusterClient => ServiceProvider.GetRequiredService<IClusterClient>();
+        protected IGrainFactory GrainFactory => ClusterClient;
 
         // public ICronJobGrain GetCronJobGrain(string id) => ClusterClient.GetGrain<ICronJobGrain>(id);
 
-        public virtual IHostBuilder ConfigureHost(IHostBuilder builder)
+        protected virtual IHostBuilder ConfigureHost(IHostBuilder builder)
         {
             return builder;
         }
 
-        public virtual ISiloBuilder ConfigureSilo(ISiloBuilder builder)
+        protected virtual FabronServerBuilder ConfigureServer(FabronServerBuilder builder)
         {
             return builder;
         }
@@ -39,10 +39,11 @@ namespace Fabron.TestRunner.Scenarios
         protected virtual IEnumerable<KeyValuePair<string, string>> Configs => new Dictionary<string, string>
         {
             { "Logging:LogLevel:Default", "Warning" },
+            { "Logging:LogLevel:Orleans", "Warning" },
             { "Logging:LogLevel:Fabron", "Information"}
         };
 
-        public virtual IHost CreateHost()
+        protected virtual IHost CreateHost()
         {
             var builder = Host.CreateDefaultBuilder()
                 .ConfigureHostConfiguration(config =>
@@ -59,32 +60,24 @@ namespace Fabron.TestRunner.Scenarios
                 });
 
             builder = ConfigureHost(builder);
+            var server = builder.UseFabron()
+                .UseLocalhostClustering()
+                .UseInMemory();
+            ConfigureServer(server);
 
-            builder.UseFabron((ctx, silo) =>
-            {
-                silo
-                    .AddActivityPropagation()
-                    .Configure<StatisticsOptions>(options =>
-                    {
-                        options.LogWriteInterval = TimeSpan.FromMilliseconds(-1);
-                    })
-                    .UseLocalhostClustering()
-                    .UseInMemory();
-                ConfigureSilo(silo);
-            }
-            )
-            .UseConsoleLifetime();
+            builder.UseConsoleLifetime();
             return builder.Build();
         }
 
-        public abstract Task RunAsync();
+        protected abstract Task RunAsync();
 
         public async Task PlayAsync()
         {
             _host = CreateHost();
             await _host.StartAsync();
             await RunAsync();
-            await _host.StopAsync().WaitAsync(TimeSpan.FromSeconds(10));
+            await _host.WaitForShutdownAsync();
+            // await _host.StopAsync().WaitAsync(TimeSpan.FromSeconds(10));
             Console.WriteLine("FINISHED");
         }
     }

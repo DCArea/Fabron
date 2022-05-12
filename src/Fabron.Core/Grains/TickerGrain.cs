@@ -1,10 +1,8 @@
 using System;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Orleans;
 using Orleans.Runtime;
-using Orleans.Timers;
 
 namespace Fabron.Grains;
 
@@ -35,14 +33,14 @@ public abstract partial class TickerGrain : IRemindable
 
     protected async Task TickAfter(TimeSpan dueTime)
     {
-        if (_tickReminder is null)
-            _tickReminder = await _runtime.ReminderRegistry.RegisterOrUpdateReminder(GrainContext.GrainId, Names.TickerReminder, dueTime, _interval);
+        // if (_tickReminder is null)
+        _tickReminder = await _runtime.ReminderRegistry.RegisterOrUpdateReminder(GrainContext.GrainId, Names.TickerReminder, dueTime, _interval);
 
-        // ?
-        if (dueTime != _interval)
-        {
-            _runtime.TimerRegistry.RegisterTimer(GrainContext, obj => Tick(), null, dueTime, TimeSpan.FromMilliseconds(-1));
-        }
+        // // ?
+        // if (dueTime != _interval)
+        // {
+        //     _runtime.TimerRegistry.RegisterTimer(GrainContext, obj => Tick(), null, dueTime, TimeSpan.FromMilliseconds(-1));
+        // }
 
         TickerLog.TickerRegistered(_logger, _key, dueTime);
     }
@@ -52,7 +50,10 @@ public abstract partial class TickerGrain : IRemindable
         int retry = 0;
         while (true)
         {
-            _tickReminder = await _runtime.ReminderRegistry.GetReminder(GrainContext.GrainId, Names.TickerReminder);
+            if (_tickReminder is null)
+            {
+                _tickReminder = await _runtime.ReminderRegistry.GetReminder(GrainContext.GrainId, Names.TickerReminder);
+            }
             if (_tickReminder is null) break;
             try
             {
@@ -91,30 +92,36 @@ public abstract partial class TickerGrain : IRemindable
     public static partial class TickerLog
     {
         [LoggerMessage(
-            EventId = 17001,
-            Level = LogLevel.Debug,
+            EventId = 13100,
+            Level = LogLevel.Information,
             Message = "[{key}]: Ticker registered with due time: {dueTime}")]
         public static partial void TickerRegistered(ILogger logger, string key, TimeSpan dueTime);
 
         [LoggerMessage(
-            EventId = 17002,
-            Level = LogLevel.Debug,
+            EventId = 13200,
+            Level = LogLevel.Warning,
+            Message = "[{key}]: Unexpected tick at {tickTime}, reason: {reason}")]
+        public static partial void UnexpectedTick(ILogger logger, string key, string tickTime, string reason);
+
+        public static void UnexpectedTick(ILogger logger, string key, DateTimeOffset? tickTime, string reason)
+            => UnexpectedTick(logger, key, tickTime.HasValue ? tickTime.Value.ToString("o") : "unknown", reason);
+
+        [LoggerMessage(
+            EventId = 13300,
+            Level = LogLevel.Warning,
+            Message = "[{key}]: tick missed at {tickTime}")]
+        public static partial void TickMissed(ILogger logger, string key, string tickTime);
+
+        [LoggerMessage(
+            EventId = 13900,
+            Level = LogLevel.Information,
             Message = "[{key}]: Ticker disposed")]
         public static partial void TickerDisposed(ILogger logger, string key);
 
         [LoggerMessage(
-            EventId = 17003,
-            Level = LogLevel.Warning,
-            Message = "[{key}]: Unexpected tick at {tickTime}")]
-        public static partial void UnexpectedTick(ILogger logger, string key, string tickTime);
-
-        [LoggerMessage(
-            EventId = 10004,
+            EventId = 13910,
             Level = LogLevel.Warning,
             Message = "[{key}]: Unregister reminder failed, retry")]
         public static partial void RetryUnregisterReminder(ILogger logger, string key);
     }
-
 }
-
-
