@@ -27,7 +27,7 @@ namespace FabronService.FunctionalTests
             siloBuilder.ConfigureServices(services =>
             {
                 services.AddSingleton<IJobStore, InMemoryJobStore>();
-                services.AddSingleton<ICronJobStore, InMemoryJobStore>();
+                services.AddSingleton<ICronJobStore, InMemoryCronJobStore>();
                 services.AddScoped<IMediator, Mediator>()
                     .RegisterJobCommandHandlers();
                 services.AddSingleton<ISystemClock, SystemClock>();

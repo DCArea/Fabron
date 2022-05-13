@@ -58,11 +58,12 @@ public partial class JobGrain : TickerGrain, IGrainBase, IJobGrain
     }
 
     private Job? _job;
+    private string? _eTag;
     async Task IGrainBase.OnActivateAsync(CancellationToken cancellationToken)
     {
         _key = GrainContext.GrainReference.GetPrimaryKeyString();
         var (name, @namespace) = KeyUtils.ParseJobKey(_key);
-        _job = await _store.FindAsync(name, @namespace);
+        (_job, _eTag) = await _store.GetAsync(name, @namespace);
     }
 
     public Task<Job?> GetState() => Task.FromResult(_job);
@@ -84,7 +85,7 @@ public partial class JobGrain : TickerGrain, IGrainBase, IJobGrain
     {
         if (_job is not null)
         {
-            await _store.DeleteAsync(_job.Metadata.Name, _job.Metadata.Namespace);
+            await _store.RemoveAsync(_job.Metadata.Name, _job.Metadata.Namespace, _eTag);
         }
     }
 
@@ -123,7 +124,7 @@ public partial class JobGrain : TickerGrain, IGrainBase, IJobGrain
                 ExecutionStatus = JobExecutionStatus.Scheduled
             }
         };
-        await _store.SaveAsync(_job);
+        _eTag = await _store.SetAsync(_job, _eTag);
 
         utcNow = DateTimeOffset.UtcNow;
         if (schedule_ <= utcNow)
@@ -170,7 +171,7 @@ public partial class JobGrain : TickerGrain, IGrainBase, IJobGrain
         }
 
         _job.Status.ExecutionStatus = JobExecutionStatus.Started;
-        await _store.SaveAsync(_job);
+        _eTag = await _store.SetAsync(_job, _eTag);
 
         await Execute();
     }
@@ -195,7 +196,7 @@ public partial class JobGrain : TickerGrain, IGrainBase, IJobGrain
         }
 
         MetricsHelper.JobExecutionDuration.Observe(sw.GetElapsedTime().TotalSeconds);
-        await _store.SaveAsync(_job);
+        _eTag = await _store.SetAsync(_job, _eTag);
 
         await StopTicker();
     }

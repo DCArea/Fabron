@@ -40,7 +40,7 @@ public class TickerTests
             A.Fake<ILogger<CronJobGrain>>(),
             clock,
             CronJobOptions,
-            new InMemoryJobStore());
+            new InMemoryCronJobStore());
         A.CallTo(() => clock.UtcNow).Returns(new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc).ToDateTimeOffset());
         var jobGrain = A.Fake<IJobGrain>();
         A.CallTo(() => runtime.GrainFactory.GetGrain<IJobGrain>(A<string>.That.StartsWith("/registry/jobs/TickerTests/fabron-cronjob-ShouldTickImmediately-"), null))

@@ -6,8 +6,9 @@ if (args.Length > 0)
     string scenarioName = args[0];
     ScenarioBase scenario = scenarioName.ToLowerInvariant() switch
     {
-        "schedulejob" => new ScheduleJob(),
-        "schedulecronjob" => new ScheduleCronJob(),
+        "schedule" => new ScheduleJob(),
+        "schedule_cron" => new ScheduleCronJob(),
+        "pgsql_schedule_cron" => new PgsqlScheduleCronJob(),
         _ => throw new ArgumentNullException($"Unknown scenario: {scenarioName}")
     };
 

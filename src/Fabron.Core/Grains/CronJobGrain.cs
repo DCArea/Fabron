@@ -64,13 +64,14 @@ public partial class CronJobGrain : TickerGrain, IGrainBase, ICronJobGrain
     private string _name = default!;
     private string _namespace = default!;
     private CronJob? _job;
+    private string? _eTag;
     async Task IGrainBase.OnActivateAsync(CancellationToken cancellationToken)
     {
         _key = this.GetPrimaryKeyString();
         var (name, @namespace) = KeyUtils.ParseCronJobKey(_key);
         _name = name;
         _namespace = @namespace;
-        _job = await _store.FindAsync(_name, _namespace);
+        (_job, _eTag) = await _store.GetAsync(_name, _namespace);
     }
 
     private DateTimeOffset? _lastSchedule;
@@ -111,7 +112,7 @@ public partial class CronJobGrain : TickerGrain, IGrainBase, ICronJobGrain
             Status = new CronJobStatus
             { }
         };
-        await _store.SaveAsync(_job);
+        _eTag = await _store.SetAsync(_job, _eTag);
 
         var now = _clock.UtcNow;
         if (!_job.Spec.Suspend && (_job.Spec.NotBefore is null || _job.Spec.NotBefore.Value <= now))
@@ -136,21 +137,21 @@ public partial class CronJobGrain : TickerGrain, IGrainBase, ICronJobGrain
     {
         Guard.IsNotNull(_job, nameof(_job));
         _job.Spec.Suspend = true;
-        await _store.SaveAsync(_job);
+        _eTag = await _store.SetAsync(_job, _eTag);
     }
 
     public async Task Resume()
     {
         Guard.IsNotNull(_job, nameof(_job));
         _job.Spec.Suspend = false;
-        await _store.SaveAsync(_job);
+        _eTag = await _store.SetAsync(_job, _eTag);
     }
 
     public async Task Delete()
     {
         if (_job is not null)
         {
-            await _store.DeleteAsync(_job.Metadata.Name, _job.Metadata.Namespace);
+            await _store.RemoveAsync(_job.Metadata.Name, _job.Metadata.Namespace, _eTag);
         }
     }
 
@@ -258,5 +259,4 @@ public partial class CronJobGrain : TickerGrain, IGrainBase, ICronJobGrain
             Message = "[{key}]: Scheduled new run[{runKey}]")]
         public static partial void ScheduledNewRun(ILogger logger, string key, string runKey);
     }
-
 }

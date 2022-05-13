@@ -6,17 +6,8 @@ namespace Fabron.Providers.PostgreSQL
     public class PostgreSQLOptions
     {
         public string ConnectionString { get; set; } = default!;
-
-        public string JobEventLogsTableName { get; set; } = "fabron_job_eventlogs";
-
-        public string CronJobEventLogsTableName { get; set; } = "fabron_cronjob_eventlogs";
-
-        public string JobConsumersTableName { get; set; } = "fabron_job_consumers";
-
-        public string CronJobConsumersTableName { get; set; } = "fabron_cronjob_consumers";
-
-        public string JobIndexesTableName { get; set; } = "fabron_jobs";
-        public string CronJobIndexesTableName { get; set; } = "fabron_cronjobs";
+        public string JobTableName { get; set; } = "fabron_jobs_v1";
+        public string CronJobTableName { get; set; } = "fabron_cronjobs_v1";
 
         public JsonSerializerOptions JsonSerializerOptions { get; set; } = new()
         {

@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using Fabron.Mando;
@@ -61,7 +60,7 @@ public class FabronServerBuilder
         HostBuilder.ConfigureServices((context, services) =>
         {
             services.AddSingleton<IJobStore, InMemoryJobStore>();
-            services.AddSingleton<ICronJobStore, InMemoryJobStore>();
+            services.AddSingleton<ICronJobStore, InMemoryCronJobStore>();
         });
 
         ConfigureOrleans((context, siloBuilder) =>

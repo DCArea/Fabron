@@ -1,4 +1,5 @@
 using System;
+using Fabron.Store;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Orleans;
@@ -93,8 +94,16 @@ namespace Fabron.Providers.PostgreSQL
 
         public static FabronServerBuilder UsePosgreSQLStore(this FabronServerBuilder server, string connectionString)
         {
+            server.HostBuilder.ConfigureServices((ctx, services) =>
+            {
+                services.Configure<PostgreSQLOptions>(options =>
+                {
+                    options.ConnectionString = connectionString;
+                });
+                services.AddSingleton<IJobStore, PostgreSQLJobStore>();
+                services.AddSingleton<ICronJobStore, PostgreSQLCronJobStore>();
+            });
             return server;
         }
     }
-
 }

@@ -1,65 +1,57 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Fabron.Models;
 
 namespace Fabron.Store;
 
-public interface IJobStore
+public interface IStateStore<TState>
 {
-    Task SaveAsync(Job job);
-    Task<Job?> FindAsync(string name, string @namespace);
-    Task DeleteAsync(string name, string @namespace);
+    Task<string> SetAsync(TState state, string? expectedETag);
+    Task<(TState? state, string? eTag)> GetAsync(string name, string @namespace);
+    Task RemoveAsync(string name, string @namespace, string? expectedETag);
 }
 
-public interface ICronJobStore
+public interface IJobStore : IStateStore<Job>
+{ }
+
+public interface ICronJobStore : IStateStore<CronJob>
+{ }
+
+public abstract class InMemoryStateStore<TState> : IStateStore<TState>
 {
-    Task SaveAsync(CronJob job);
-    Task<CronJob?> FindAsync(string name, string @namespace);
-    Task DeleteAsync(string name, string @namespace);
+    private readonly Dictionary<string, (TState state, string eTag)> _dict = new();
+
+    public Task<(TState? state, string? eTag)> GetAsync(string name, string @namespace)
+    {
+        string key = @namespace + '/' + name;
+        return Task.FromResult(_dict.TryGetValue(key, out var state) ? state : (default, default));
+    }
+
+    public Task RemoveAsync(string name, string @namespace, string? expectedETag)
+    {
+        string key = @namespace + '/' + name;
+        _dict.Remove(key);
+        return Task.CompletedTask;
+    }
+
+    public Task<string> SetAsync(TState state, string? expectedETag)
+    {
+        string key = GetStateKey(state);
+        string newETag = Guid.NewGuid().ToString();
+        _dict[key] = (state, newETag);
+        return Task.FromResult(newETag);
+    }
+
+    protected abstract string GetStateKey(TState state);
 }
 
-public class InMemoryJobStore : IJobStore, ICronJobStore
+public class InMemoryJobStore : InMemoryStateStore<Job>, IJobStore
 {
-    private readonly Dictionary<string, Job> _jobs = new();
-    private readonly Dictionary<string, CronJob> _cronJobs = new();
+    protected override string GetStateKey(Job state) => state.Metadata.Namespace + '/' + state.Metadata.Name;
+}
 
-    Task IJobStore.SaveAsync(Job job)
-    {
-        string key = job.Metadata.Namespace + '/' + job.Metadata.Name;
-        _jobs[key] = job;
-        return Task.CompletedTask;
-    }
-
-    Task<Job?> IJobStore.FindAsync(string name, string @namespace)
-    {
-        string key = @namespace + '/' + name;
-        return Task.FromResult(_jobs.TryGetValue(key, out var job) ? job : null);
-    }
-
-    Task IJobStore.DeleteAsync(string name, string @namespace)
-    {
-        string key = @namespace + '/' + name;
-        _jobs.Remove(key);
-        return Task.CompletedTask;
-    }
-
-    Task ICronJobStore.SaveAsync(CronJob job)
-    {
-        string key = job.Metadata.Namespace + '/' + job.Metadata.Name;
-        _cronJobs[key] = job;
-        return Task.CompletedTask;
-    }
-
-    Task<CronJob?> ICronJobStore.FindAsync(string name, string @namespace)
-    {
-        string key = @namespace + '/' + name;
-        return Task.FromResult(_cronJobs.TryGetValue(key, out var job) ? job : null);
-    }
-
-    Task ICronJobStore.DeleteAsync(string name, string @namespace)
-    {
-        string key = @namespace + '/' + name;
-        _cronJobs.Remove(key);
-        return Task.CompletedTask;
-    }
+public class InMemoryCronJobStore : InMemoryStateStore<CronJob>, ICronJobStore
+{
+    protected override string GetStateKey(CronJob state) => state.Metadata.Namespace + '/' + state.Metadata.Name;
 }

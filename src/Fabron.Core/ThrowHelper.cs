@@ -1,10 +1,9 @@
 ﻿using System;
-using System.Diagnostics.CodeAnalysis;
 using Fabron.Models;
 
 namespace Fabron
 {
-    public static partial class ThrowHelper
+    internal static partial class ThrowHelper
     {
         public static void ThrowConsumerNotFollowedUp(string entityKey, long expect, long current)
             => throw new InvalidOperationException($"Entity({entityKey}) events are not consumed, expect offset: {expect}, current offset: {current}");
