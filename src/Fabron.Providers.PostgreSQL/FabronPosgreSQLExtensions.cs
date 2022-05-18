@@ -38,9 +38,14 @@ namespace Fabron.Providers.PostgreSQL
                 options.Invariant = Invariant;
                 options.ConnectionString = connectionString;
             });
-            // silo.UsePostgreSQLEventStore();
-            // silo.UsePostgreSQLIndexStore();
             return silo;
+        }
+
+        public static FabronClientBuilder UsePostgreSQL(this FabronClientBuilder client, string connectionString)
+        {
+            client.UsePostgreSQLClustering(connectionString);
+            client.UsePosgreSQLQuerier(connectionString);
+            return client;
         }
 
         public static FabronClientBuilder UsePostgreSQLClustering(this FabronClientBuilder client, string connectionString)
@@ -54,6 +59,19 @@ namespace Fabron.Providers.PostgreSQL
                 });
             });
             return client;
+        }
+
+        public static FabronClientBuilder UsePosgreSQLQuerier(this FabronClientBuilder server, string connectionString)
+        {
+            server.HostBuilder.ConfigureServices((ctx, services) =>
+            {
+                services.Configure<PostgreSQLOptions>(options =>
+                {
+                    options.ConnectionString = connectionString;
+                });
+                services.AddSingleton<IFabronQuerier, PostgreSQLQuerier>();
+            });
+            return server;
         }
 
         public static FabronServerBuilder UsePostgreSQL(this FabronServerBuilder server, string connectionString)

@@ -82,6 +82,7 @@ WHERE key = @key AND etag = @expected_etag;";
         var cmd = new NpgsqlCommand(_sql_select, conn);
         cmd.Parameters.AddWithValue("@key", key);
         await using var reader = await cmd.ExecuteReaderAsync();
+
         if (await reader.ReadAsync())
         {
             var data = JsonSerializer.Deserialize<TState>(reader.GetString(0), _jsonSerializerOptions);
