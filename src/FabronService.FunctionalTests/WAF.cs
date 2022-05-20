@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
-
+using Fabron;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -46,7 +46,7 @@ namespace FabronService.FunctionalTests
                 })
                 .ConfigureServices((ctx, services) =>
                 {
-                    services.AddFabronClient();
+                    services.AddSingleton<IJobManager, JobManager>();
                     services.AddSingleton(TestCluster);
                     services.AddSingleton(TestCluster.Client);
                     services.AddSingleton<IGrainFactory>(TestCluster.Client);

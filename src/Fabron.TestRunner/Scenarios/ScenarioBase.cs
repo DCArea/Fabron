@@ -15,7 +15,7 @@ public interface IScenario
     Task PlayAsync();
 }
 
-public abstract class ScenarioBase: IScenario
+public abstract class ScenarioBase : IScenario
 {
     private IHost _host = default!;
     private IServiceProvider ServiceProvider => _host.Services;
@@ -60,13 +60,12 @@ public abstract class ScenarioBase: IScenario
             {
                 services.AddOpenTelemetryTracing(options => options
                     .AddSource("orleans.runtime.graincall")
-                // .AddConsoleExporter()
                 );
-                services.AddFabronClient();
+                services.AddSingleton<IJobManager, JobManager>();
             });
 
         builder = ConfigureHost(builder);
-        var server = builder.UseFabron()
+        var server = builder.UseFabronServer()
             .UseLocalhostClustering()
             .UseInMemory();
         ConfigureServer(server);

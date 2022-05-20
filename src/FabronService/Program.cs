@@ -2,25 +2,37 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-
 using AspNetCore.Authentication.ApiKey;
-using Fabron;
-
+using Fabron.Providers.PostgreSQL;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
-
+using Orleans.Hosting;
 using Prometheus;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Host
-    .UseFabron()
-    .UseLocalhostClustering()
-    .UseInMemory();
+var server = builder.Host.UseFabronServer();
+var client = builder.Host.UseFabronClient(cohosted: true);
+
+if (builder.Environment.IsDevelopment())
+{
+    server.UseLocalhostClustering()
+        .UseInMemory();
+}
+else
+{
+    server
+        .ConfigureOrleans((ctx, siloBuilder) =>
+        {
+            siloBuilder.UseKubernetesHosting();
+        })
+        .UsePostgreSQL(builder.Configuration["PGSQL"]);
+    client.UsePostgreSQL(builder.Configuration["PGSQL"]);
+}
 
 builder.Services
     .ConfigureFramework()
@@ -30,9 +42,9 @@ builder.Services
 
 var app = builder.Build();
 
-app.UseCustomSwagger()
-    .UseRouting()
-    .UseAuthentication()
+app.UseCustomSwagger();
+
+app.UseAuthentication()
     .UseAuthorization();
 
 app.MapHealthChecks("/health").AllowAnonymous();
@@ -40,6 +52,7 @@ app.MapMetrics().AllowAnonymous();
 app.MapCronHttpReminders();
 app.MapHttpReminders();
 
+app.Run();
 
 #pragma warning disable CA1050 // Declare types in namespaces
 public static class AppConfigureExtensions
@@ -78,6 +91,7 @@ public static class AppConfigureExtensions
             {
                 options.Realm = "FabronService API";
                 options.KeyName = "token";
+                options.IgnoreAuthenticationIfAllowAnonymous = true;
                 options.Events = new ApiKeyEvents
                 {
                     OnValidateKey = ctx =>

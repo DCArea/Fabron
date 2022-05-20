@@ -5,7 +5,7 @@
     "module": "commonjs",
     "noEmit": true,
     "allowJs": true,
-    "removeComments": true,
+    "removeComments": false,
 
     "strict": true,
     "noImplicitAny": true,
@@ -21,6 +21,7 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
 
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "types": ["k6"]
   }
 }

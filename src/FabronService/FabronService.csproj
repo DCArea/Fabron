@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Fabron.Server\Fabron.Server.csproj" />
+    <ProjectReference Include="..\Fabron.Providers.PostgreSQL\Fabron.Providers.PostgreSQL.csproj" />
   </ItemGroup>
 
 </Project>

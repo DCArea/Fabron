@@ -157,67 +157,76 @@ public partial class CronJobGrain : TickerGrain, IGrainBase, ICronJobGrain
 
     protected override async Task Tick(DateTimeOffset? expectedTickTime)
     {
-        if (_job is null || _job.Deleted)
+        try
         {
-            TickerLog.UnexpectedTick(_logger, _key, expectedTickTime, "NotExisting");
-            await StopTicker();
+            if (_job is null || _job.Deleted)
+            {
+                TickerLog.UnexpectedTick(_logger, _key, expectedTickTime, "NotExisting");
+                await StopTicker();
+                return;
+            }
+
+            if (_job.Spec.Suspend)
+            {
+                TickerLog.UnexpectedTick(_logger, _key, expectedTickTime, "Suspended");
+                await StopTicker();
+                return;
+            }
+
+            DateTimeOffset now = _clock.UtcNow;
+            if (now > _job.Spec.ExpirationTime)
+            {
+                TickerLog.UnexpectedTick(_logger, _key, expectedTickTime, "Expired");
+                await StopTicker();
+                return;
+            }
+
+            if (_job.Spec.NotBefore.HasValue && now < _job.Spec.NotBefore.Value)
+            {
+                TickerLog.UnexpectedTick(_logger, _key, expectedTickTime, "NotStarted");
+                await TickAfter(_job.Spec.NotBefore.Value.Subtract(now));
+                return;
+            }
+
+            Cronos.CronExpression cron = Cronos.CronExpression.Parse(_job.Spec.Schedule, _options.CronFormat);
+
+            DateTimeOffset from = now.AddSeconds(-10);
+            if (_lastSchedule.HasValue && _lastSchedule.Value > from)
+            {
+                from = _lastSchedule.Value;
+            }
+            var to = now.AddSeconds(10);
+            if (to > _job.Spec.ExpirationTime)
+            {
+                to = _job.Spec.ExpirationTime.Value;
+            }
+
+            var schedules = cron.GetOccurrences(from, to, _options.TimeZone, fromInclusive: false, toInclusive: true);
+            if (schedules.Any())
+            {
+                // no more schedules
+                // await StopTicker();
+                // return;
+                var scheduleTasks = schedules.Select(ScheduleNewRun);
+                await Task.WhenAll(scheduleTasks);
+            }
+
+            from = to;
+            var nextTick = cron.GetNextOccurrence(from, _options.TimeZone);
+            if (!nextTick.HasValue || (_job.Spec.ExpirationTime.HasValue && nextTick.Value > _job.Spec.ExpirationTime.Value))
+            {
+                // no more next tick
+                await StopTicker();
+                return;
+            }
+
+            await TickAfter(nextTick.Value.Subtract(now));
+        }
+        catch (Exception e)
+        {
+            TickerLog.ErrorOnTicking(_logger, _key, e);
             return;
         }
-
-        if (_job.Spec.Suspend)
-        {
-            TickerLog.UnexpectedTick(_logger, _key, expectedTickTime, "Suspended");
-            await StopTicker();
-            return;
-        }
-
-        DateTimeOffset now = _clock.UtcNow;
-        if (now > _job.Spec.ExpirationTime)
-        {
-            TickerLog.UnexpectedTick(_logger, _key, expectedTickTime, "Expired");
-            await StopTicker();
-            return;
-        }
-
-        if (_job.Spec.NotBefore.HasValue && now < _job.Spec.NotBefore.Value)
-        {
-            TickerLog.UnexpectedTick(_logger, _key, expectedTickTime, "NotStarted");
-            await TickAfter(_job.Spec.NotBefore.Value.Subtract(now));
-            return;
-        }
-
-        Cronos.CronExpression cron = Cronos.CronExpression.Parse(_job.Spec.Schedule, _options.CronFormat);
-
-        DateTimeOffset from = now.AddSeconds(-10);
-        if (_lastSchedule.HasValue && _lastSchedule.Value > from)
-        {
-            from = _lastSchedule.Value;
-        }
-        var to = now.AddSeconds(10);
-        if (to > _job.Spec.ExpirationTime)
-        {
-            to = _job.Spec.ExpirationTime.Value;
-        }
-
-        var schedules = cron.GetOccurrences(from, to, _options.TimeZone, fromInclusive: false, toInclusive: true);
-        if (!schedules.Any())
-        {
-            // no more schedules
-            await StopTicker();
-            return;
-        }
-        var scheduleTasks = schedules.Select(ScheduleNewRun);
-        await Task.WhenAll(scheduleTasks);
-
-        var nextTick = cron.GetNextOccurrence(schedules.Last(), _options.TimeZone);
-        if (!nextTick.HasValue || (_job.Spec.ExpirationTime.HasValue && nextTick.Value > _job.Spec.ExpirationTime.Value))
-        {
-            // no more next tick
-            await StopTicker();
-            return;
-        }
-
-        await TickAfter(nextTick.Value.Subtract(now));
     }
 
     private async Task ScheduleNewRun(DateTimeOffset schedule)

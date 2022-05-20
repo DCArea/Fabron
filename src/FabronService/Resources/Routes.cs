@@ -7,6 +7,7 @@ public static class Routes
 {
     const string CronHttpReminders = nameof(FabronService.Resources.CronHttpReminders);
     internal const string CronHttpReminders_Get = $"{CronHttpReminders}_{nameof(CronHttpRemindersHandler.Get)}";
+    internal const string CronHttpReminders_GetSchedules = $"{CronHttpReminders}_{nameof(CronHttpRemindersHandler.GetSchedules)}";
     internal const string CronHttpReminders_Register = $"{CronHttpReminders}_{nameof(CronHttpRemindersHandler.Register)}";
     public static IEndpointRouteBuilder MapCronHttpReminders(this IEndpointRouteBuilder endpoints)
     {
@@ -16,6 +17,9 @@ public static class Routes
             .RequireAuthorization();
         endpoints.MapGet("/cron-http-reminders/{name}", CronHttpRemindersHandler.Get)
             .WithName(CronHttpReminders_Get)
+            .RequireAuthorization();
+        endpoints.MapGet("/cron-http-reminders/{name}/schedules", CronHttpRemindersHandler.GetSchedules)
+            .WithName(CronHttpReminders_GetSchedules)
             .RequireAuthorization();
 
         return endpoints;

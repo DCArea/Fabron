@@ -16,7 +16,7 @@
   <PropertyGroup>
     <AspNetCoreVersion>6.0.4</AspNetCoreVersion>
     <MEXVersion>6.0.0</MEXVersion>
-    <OrleansVersion>3.9.9-ci.20220424.1</OrleansVersion>
+    <OrleansVersion>3.9.9-ci.20220518.1</OrleansVersion>
   </PropertyGroup>
 
   <!-- library versions -->

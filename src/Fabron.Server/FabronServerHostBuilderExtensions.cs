@@ -5,9 +5,9 @@ using Fabron;
 
 namespace Microsoft.Extensions.Hosting
 {
-    public static class FabronHostBuilderExtensions
+    public static class FabronServerHostBuilderExtensions
     {
-        public static FabronServerBuilder UseFabron(this IHostBuilder hostBuilder, IEnumerable<Assembly>? commandAssemblies = null)
+        public static FabronServerBuilder UseFabronServer(this IHostBuilder hostBuilder, IEnumerable<Assembly>? commandAssemblies = null)
         {
             return new FabronServerBuilder(hostBuilder);
         }

@@ -113,6 +113,12 @@ public abstract partial class TickerGrain : IRemindable
         public static partial void TickMissed(ILogger logger, string key, string tickTime);
 
         [LoggerMessage(
+            EventId = 13400,
+            Level = LogLevel.Error,
+            Message = "[{key}]: error on ticking")]
+        public static partial void ErrorOnTicking(ILogger logger, string key, Exception exception);
+
+        [LoggerMessage(
             EventId = 13900,
             Level = LogLevel.Information,
             Message = "[{key}]: Ticker disposed")]

@@ -43,7 +43,10 @@ namespace Fabron.Providers.PostgreSQL
 
         public static FabronClientBuilder UsePostgreSQL(this FabronClientBuilder client, string connectionString)
         {
-            client.UsePostgreSQLClustering(connectionString);
+            if (!client.Cohosted)
+            {
+                client.UsePostgreSQLClustering(connectionString);
+            }
             client.UsePosgreSQLQuerier(connectionString);
             return client;
         }
@@ -61,7 +64,7 @@ namespace Fabron.Providers.PostgreSQL
             return client;
         }
 
-        public static FabronClientBuilder UsePosgreSQLQuerier(this FabronClientBuilder server, string connectionString)
+        public static FabronClientBuilder UsePosgreSQLQuerier(this FabronClientBuilder server, string connectionString!!)
         {
             server.HostBuilder.ConfigureServices((ctx, services) =>
             {
@@ -74,17 +77,16 @@ namespace Fabron.Providers.PostgreSQL
             return server;
         }
 
-        public static FabronServerBuilder UsePostgreSQL(this FabronServerBuilder server, string connectionString)
+        public static FabronServerBuilder UsePostgreSQL(this FabronServerBuilder server, string connectionString!!)
         {
             server.UsePostgreSQLClustering(connectionString);
             server.UsePosgreSQLReminder(connectionString);
             server.UsePosgreSQLStore(connectionString);
-
             return server;
         }
 
 
-        public static FabronServerBuilder UsePostgreSQLClustering(this FabronServerBuilder server, string connectionString)
+        public static FabronServerBuilder UsePostgreSQLClustering(this FabronServerBuilder server, string connectionString!!)
         {
             server.ConfigureOrleans((ctx, sb) =>
             {
@@ -97,7 +99,7 @@ namespace Fabron.Providers.PostgreSQL
             return server;
         }
 
-        public static FabronServerBuilder UsePosgreSQLReminder(this FabronServerBuilder server, string connectionString)
+        public static FabronServerBuilder UsePosgreSQLReminder(this FabronServerBuilder server, string connectionString!!)
         {
             server.ConfigureOrleans((ctx, sb) =>
             {

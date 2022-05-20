@@ -11,7 +11,10 @@ namespace Fabron;
 
 public class FabronClientBuilder
 {
-    public FabronClientBuilder(IHostBuilder hostBuilder, IEnumerable<Assembly>? commandAssemblies = null)
+    public FabronClientBuilder(
+        IHostBuilder hostBuilder,
+        IEnumerable<Assembly>? commandAssemblies,
+        bool cohosted)
     {
         if (hostBuilder.Properties.ContainsKey("HasFabronClientBuilder"))
         {
@@ -26,17 +29,22 @@ public class FabronClientBuilder
             services.RegisterCommands(commandAssemblies);
         });
 
-        hostBuilder.UseOrleansClient((ctx, cb) =>
-        {
-        });
-
         HostBuilder = hostBuilder;
+        Cohosted = cohosted;
+
+        if (!cohosted)
+        {
+            hostBuilder.UseOrleansClient((ctx, cb) => { });
+        }
     }
 
     public IHostBuilder HostBuilder { get; }
 
+    public bool Cohosted { get; }
+
     public FabronClientBuilder ConfigureOrleansClient(Action<HostBuilderContext, IClientBuilder> configure)
     {
+        if (Cohosted) throw new InvalidOperationException("Cannot configure Orleans client when cohosted.");
         HostBuilder.ConfigureServices((context, services) =>
         {
             services.AddOrleansClient(sb =>

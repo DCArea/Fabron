@@ -11,10 +11,9 @@ namespace Fabron.FunctionalTests
             // .
             clientBuilder.ConfigureServices(services =>
             {
-                services.AddFabronClient()
-                    .RegisterCommands()
-                    // .UseInMemoryJobQuerier();
-                    ;
+                services
+                    .AddSingleton<IJobManager, JobManager>()
+                    .RegisterCommands();
             });
     }
 }
