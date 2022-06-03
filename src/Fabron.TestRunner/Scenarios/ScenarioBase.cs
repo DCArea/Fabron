@@ -20,12 +20,8 @@ public abstract class ScenarioBase : IScenario
     private IHost _host = default!;
     private IServiceProvider ServiceProvider => _host.Services;
     protected ILogger Logger => ServiceProvider.GetRequiredService<ILogger<ScenarioBase>>();
-    protected IJobManager JobManager => ServiceProvider.GetRequiredService<IJobManager>();
-    // public IJobQuerier JobQuerier => ServiceProvider.GetRequiredService<IJobQuerier>();
     protected IClusterClient ClusterClient => ServiceProvider.GetRequiredService<IClusterClient>();
     protected IGrainFactory GrainFactory => ClusterClient;
-
-    // public ICronJobGrain GetCronJobGrain(string id) => ClusterClient.GetGrain<ICronJobGrain>(id);
 
     protected virtual IHostBuilder ConfigureHost(IHostBuilder builder)
     {
@@ -61,7 +57,6 @@ public abstract class ScenarioBase : IScenario
                 services.AddOpenTelemetryTracing(options => options
                     .AddSource("orleans.runtime.graincall")
                 );
-                services.AddSingleton<IJobManager, JobManager>();
             });
 
         builder = ConfigureHost(builder);

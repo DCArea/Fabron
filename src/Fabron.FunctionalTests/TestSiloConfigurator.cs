@@ -1,9 +1,8 @@
 
 using System;
-using Fabron.Mando;
+using Fabron.Core.CloudEvents;
 using Fabron.Store;
 using Microsoft.Extensions.DependencyInjection;
-
 using Orleans.Configuration;
 using Orleans.Hosting;
 using Orleans.TestingHost;
@@ -28,16 +27,15 @@ namespace Fabron.FunctionalTests
                 options.ResponseTimeout = TimeSpan.FromSeconds(5);
             });
 
-            siloBuilder.UseLocalhostClustering();
+            siloBuilder.UseLocalhostClustering()
+                .UseInMemoryReminderService();
             siloBuilder.ConfigureServices(services =>
             {
-                services.AddSingleton<IJobStore, InMemoryJobStore>();
-                services.AddSingleton<ICronJobStore, InMemoryCronJobStore>();
-                services.AddScoped<IMediator, Mediator>()
-                    .RegisterJobCommandHandlers();
+                services.AddSingleton<ITimedEventStore, InMemoryTimedEventStore>();
+                services.AddSingleton<ICronEventStore, InMemoryCronEventStore>();
+                services.AddSingleton<IEventDispatcher, EventDispatcher>();
                 services.AddSingleton<ISystemClock, SystemClock>();
             });
-
             siloBuilder.ConfigureServices(ConfigureServices);
         }
     }

@@ -18,7 +18,7 @@ namespace FabronService.FunctionalTests
             HttpClient client = _waf.CreateClient();
             HttpResponseMessage response = await client.GetAsync("/swagger/v1/swagger.json");
             response.EnsureSuccessStatusCode();
-            string? content = await response.Content.ReadAsStringAsync();
+            await response.Content.ReadAsStringAsync();
         }
 
     }

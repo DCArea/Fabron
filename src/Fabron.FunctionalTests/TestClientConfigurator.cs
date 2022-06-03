@@ -8,12 +8,9 @@ namespace Fabron.FunctionalTests
     internal class TestClientConfigurator : IClientBuilderConfigurator
     {
         public void Configure(IConfiguration configuration, IClientBuilder clientBuilder) =>
-            // .
             clientBuilder.ConfigureServices(services =>
             {
-                services
-                    .AddSingleton<IJobManager, JobManager>()
-                    .RegisterCommands();
+                services.AddSingleton<IFabronClient, FabronClient>();
             });
     }
 }

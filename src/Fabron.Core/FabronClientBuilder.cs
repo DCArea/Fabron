@@ -25,8 +25,7 @@ public class FabronClientBuilder
 
         hostBuilder.ConfigureServices((ctx, services) =>
         {
-            services.TryAddSingleton<IJobManager, JobManager>();
-            services.RegisterCommands(commandAssemblies);
+            services.TryAddSingleton<IFabronClient, FabronClient>();
         });
 
         HostBuilder = hostBuilder;

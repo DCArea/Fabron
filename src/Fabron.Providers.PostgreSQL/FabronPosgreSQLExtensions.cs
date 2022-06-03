@@ -47,7 +47,7 @@ namespace Fabron.Providers.PostgreSQL
             {
                 client.UsePostgreSQLClustering(connectionString);
             }
-            client.UsePosgreSQLQuerier(connectionString);
+            // client.UsePosgreSQLQuerier(connectionString);
             return client;
         }
 
@@ -64,18 +64,17 @@ namespace Fabron.Providers.PostgreSQL
             return client;
         }
 
-        public static FabronClientBuilder UsePosgreSQLQuerier(this FabronClientBuilder server, string connectionString!!)
-        {
-            server.HostBuilder.ConfigureServices((ctx, services) =>
-            {
-                services.Configure<PostgreSQLOptions>(options =>
-                {
-                    options.ConnectionString = connectionString;
-                });
-                services.AddSingleton<IFabronQuerier, PostgreSQLQuerier>();
-            });
-            return server;
-        }
+        // public static FabronClientBuilder UsePosgreSQLQuerier(this FabronClientBuilder server, string connectionString!!)
+        // {
+        //     server.HostBuilder.ConfigureServices((ctx, services) =>
+        //     {
+        //         services.Configure<PostgreSQLOptions>(options =>
+        //         {
+        //             options.ConnectionString = connectionString;
+        //         });
+        //     });
+        //     return server;
+        // }
 
         public static FabronServerBuilder UsePostgreSQL(this FabronServerBuilder server, string connectionString!!)
         {
@@ -120,8 +119,8 @@ namespace Fabron.Providers.PostgreSQL
                 {
                     options.ConnectionString = connectionString;
                 });
-                services.AddSingleton<IJobStore, PostgreSQLJobStore>();
-                services.AddSingleton<ICronJobStore, PostgreSQLCronJobStore>();
+                services.AddSingleton<ITimedEventStore, PostgreSQLTimedEventStore>();
+                services.AddSingleton<ICronEventStore, PostgreSQLCronEventStore>();
             });
             return server;
         }

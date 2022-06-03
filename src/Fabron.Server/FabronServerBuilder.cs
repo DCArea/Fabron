@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using Fabron.Mando;
+using Fabron.Core.CloudEvents;
 using Fabron.Store;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -22,10 +22,9 @@ public class FabronServerBuilder
 
         hostBuilder.ConfigureServices((ctx, services) =>
         {
-            services.AddSingleton<IJobManager, JobManager>();
-            services.AddScoped<IMediator, Mediator>()
-                .RegisterJobCommandHandlers(commandAssemblies);
             services.AddSingleton<ISystemClock, SystemClock>();
+            services.AddSingleton<IFabronClient, FabronClient>();
+            services.AddSingleton<IEventDispatcher, EventDispatcher>();
         });
 
         HostBuilder = hostBuilder;
@@ -59,8 +58,8 @@ public class FabronServerBuilder
     {
         HostBuilder.ConfigureServices((context, services) =>
         {
-            services.AddSingleton<IJobStore, InMemoryJobStore>();
-            services.AddSingleton<ICronJobStore, InMemoryCronJobStore>();
+            services.AddSingleton<ITimedEventStore, InMemoryTimedEventStore>();
+            services.AddSingleton<ICronEventStore, InMemoryCronEventStore>();
         });
 
         ConfigureOrleans((context, siloBuilder) =>
@@ -69,6 +68,16 @@ public class FabronServerBuilder
                 .UseInMemoryReminderService();
         });
 
+        return this;
+    }
+
+    public FabronServerBuilder AddSimpleEventRouter(Action<SimpleEventRouterOptions> configure)
+    {
+        HostBuilder.ConfigureServices((context, services) =>
+        {
+            services.AddSingleton<IEventRouter, SimpleEventRouter>();
+            services.Configure<SimpleEventRouterOptions>(configure);
+        });
         return this;
     }
 }

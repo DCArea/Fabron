@@ -16,14 +16,7 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Orleans.Sdk" Version="$(OrleansVersion)" />
     <PackageReference Include="Microsoft.Orleans.Streaming" Version="$(OrleansVersion)" />
-    <!-- <PackageReference Include="Microsoft.Orleans.Core" Version="$(OrleansVersion)" />
-    <PackageReference Include="Microsoft.Orleans.OrleansRuntime" Version="$(OrleansVersion)" /> -->
     <PackageReference Include="Microsoft.Toolkit.Diagnostics" Version="$(MicrosoftToolkitDiagnostics)" />
-    <PackageReference Include="prometheus-net" Version="$(PrometheusNetVersion)" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Fabron.Mando\Fabron.Mando.csproj" />
   </ItemGroup>
 
 </Project>

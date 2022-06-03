@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:6.0.202 AS build
+FROM mcr.microsoft.com/dotnet/sdk:6.0.300 AS build
 WORKDIR /source
 
 # copy csproj and restore as distinct layers
@@ -11,7 +11,6 @@ COPY src/FabronService/*.csproj ./src/FabronService/
 COPY src/FabronService.FunctionalTests/*.csproj ./src/FabronService.FunctionalTests/
 COPY src/Fabron.Core/*.csproj ./src/Fabron.Core/
 COPY src/Fabron.Core.Test/*.csproj ./src/Fabron.Core.Test/
-COPY src/Fabron.Mando/*.csproj ./src/Fabron.Mando/
 COPY src/Fabron.Server/*.csproj ./src/Fabron.Server/
 COPY src/Fabron.FunctionalTests/*.csproj ./src/Fabron.FunctionalTests/
 COPY src/Fabron.TestRunner/*.csproj ./src/Fabron.TestRunner/
@@ -24,7 +23,7 @@ WORKDIR /source/src/FabronService
 RUN dotnet publish -c release -o /app --no-restore
 
 # final stage/image
-FROM mcr.microsoft.com/dotnet/aspnet:6.0.2
+FROM mcr.microsoft.com/dotnet/aspnet:6.0.3
 WORKDIR /app
 COPY --from=build /app ./
 ENTRYPOINT ["dotnet", "FabronService.dll"]
