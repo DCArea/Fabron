@@ -18,21 +18,16 @@ namespace Fabron
         public TimeSpan TickerInterval { get; set; } = TimeSpan.FromMinutes(2);
     }
 
-    public class JobOptions : CommonOptions
-    {
-    }
-
-    public class CronJobOptions : CommonOptions
-    {
-        public CronFormat CronFormat { get; set; } = CronFormat.Standard;
-    }
-
     public class FabronClientOptions : CommonOptions
     {
     }
 
     public class SimpleSchedulerOptions : CommonOptions
     {
+        public SimpleSchedulerOptions()
+        {
+            TickerInterval = TimeSpan.FromSeconds(30);
+        }
     }
 
     public class CronSchedulerOptions : CommonOptions

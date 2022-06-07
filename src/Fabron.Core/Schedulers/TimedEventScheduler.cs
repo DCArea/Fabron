@@ -80,7 +80,6 @@ public class TimedEventScheduler : TickerGrain, IGrainBase, ITimedEventScheduler
     {
         var utcNow = _clock.UtcNow;
         var schedule_ = spec.Schedule;
-        await TickAfter(_options.TickerInterval);
 
         _state = new TimedEvent
         {
@@ -127,6 +126,8 @@ public class TimedEventScheduler : TickerGrain, IGrainBase, ITimedEventScheduler
             TickerLog.ErrorOnTicking(_logger, _key, e);
             return;
         }
+
+        await StopTicker();
     }
 }
 
