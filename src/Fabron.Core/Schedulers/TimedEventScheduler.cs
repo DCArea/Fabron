@@ -111,7 +111,7 @@ public class TimedEventScheduler : TickerGrain, IGrainBase, ITimedEventScheduler
     {
         if (_state is null || _state.Metadata.DeletionTimestamp is not null)
         {
-            TickerLog.UnexpectedTick(_logger, _key, expectedTickTime, "Schedule is not registered");
+            TickerLog.UnexpectedTick(_logger, _key, expectedTickTime, "NotExists");
             await StopTicker();
             return;
         }

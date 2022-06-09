@@ -6,6 +6,7 @@ public static partial class Routes
     {
         endpoints.MapCronEvents();
         endpoints.MapTimedEvents();
+        endpoints.MapPeriodicEvents();
         return endpoints;
     }
 }

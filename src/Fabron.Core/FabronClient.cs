@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Fabron.Core.CloudEvents;
-using Fabron.Schedulers;
 using Fabron.Models;
+using Fabron.Schedulers;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
@@ -22,6 +22,8 @@ public interface IFabronClient
 
     Task<TimedEvent<TData>?> GetTimedEvent<TData>(string key);
 
+    Task CancelTimedEvent(string key);
+
     Task ScheduleCronEvent<T>(
         string key,
         string schedule,
@@ -33,6 +35,22 @@ public interface IFabronClient
         Dictionary<string, string>? annotations = null);
 
     Task<CronEvent<TData>?> GetCronEvent<TData>(string key);
+
+    Task CancelCronEvent(string key);
+
+    Task SchedulePeriodicEvent<T>(
+        string key,
+        CloudEventTemplate<T> template,
+        TimeSpan period,
+        DateTimeOffset? notBefore = null,
+        DateTimeOffset? expirationTime = null,
+        bool suspend = false,
+        Dictionary<string, string>? labels = null,
+        Dictionary<string, string>? annotations = null);
+
+    Task<PeriodicEvent<TData>?> GetPeriodicEvent<TData>(string key);
+
+    Task CancelPeriodicEvent(string key);
 }
 
 public class FabronClient : IFabronClient
@@ -64,6 +82,12 @@ public class FabronClient : IFabronClient
             CloudEventTemplate = JsonSerializer.Serialize(template, _options.JsonSerializerOptions),
         };
         await grain.Schedule(spec, labels, annotations, null);
+    }
+
+    public async Task CancelTimedEvent(string key)
+    {
+        var grain = _client.GetGrain<ITimedEventScheduler>(key);
+        await grain.Unregister();
     }
 
     public async Task<TimedEvent<TData>?> GetTimedEvent<TData>(string key)
@@ -117,6 +141,57 @@ public class FabronClient : IFabronClient
                 state.Spec.Suspend
             )
         );
+    }
+
+    public async Task CancelCronEvent(string key)
+    {
+        var grain = _client.GetGrain<ICronEventScheduler>(key);
+        await grain.Unregister();
+    }
+
+    public async Task SchedulePeriodicEvent<T>(
+        string key,
+        CloudEventTemplate<T> template,
+        TimeSpan period,
+        DateTimeOffset? notBefore = null,
+        DateTimeOffset? expirationTime = null,
+        bool suspend = false,
+        Dictionary<string, string>? labels = null,
+        Dictionary<string, string>? annotations = null)
+    {
+        var grain = _client.GetGrain<IPeriodicEventScheduler>(key);
+        var spec = new PeriodicEventSpec
+        {
+            Template = JsonSerializer.Serialize(template, _options.JsonSerializerOptions),
+            Period = period,
+            NotBefore = notBefore,
+            ExpirationTime = expirationTime,
+            Suspend = suspend,
+        };
+        await grain.Schedule(spec, labels, annotations, null);
+    }
+
+    public async Task<PeriodicEvent<TData>?> GetPeriodicEvent<TData>(string key)
+    {
+        var grain = _client.GetGrain<IPeriodicEventScheduler>(key);
+        var state = await grain.GetState();
+        if (state is null) return null;
+        return new PeriodicEvent<TData>(
+            state.Metadata,
+            new(
+                JsonSerializer.Deserialize<CloudEventTemplate<TData>>(state.Spec.Template, _options.JsonSerializerOptions)!,
+                state.Spec.Period,
+                state.Spec.NotBefore,
+                state.Spec.ExpirationTime,
+                state.Spec.Suspend
+            )
+        );
+    }
+
+    public Task CancelPeriodicEvent(string key)
+    {
+        var grain = _client.GetGrain<IPeriodicEventScheduler>(key);
+        return grain.Unregister();
     }
 
 }

@@ -15,6 +15,10 @@ public static partial class Routes
             .WithName($"{nameof(CronEvents)}_{nameof(CronEvents.Get)}")
             .RequireAuthorization();
 
+        endpoints.MapDelete("/cronevents/{name}", CronEvents.Delete)
+            .WithName($"{nameof(CronEvents)}_{nameof(CronEvents.Delete)}")
+            .RequireAuthorization();
+
         return endpoints;
     }
 }

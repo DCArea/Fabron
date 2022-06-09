@@ -60,6 +60,7 @@ public class FabronServerBuilder
         {
             services.AddSingleton<ITimedEventStore, InMemoryTimedEventStore>();
             services.AddSingleton<ICronEventStore, InMemoryCronEventStore>();
+            services.AddSingleton<IPeriodicEventStore, InMemoryPeriodicEventStore>();
         });
 
         ConfigureOrleans((context, siloBuilder) =>

@@ -1,5 +1,7 @@
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
+using Fabron.Diagnostics;
 using Microsoft.Extensions.Logging;
 using Orleans;
 using Orleans.Runtime;
@@ -80,6 +82,10 @@ public abstract partial class TickerGrain : IRemindable
             _tickReminder = await Runtime.ReminderRegistry.GetReminder(GrainContext.GrainId, Names.TickerReminder);
         }
         TickerLog.Ticking(_logger, _key);
+
+        Activity.Current?.Dispose();
+        Activity.Current = null;
+        using var activity = Activities.Source.StartActivity("Ticking");
         await Tick(status.FirstTickTime);
     }
 

@@ -26,13 +26,17 @@ namespace Fabron
     {
         public SimpleSchedulerOptions()
         {
-            TickerInterval = TimeSpan.FromSeconds(30);
+            TickerInterval = TimeSpan.FromMinutes(1);
         }
     }
 
     public class CronSchedulerOptions : CommonOptions
     {
         public CronFormat CronFormat { get; set; } = CronFormat.Standard;
+    }
+
+    public class PeriodicSchedulerOptions : CommonOptions
+    {
     }
 
 }

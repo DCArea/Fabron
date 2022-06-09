@@ -22,7 +22,7 @@ export default () => {
     const name = `${now / 1000}-${scenario.iterationInTest}`;
     const url = `${baseUrl}/timedevents/${name}`
     const req_body = {
-        "schedule": new Date(Date.now() + 6 * 60000).toISOString(),
+        "schedule": new Date(now + 5 * 60000).toISOString(),
         "template": {
             "data": {
                 "foo": "bar"

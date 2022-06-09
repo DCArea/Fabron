@@ -15,6 +15,10 @@ public static partial class Routes
             .WithName($"{nameof(TimedEvents)}_{nameof(TimedEvents.Get)}")
             .RequireAuthorization();
 
+        endpoints.MapDelete("/timedevents/{name}", TimedEvents.Cancel)
+            .WithName($"{nameof(TimedEvents)}_{nameof(TimedEvents.Cancel)}")
+            .RequireAuthorization();
+
         return endpoints;
     }
 }

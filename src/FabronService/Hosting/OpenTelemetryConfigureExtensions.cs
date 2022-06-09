@@ -22,6 +22,7 @@ public static class OpenTelemetryConfigureExtensions
                 .AddEncrichedAspNetCoreInstrumentation()
                 .AddNpgsql()
                 .AddSource("Microsoft.Orleans")
+                .AddSource("Fabron")
                 .AddHttpClientInstrumentation()
                 .AddGrpcClientInstrumentation()
                 .AddOtlpExporter()
