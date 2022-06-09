@@ -16,7 +16,7 @@ public static class EnvelopeExtensions
 
     public static CloudEventEnvelop ToCloudEvent(this CronEvent cron, DateTimeOffset timestamp, JsonSerializerOptions jsonSerializerOptions)
     {
-        var template = JsonSerializer.Deserialize<CloudEventTemplate>(cron.Spec.CloudEventTemplate, jsonSerializerOptions)!;
+        var template = JsonSerializer.Deserialize<CloudEventTemplate>(cron.Spec.Template, jsonSerializerOptions)!;
         string id = $"{cron.Metadata.Key}-{timestamp.ToUnixTimeSeconds()}";
         string source = template.Source ?? "fabron.io/cronevents";
         string type = template.Type ?? "fabron.cronevents.fired";
@@ -25,7 +25,7 @@ public static class EnvelopeExtensions
 
     public static CloudEventEnvelop ToCloudEvent(this TimedEvent schedule, DateTimeOffset timestamp, JsonSerializerOptions jsonSerializerOptions)
     {
-        var template = JsonSerializer.Deserialize<CloudEventTemplate>(schedule.Spec.CloudEventTemplate, jsonSerializerOptions)!;
+        var template = JsonSerializer.Deserialize<CloudEventTemplate>(schedule.Spec.Template, jsonSerializerOptions)!;
         string id = $"{schedule.Metadata.Key}-{timestamp.ToUnixTimeSeconds()}";
         string source = template.Source ?? "fabron.io/timedevents";
         string type = template.Type ?? "fabron.timedevents.fired";

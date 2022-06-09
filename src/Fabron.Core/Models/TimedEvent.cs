@@ -19,10 +19,10 @@ public class TimedEvent
 public class TimedEventSpec
 {
     [Id(0)]
-    public DateTimeOffset Schedule { get; init; } = default!;
+    public string Template { get; init; } = default!;
 
     [Id(1)]
-    public string CloudEventTemplate { get; init; } = default!;
+    public DateTimeOffset Schedule { get; init; } = default!;
 }
 
 public record TimedEvent<TData>(

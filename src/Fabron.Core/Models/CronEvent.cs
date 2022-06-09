@@ -20,10 +20,10 @@ public class CronEventSpec
 {
 
     [Id(0)]
-    public string Schedule { get; init; } = default!;
+    public string Template { get; init; } = default!;
 
     [Id(1)]
-    public string CloudEventTemplate { get; init; } = default!;
+    public string Schedule { get; init; } = default!;
 
     [Id(2)]
     public DateTimeOffset? NotBefore { get; set; }

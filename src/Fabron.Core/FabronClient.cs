@@ -79,7 +79,7 @@ public class FabronClient : IFabronClient
         var spec = new TimedEventSpec
         {
             Schedule = schedule,
-            CloudEventTemplate = JsonSerializer.Serialize(template, _options.JsonSerializerOptions),
+            Template = JsonSerializer.Serialize(template, _options.JsonSerializerOptions),
         };
         await grain.Schedule(spec, labels, annotations, null);
     }
@@ -99,7 +99,7 @@ public class FabronClient : IFabronClient
             state.Metadata,
             new(
                 state.Spec.Schedule,
-                JsonSerializer.Deserialize<CloudEventTemplate<TData>>(state.Spec.CloudEventTemplate, _options.JsonSerializerOptions)!
+                JsonSerializer.Deserialize<CloudEventTemplate<TData>>(state.Spec.Template, _options.JsonSerializerOptions)!
             )
         );
     }
@@ -117,8 +117,8 @@ public class FabronClient : IFabronClient
         var grain = _client.GetGrain<ICronEventScheduler>(key);
         var spec = new CronEventSpec
         {
+            Template = JsonSerializer.Serialize(template, _options.JsonSerializerOptions),
             Schedule = schedule,
-            CloudEventTemplate = JsonSerializer.Serialize(template, _options.JsonSerializerOptions),
             NotBefore = notBefore,
             ExpirationTime = expirationTime,
             Suspend = suspend,
@@ -135,7 +135,7 @@ public class FabronClient : IFabronClient
             state.Metadata,
             new(
                 state.Spec.Schedule,
-                JsonSerializer.Deserialize<CloudEventTemplate<TData>>(state.Spec.CloudEventTemplate, _options.JsonSerializerOptions)!,
+                JsonSerializer.Deserialize<CloudEventTemplate<TData>>(state.Spec.Template, _options.JsonSerializerOptions)!,
                 state.Spec.NotBefore,
                 state.Spec.ExpirationTime,
                 state.Spec.Suspend
