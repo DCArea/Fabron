@@ -25,5 +25,6 @@ RUN dotnet publish -c release -o /app --no-restore
 # final stage/image
 FROM mcr.microsoft.com/dotnet/aspnet:6.0.3
 WORKDIR /app
+ENV Logging__Console__FormatterName="ejson"
 COPY --from=build /app ./
 ENTRYPOINT ["dotnet", "FabronService.dll"]

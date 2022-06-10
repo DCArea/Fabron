@@ -10,7 +10,7 @@ public interface IEventDispatcher
 {
     List<IEventRouter> Routers { get; }
 
-    ValueTask DispatchAsync(ScheduleMetadata metadata, CloudEventEnvelop envelop);
+    Task DispatchAsync(ScheduleMetadata metadata, CloudEventEnvelop envelop);
 }
 
 public class EventDispatcher : IEventDispatcher
@@ -22,7 +22,7 @@ public class EventDispatcher : IEventDispatcher
 
     public List<IEventRouter> Routers { get; }
 
-    public ValueTask DispatchAsync(ScheduleMetadata metadata, CloudEventEnvelop envelop)
+    public Task DispatchAsync(ScheduleMetadata metadata, CloudEventEnvelop envelop)
     {
         foreach (var router in Routers)
         {
@@ -31,6 +31,6 @@ public class EventDispatcher : IEventDispatcher
                 return router.DispatchAsync(metadata, envelop);
             }
         }
-        return ValueTask.CompletedTask;
+        return Task.CompletedTask;
     }
 }

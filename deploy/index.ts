@@ -82,7 +82,7 @@ const deployment = new Deployment(appName, {
     },
     spec: {
         minReadySeconds: 60,
-        replicas: config.getNumber(`replicas`) ?? 3,
+        replicas: config.getNumber(`replicas`) ?? 4,
         selector: {
             matchLabels: labels
         },
@@ -179,10 +179,56 @@ const deployment = new Deployment(appName, {
                     }, {
                         name: "OTEL_EXPORTER_OTLP_ENDPOINT",
                         value: "http://$(OTEL_EXPORTER_OTLP_HOST):4317"
+                    }, {
+                        name: "DOTNET_DiagnosticPorts",
+                        value: "/diag/port.sock"
                     }],
                     envFrom: [{
                         secretRef: { name: secret.metadata.name }
                     }],
+                    volumeMounts: [{
+                        mountPath: "/diag",
+                        name: "diagvol"
+                    }]
+                }, {
+                    args: ["--no-auth"],
+                    env: [{
+                        name: "DOTNETMONITOR_Urls",
+                        value: "http://localhost:52323"
+                    }, {
+                        name: "DOTNETMONITOR_DiagnosticPort__ConnectionMode",
+                        value: "Listen"
+                    }, {
+                        name: "DOTNETMONITOR_DiagnosticPort__EndpointName",
+                        value: "/diag/port.sock"
+                    }, {
+                        name: "DOTNETMONITOR_Storage__DumpTempFolder",
+                        value: "/diag/dumps"
+                    }, {
+                        name: "DotnetMonitor_Metrics__Providers__0__ProviderName",
+                        value: "Npgsql"
+                    }],
+                    image: "mcr.microsoft.com/dotnet/monitor:latest",
+                    imagePullPolicy: "Always",
+                    name: "monitor",
+                    resources: {
+                        limits: {
+                            cpu: "250m",
+                            memory: "256Mi"
+                        },
+                        requests: {
+                            cpu: "50m",
+                            memory: "32Mi"
+                        }
+                    },
+                    volumeMounts: [{
+                        mountPath: "/diag",
+                        name: "diagvol"
+                    }]
+                }],
+                volumes: [{
+                    emptyDir: {},
+                    name: "diagvol"
                 }],
                 terminationGracePeriodSeconds: 180
             }

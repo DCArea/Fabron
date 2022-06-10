@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Fabron.Diagnostics;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,16 +21,18 @@ public static class OpenTelemetryConfigureExtensions
         builder.Services
             .AddOpenTelemetryTracing(options => options
                 .AddEncrichedAspNetCoreInstrumentation()
-                .AddNpgsql()
+                // .AddNpgsql()
                 .AddSource("Microsoft.Orleans")
-                .AddSource("Fabron")
+                .AddSource(Activities.ActivitySourceName)
                 .AddHttpClientInstrumentation()
                 .AddGrpcClientInstrumentation()
+                .SetSampler<MySampler>()
                 .AddOtlpExporter()
             );
 
         builder.Services.AddOpenTelemetryMetrics((builder) => builder
             .AddRuntimeMetrics()
+            .AddMeter(Meters.MeterName)
             .AddPrometheusExporter()
         );
 
@@ -40,5 +43,27 @@ public static class OpenTelemetryConfigureExtensions
     {
         app.UseOpenTelemetryPrometheusScrapingEndpoint();
         return app;
+    }
+}
+
+internal class MySampler : Sampler
+{
+    private static readonly SamplingResult s_recordAndSample = new(SamplingDecision.RecordAndSample);
+    private static readonly SamplingResult s_drop = new(SamplingDecision.Drop);
+    public override SamplingResult ShouldSample(in SamplingParameters param)
+    {
+        if (param.Name == "Health checks"
+            || param.Name == "HTTP GET"
+            || param.Name.StartsWith("IDeploymentLoadPublisher")
+            || param.Name.StartsWith("IMembershipService")
+            || param.Name.StartsWith("ISiloManifestSystemTarget")
+            || param.Name.StartsWith("IDhtGrainDirectory")
+            || param.Name.StartsWith("IRemoteClientDirectory")
+            || param.Name.StartsWith("IRemoteGrainDirectory"))
+        {
+            return s_drop;
+        }
+
+        return s_recordAndSample;
     }
 }

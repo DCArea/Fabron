@@ -6,5 +6,5 @@ namespace Fabron.Core.CloudEvents;
 public interface IEventRouter
 {
     bool Matches(ScheduleMetadata metadata, CloudEventEnvelop envelop);
-    ValueTask DispatchAsync(ScheduleMetadata metadata, CloudEventEnvelop envelop);
+    Task DispatchAsync(ScheduleMetadata metadata, CloudEventEnvelop envelop);
 }

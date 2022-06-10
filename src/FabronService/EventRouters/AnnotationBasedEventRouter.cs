@@ -21,15 +21,15 @@ public class AnnotationBasedEventRouter : IEventRouter
         return annotations is not null && annotations.ContainsKey("routing.fabron.io/destination");
     }
 
-    public ValueTask DispatchAsync(ScheduleMetadata metadata, CloudEventEnvelop envelop)
+    public Task DispatchAsync(ScheduleMetadata metadata, CloudEventEnvelop envelop)
     {
         string? destination = metadata.Annotations?["routing.fabron.io/destination"];
         Guard.IsNotNull(destination, nameof(destination));
         if (destination.StartsWith("http"))
         {
-            return new ValueTask(_http.SendAsync(new Uri(destination), envelop));
+            return _http.SendAsync(new Uri(destination), envelop);
         }
-        throw new InvalidOperationException("Invalid destination");
+        return ThrowHelper.ThrowArgumentOutOfRangeException<Task>(nameof(destination));
     }
 }
 

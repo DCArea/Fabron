@@ -55,6 +55,7 @@ public abstract partial class TickerGrain : IRemindable
                 await Runtime.ReminderRegistry.UnregisterReminder(GrainContext.GrainId, _tickReminder);
                 _tickReminder = null;
                 TickerLog.TickerDisposed(_logger, _key);
+                Runtime.DeactivateOnIdle(GrainContext);
                 break;
             }
             catch (ReminderException)
@@ -86,7 +87,7 @@ public abstract partial class TickerGrain : IRemindable
         Activity.Current?.Dispose();
         Activity.Current = null;
         using var activity = Activities.Source.StartActivity("Ticking");
-        await Tick(status.FirstTickTime);
+        var task = Task.Factory.StartNew(() => Tick(status.FirstTickTime)).Unwrap();
     }
 
     public static partial class TickerLog

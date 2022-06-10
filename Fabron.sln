@@ -31,6 +31,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fabron.TestRunner", "src\Fa
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fabron.Providers.PostgreSQL", "src\Fabron.Providers.PostgreSQL\Fabron.Providers.PostgreSQL.csproj", "{A82CAF10-F438-4F53-B6FD-DB8C21EE9D61}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "perf", "perf", "{35DA120E-BD0F-44ED-9993-CD1383AC5310}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Benchmarks", "perf\Benchmarks\Benchmarks.csproj", "{6302C5FE-49FD-457B-A1E9-47708C27D746}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -137,6 +141,18 @@ Global
 		{A82CAF10-F438-4F53-B6FD-DB8C21EE9D61}.Release|x64.Build.0 = Release|Any CPU
 		{A82CAF10-F438-4F53-B6FD-DB8C21EE9D61}.Release|x86.ActiveCfg = Release|Any CPU
 		{A82CAF10-F438-4F53-B6FD-DB8C21EE9D61}.Release|x86.Build.0 = Release|Any CPU
+		{6302C5FE-49FD-457B-A1E9-47708C27D746}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6302C5FE-49FD-457B-A1E9-47708C27D746}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6302C5FE-49FD-457B-A1E9-47708C27D746}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{6302C5FE-49FD-457B-A1E9-47708C27D746}.Debug|x64.Build.0 = Debug|Any CPU
+		{6302C5FE-49FD-457B-A1E9-47708C27D746}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{6302C5FE-49FD-457B-A1E9-47708C27D746}.Debug|x86.Build.0 = Debug|Any CPU
+		{6302C5FE-49FD-457B-A1E9-47708C27D746}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6302C5FE-49FD-457B-A1E9-47708C27D746}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6302C5FE-49FD-457B-A1E9-47708C27D746}.Release|x64.ActiveCfg = Release|Any CPU
+		{6302C5FE-49FD-457B-A1E9-47708C27D746}.Release|x64.Build.0 = Release|Any CPU
+		{6302C5FE-49FD-457B-A1E9-47708C27D746}.Release|x86.ActiveCfg = Release|Any CPU
+		{6302C5FE-49FD-457B-A1E9-47708C27D746}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -150,6 +166,7 @@ Global
 		{FB106A10-DF42-40CD-91DD-65DF046EE3F2} = {7D1F17CB-08F2-4C8E-B5C9-FE6B4146650D}
 		{EF48A0B1-9924-4A91-B4A4-DCA856903D1F} = {7D1F17CB-08F2-4C8E-B5C9-FE6B4146650D}
 		{A82CAF10-F438-4F53-B6FD-DB8C21EE9D61} = {69206C38-EB1E-4CE2-9961-FC1D1D6609FE}
+		{6302C5FE-49FD-457B-A1E9-47708C27D746} = {35DA120E-BD0F-44ED-9993-CD1383AC5310}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {131A525F-A9C4-4AC3-B730-FC206DF60CD0}

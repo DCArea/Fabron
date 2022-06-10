@@ -101,13 +101,11 @@ WHERE key = @key AND etag = @expected_etag;";
         NpgsqlCommand cmd;
         if (expectedETag is null)
         {
-            // upsert
             cmd = new NpgsqlCommand(_sql_delete, conn);
             cmd.Parameters.AddWithValue("@key", key);
         }
         else
         {
-            // update
             cmd = new NpgsqlCommand(_sql_delete_with_etag, conn);
             cmd.Parameters.AddWithValue("@key", key);
             cmd.Parameters.AddWithValue("@expected_etag", expectedETag);

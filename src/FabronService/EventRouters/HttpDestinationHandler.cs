@@ -32,25 +32,22 @@ public class HttpDestinationHandler : IHttpDestinationHandler
 
     public async Task SendAsync(Uri destination, CloudEventEnvelop envelop)
     {
-        var client = _factory.CreateClient();
-        HttpResponseMessage response;
+        using var client = _factory.CreateClient();
         try
         {
             var request = new HttpRequestMessage(HttpMethod.Put, destination)
             {
+                Version = new Version(2, 0),
+                VersionPolicy = HttpVersionPolicy.RequestVersionOrLower,
                 Content = JsonContent.Create(envelop, _contentType, _jsonSerializerOptions)
             };
-            response = await client.SendAsync(request);
+            using var response = await client.SendAsync(request);
+            response.EnsureSuccessStatusCode();
         }
         catch (HttpRequestException ex)
         {
             _logger.LogError(ex, "Failed to send event to {Destination}", destination);
-            return;
-        }
-        if (!response.IsSuccessStatusCode)
-        {
-            _logger.LogError("Failed to send event to {Destination} with status code {StatusCode}", destination, response.StatusCode);
-            return;
+            throw;
         }
     }
 }

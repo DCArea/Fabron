@@ -14,7 +14,7 @@ public class SimpleEventRouter : IEventRouter
         _options = options.Value;
     }
 
-    public ValueTask DispatchAsync(ScheduleMetadata metadata, CloudEventEnvelop envelop)
+    public Task DispatchAsync(ScheduleMetadata metadata, CloudEventEnvelop envelop)
     {
         foreach (var route in _options.Routes)
         {
@@ -23,7 +23,7 @@ public class SimpleEventRouter : IEventRouter
                 return route.HandleAsync(metadata, envelop);
             }
         }
-        return ValueTask.CompletedTask;
+        return Task.CompletedTask;
     }
 
     public bool Matches(ScheduleMetadata metadata, CloudEventEnvelop envelop)
@@ -33,7 +33,7 @@ public class SimpleEventRouter : IEventRouter
     {
         public Func<ScheduleMetadata, CloudEventEnvelop, bool> Matches { get; init; }
             = (metadata, envelop) => true;
-        public Func<ScheduleMetadata, CloudEventEnvelop, ValueTask> HandleAsync { get; init; }
-            = (metadata, envelop) => ValueTask.CompletedTask;
+        public Func<ScheduleMetadata, CloudEventEnvelop, Task> HandleAsync { get; init; }
+            = (metadata, envelop) => Task.CompletedTask;
     }
 }

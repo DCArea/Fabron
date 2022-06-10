@@ -16,19 +16,27 @@ export let options: Options = {
     },
 };
 
-const now = Date.now();
-export default () => {
+
+export function setup() {
+    const now = Date.now();
+    const schedule = new Date(now + 1 * 60000).toISOString();
+    // const schedule = "2022-06-10T08:11:00Z";
+    console.log(schedule);
+    return { now, schedule };
+}
+
+export default function ({ now, schedule }: { now: number, schedule: string }) {
     const scenario = execution.default.scenario;
-    const name = `${now / 1000}-${scenario.iterationInTest}`;
+    const name = `${now}-${scenario.iterationInTest}`;
     const url = `${baseUrl}/timedevents/${name}`
     const req_body = {
-        "schedule": new Date(now + 5 * 60000).toISOString(),
+        "schedule": schedule,
         "template": {
             "data": {
                 "foo": "bar"
             }
         },
-        "routingDestination": "http://stub.dca.svc.cluster.local/cloudevents"
+        "routingDestination": targetUrl
     };
     const params = {
         headers: {

@@ -1,19 +1,20 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Fabron.Store;
 
-public interface IStateStore2<TState>
+public interface IStateStore<TState>
 {
     Task<string> SetAsync(TState state, string? expectedETag);
     Task<(TState? state, string? eTag)> GetAsync(string key);
     Task RemoveAsync(string key, string? expectedETag);
 }
 
-public abstract class InMemoryStateStore2<TState> : IStateStore2<TState>
+public abstract class InMemoryStateStore<TState> : IStateStore<TState>
 {
-    private readonly Dictionary<string, (TState state, string eTag)> _dict = new();
+    private readonly ConcurrentDictionary<string, (TState state, string eTag)> _dict = new();
 
     public Task<(TState? state, string? eTag)> GetAsync(string key)
     {
@@ -22,7 +23,7 @@ public abstract class InMemoryStateStore2<TState> : IStateStore2<TState>
 
     public Task RemoveAsync(string key, string? expectedETag)
     {
-        _dict.Remove(key);
+        _dict.Remove(key, out _);
         return Task.CompletedTask;
     }
 

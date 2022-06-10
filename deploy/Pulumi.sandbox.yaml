@@ -2,6 +2,6 @@ config:
   fabron:ApiKey:
     secure: AAABAE0y9HwIS2I9Wy/JBiuYYfvY5evJL6hSlxOw0tNW29Ua5oZXnNY=
   fabron:PGSQL:
-    secure: AAABAN3rP3ps00kkXrjCX+5f8zk3uocjf3jBU8FuPVLyV2tmjhy1Q4TIwc7V/l/6HHiLvJ4sEHumt3ChCKylFLX379hl/T4KXU6zJfo60fgU2Q4sv1aNk8qTDM0j2o73t1zeOibTsC8oc8ObfcG1skZvL3VOkvln9RwhR3ZxHIRe5EHL3gxhIRxftkw2QVRDW0Y3RcJ5FClpPmaDjlcxSpEXvrpzXD14u/ECLDTfplqbDj5KPoEmrfVHFYMfAEdHKYY=
+    secure: AAABAHSPs3F9wJ564g9nKTOZEBE4inn0Ff26kTs4fTXQZARMiV1pKrjD8XjzXHAtRyxCmlUuwqTPZKh7nhDzl++t0s9dyltdDMMcOs83h1pVrTl0w6q+/qASmQ7nQXlAsK2D977eqrrSOlCLcWoXAFz/H7bMkmo3Uijmi5R3m1s8JRbZMhlL+MQ+kFLv9kAORlk9HwPL7i1XGfpahLeIycAC2laqhc3VQBHN6KaWn7esluP7LWGP8Ks2Me0yRTV0sMUX93izbMqE+wTgDWqR
   fabron:host: fabron.s.suuyuu.cn
-  fabron:image: registry.cn-hangzhou.aliyuncs.com/surac/fabron:dev.018
+  fabron:image: registry.cn-hangzhou.aliyuncs.com/surac/fabron:dev.34
