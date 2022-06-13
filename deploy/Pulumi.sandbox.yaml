@@ -1,7 +1,0 @@
-config:
-  fabron:ApiKey:
-    secure: AAABAE0y9HwIS2I9Wy/JBiuYYfvY5evJL6hSlxOw0tNW29Ua5oZXnNY=
-  fabron:PGSQL:
-    secure: AAABAHSPs3F9wJ564g9nKTOZEBE4inn0Ff26kTs4fTXQZARMiV1pKrjD8XjzXHAtRyxCmlUuwqTPZKh7nhDzl++t0s9dyltdDMMcOs83h1pVrTl0w6q+/qASmQ7nQXlAsK2D977eqrrSOlCLcWoXAFz/H7bMkmo3Uijmi5R3m1s8JRbZMhlL+MQ+kFLv9kAORlk9HwPL7i1XGfpahLeIycAC2laqhc3VQBHN6KaWn7esluP7LWGP8Ks2Me0yRTV0sMUX93izbMqE+wTgDWqR
-  fabron:host: fabron.s.suuyuu.cn
-  fabron:image: registry.cn-hangzhou.aliyuncs.com/surac/fabron:dev.34
