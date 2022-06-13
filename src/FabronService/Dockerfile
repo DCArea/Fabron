@@ -15,6 +15,7 @@ COPY src/Fabron.Server/*.csproj ./src/Fabron.Server/
 COPY src/Fabron.FunctionalTests/*.csproj ./src/Fabron.FunctionalTests/
 COPY src/Fabron.TestRunner/*.csproj ./src/Fabron.TestRunner/
 COPY src/Fabron.Providers.PostgreSQL/*.csproj ./src/Fabron.Providers.PostgreSQL/
+COPY perf/Benchmarks/Benchmarks.csproj ./perf/Benchmarks/
 RUN dotnet restore
 
 # copy everything else and build app
