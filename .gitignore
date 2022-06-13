@@ -445,3 +445,4 @@ $RECYCLE.BIN/
 eng\load-testing\**\results
 
 envs.ps1
+Pulumi.*.yaml
