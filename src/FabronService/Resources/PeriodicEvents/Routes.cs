@@ -19,6 +19,10 @@ public static partial class Routes
             .WithName($"{nameof(PeriodicEvents)}_{nameof(PeriodicEvents.Delete)}")
             .RequireAuthorization();
 
+        endpoints.MapGet("/periodicevents/{name}/ticker/status", PeriodicEvents.GetTickerStatus)
+            .WithName($"{nameof(PeriodicEvents)}_{nameof(PeriodicEvents.GetTickerStatus)}")
+            .RequireAuthorization();
+
         return endpoints;
     }
 }

@@ -4,8 +4,10 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Fabron.Core.CloudEvents;
+using Fabron.Diagnostics;
 using Fabron.Models;
 using Fabron.Store;
+using Microsoft.Extensions.Internal;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Toolkit.Diagnostics;
@@ -19,6 +21,9 @@ public interface IPeriodicEventScheduler : IGrainWithStringKey
 {
     [ReadOnly]
     ValueTask<PeriodicEvent?> GetState();
+
+    [ReadOnly]
+    Task<TickerStatus> GetTickerStatus();
 
     Task<PeriodicEvent> Schedule(
         PeriodicEventSpec spec,
@@ -173,15 +178,21 @@ public class PeriodicEventScheduler : TickerGrain, IGrainBase, IPeriodicEventSch
     private async Task DispatchNew(CloudEventEnvelop cloudEvent)
     {
         Guard.IsNotNull(_state, nameof(_state));
+        var utcNow = _clock.UtcNow;
+        var sw = ValueStopwatch.StartNew();
+        RecordTick(utcNow);
+        Meters.RecordCloudEventDispatchTardiness(utcNow, cloudEvent.Time);
         try
         {
             await _dispatcher.DispatchAsync(_state.Metadata, cloudEvent);
+            Meters.CloudEventDispatchCount.Add(1);
+            Meters.CloudEventDispatchDuration.Record(sw.GetElapsedTime().TotalMilliseconds);
         }
         catch (Exception e)
         {
             TickerLog.ErrorOnTicking(_logger, _key, e);
+            Meters.CloudEventDispatchFailedCount.Add(1);
             return;
         }
     }
 }
-

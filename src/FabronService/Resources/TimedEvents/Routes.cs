@@ -19,6 +19,11 @@ public static partial class Routes
             .WithName($"{nameof(TimedEvents)}_{nameof(TimedEvents.Cancel)}")
             .RequireAuthorization();
 
+        endpoints.MapGet("/timedevents/{name}/ticker/status", TimedEvents.GetTickerStatus)
+            .WithName($"{nameof(TimedEvents)}_{nameof(TimedEvents.GetTickerStatus)}")
+            .RequireAuthorization();
+
+
         return endpoints;
     }
 }

@@ -10,7 +10,7 @@ export let options: Options = {
         contacts: {
             executor: 'shared-iterations',
             vus: 1000,
-            iterations: 30000,
+            iterations: 50000,
             maxDuration: '100s',
         }
     },

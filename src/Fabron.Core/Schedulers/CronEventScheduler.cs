@@ -5,8 +5,10 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Fabron.Core.CloudEvents;
+using Fabron.Diagnostics;
 using Fabron.Models;
 using Fabron.Store;
+using Microsoft.Extensions.Internal;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Toolkit.Diagnostics;
@@ -20,6 +22,9 @@ public interface ICronEventScheduler : IGrainWithStringKey
 {
     [ReadOnly]
     ValueTask<CronEvent?> GetState();
+
+    [ReadOnly]
+    Task<TickerStatus> GetTickerStatus();
 
     Task<CronEvent> Schedule(
         CronEventSpec spec,
@@ -152,8 +157,6 @@ public class CronEventScheduler : TickerGrain, IGrainBase, ICronEventScheduler
         if (schedules.Any())
         {
             Dispatch(schedules);
-            // var scheduleTasks = schedules.Select(DispatchNew);
-            // await Task.WhenAll(scheduleTasks);
             _lastSchedule = schedules.Last();
         }
         from = to;
@@ -187,13 +190,20 @@ public class CronEventScheduler : TickerGrain, IGrainBase, ICronEventScheduler
     private async Task DispatchNew(CloudEventEnvelop cloudEvent)
     {
         Guard.IsNotNull(_state, nameof(_state));
+        var utcNow = _clock.UtcNow;
+        var sw = ValueStopwatch.StartNew();
+        RecordTick(utcNow);
+        Meters.RecordCloudEventDispatchTardiness(utcNow, cloudEvent.Time);
         try
         {
             await _dispatcher.DispatchAsync(_state.Metadata, cloudEvent);
+            Meters.CloudEventDispatchCount.Add(1);
+            Meters.CloudEventDispatchDuration.Record(sw.GetElapsedTime().TotalMilliseconds);
         }
         catch (Exception e)
         {
             TickerLog.ErrorOnTicking(_logger, _key, e);
+            Meters.CloudEventDispatchFailedCount.Add(1);
             return;
         }
     }

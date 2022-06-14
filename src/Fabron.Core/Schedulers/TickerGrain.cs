@@ -1,7 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
+using Fabron.Core.CloudEvents;
 using Fabron.Diagnostics;
+using Fabron.Models;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Orleans;
 using Orleans.Runtime;
@@ -12,6 +17,7 @@ public abstract partial class TickerGrain : IRemindable
 {
     private readonly ILogger _logger;
     private readonly TimeSpan _interval;
+
     public TickerGrain(
         IGrainContext context,
         IGrainRuntime runtime,
@@ -30,7 +36,7 @@ public abstract partial class TickerGrain : IRemindable
 
     public IGrainContext GrainContext { get; }
     protected IGrainRuntime Runtime { get; }
-
+    protected Queue<DateTimeOffset> RecentTicks { get; } = new(20);
 
     protected abstract Task Tick(DateTimeOffset? expectedTickTime = null);
 
@@ -73,6 +79,26 @@ public abstract partial class TickerGrain : IRemindable
                 // TODO: add log
                 return;
             }
+        }
+    }
+
+    public async Task<TickerStatus> GetTickerStatus()
+    {
+        var reminderTable = Runtime.ServiceProvider.GetRequiredService<IReminderTable>();
+        var entry = await reminderTable.ReadRow(GrainContext.GrainReference, Names.TickerReminder);
+        return new TickerStatus
+        {
+            StartAt = entry?.StartAt,
+            RecentTicks = RecentTicks.ToList()
+        };
+    }
+
+    protected void RecordTick(DateTimeOffset tickTime)
+    {
+        RecentTicks.Enqueue(tickTime);
+        if (RecentTicks.Count > 20)
+        {
+            RecentTicks.Dequeue();
         }
     }
 

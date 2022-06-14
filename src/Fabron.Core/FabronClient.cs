@@ -5,65 +5,20 @@ using System.Threading.Tasks;
 using Fabron.Core.CloudEvents;
 using Fabron.Models;
 using Fabron.Schedulers;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
 
 namespace Fabron;
 
-public interface IFabronClient
-{
-    Task ScheduleTimedEvent<T>(
-        string key,
-        DateTimeOffset schedule,
-        CloudEventTemplate<T> template,
-        Dictionary<string, string>? labels = null,
-        Dictionary<string, string>? annotations = null);
-
-    Task<TimedEvent<TData>?> GetTimedEvent<TData>(string key);
-
-    Task CancelTimedEvent(string key);
-
-    Task ScheduleCronEvent<T>(
-        string key,
-        string schedule,
-        CloudEventTemplate<T> template,
-        DateTimeOffset? notBefore = null,
-        DateTimeOffset? expirationTime = null,
-        bool suspend = false,
-        Dictionary<string, string>? labels = null,
-        Dictionary<string, string>? annotations = null);
-
-    Task<CronEvent<TData>?> GetCronEvent<TData>(string key);
-
-    Task CancelCronEvent(string key);
-
-    Task SchedulePeriodicEvent<T>(
-        string key,
-        CloudEventTemplate<T> template,
-        TimeSpan period,
-        DateTimeOffset? notBefore = null,
-        DateTimeOffset? expirationTime = null,
-        bool suspend = false,
-        Dictionary<string, string>? labels = null,
-        Dictionary<string, string>? annotations = null);
-
-    Task<PeriodicEvent<TData>?> GetPeriodicEvent<TData>(string key);
-
-    Task CancelPeriodicEvent(string key);
-}
-
 public class FabronClient : IFabronClient
 {
-    private readonly ILogger _logger;
     private readonly IClusterClient _client;
     private readonly FabronClientOptions _options;
 
-    public FabronClient(ILogger<FabronClient> logger,
+    public FabronClient(
         IClusterClient client,
         IOptions<FabronClientOptions> options)
     {
-        _logger = logger;
         _client = client;
         _options = options.Value;
     }
@@ -104,6 +59,12 @@ public class FabronClient : IFabronClient
         );
     }
 
+    public Task<TickerStatus> GetTimedEventTickerStatus(string key)
+    {
+        return _client.GetGrain<ITimedEventScheduler>(key)
+            .GetTickerStatus();
+    }
+
     public async Task ScheduleCronEvent<T>(
         string key,
         string schedule,
@@ -141,6 +102,12 @@ public class FabronClient : IFabronClient
                 state.Spec.Suspend
             )
         );
+    }
+
+    public Task<TickerStatus> GetCronEventTickerStatus(string key)
+    {
+        return _client.GetGrain<ICronEventScheduler>(key)
+            .GetTickerStatus();
     }
 
     public async Task CancelCronEvent(string key)
@@ -186,6 +153,12 @@ public class FabronClient : IFabronClient
                 state.Spec.Suspend
             )
         );
+    }
+
+    public Task<TickerStatus> GetPeriodicEventTickerStatus(string key)
+    {
+        return _client.GetGrain<IPeriodicEventScheduler>(key)
+            .GetTickerStatus();
     }
 
     public Task CancelPeriodicEvent(string key)
