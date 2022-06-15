@@ -3,21 +3,19 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Fabron.Core.CloudEvents;
+using Fabron.CloudEvents;
 using Fabron.Diagnostics;
 using Fabron.Models;
 using Fabron.Store;
-using Microsoft.Extensions.Internal;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.Toolkit.Diagnostics;
 using Orleans;
 using Orleans.Concurrency;
 using Orleans.Runtime;
 
 namespace Fabron.Schedulers;
 
-public interface ITimedEventScheduler : IGrainWithStringKey
+public interface ITimedScheduler : IGrainWithStringKey
 {
     [ReadOnly]
     Task<TickerStatus> GetTickerStatus();
@@ -26,6 +24,7 @@ public interface ITimedEventScheduler : IGrainWithStringKey
     ValueTask<TimedEvent?> GetState();
 
     Task<TimedEvent> Schedule(
+        string template,
         TimedEventSpec spec,
         Dictionary<string, string>? labels,
         Dictionary<string, string>? annotations,
@@ -35,13 +34,9 @@ public interface ITimedEventScheduler : IGrainWithStringKey
     Task Unregister();
 }
 
-public partial class TimedEventScheduler : TickerGrain, IGrainBase, ITimedEventScheduler
+public partial class TimedEventScheduler : SchedulerGrain<TimedEvent>, IGrainBase, ITimedScheduler
 {
-    private readonly ILogger _logger;
-    private readonly ISystemClock _clock;
-    private readonly ITimedEventStore _store;
     private readonly SimpleSchedulerOptions _options;
-    private readonly IEventDispatcher _dispatcher;
 
     public TimedEventScheduler(
         IGrainContext context,
@@ -50,21 +45,17 @@ public partial class TimedEventScheduler : TickerGrain, IGrainBase, ITimedEventS
         IOptions<SimpleSchedulerOptions> options,
         ISystemClock clock,
         ITimedEventStore store,
-        IEventDispatcher mediator) : base(context, runtime, logger, options.Value.TickerInterval)
+        IEventDispatcher dispatcher) : base(context, runtime, logger, clock, options.Value, store, dispatcher)
     {
-        _logger = logger;
-        _clock = clock;
-        _store = store;
         _options = options.Value;
-        _dispatcher = mediator;
     }
 
-    private TimedEvent? _state;
-    private string? _eTag;
     async Task IGrainBase.OnActivateAsync(CancellationToken cancellationToken)
     {
         _key = GrainContext.GrainReference.GetPrimaryKeyString();
-        (_state, _eTag) = await _store.GetAsync(_key);
+        var entry = await _store.GetAsync(_key);
+        _state = entry?.State;
+        _eTag = entry?.ETag;
     }
 
     public async Task Unregister()
@@ -79,6 +70,7 @@ public partial class TimedEventScheduler : TickerGrain, IGrainBase, ITimedEventS
     public ValueTask<TimedEvent?> GetState() => ValueTask.FromResult(_state);
 
     public async Task<TimedEvent> Schedule(
+        string template,
         TimedEventSpec spec,
         Dictionary<string, string>? labels,
         Dictionary<string, string>? annotations,
@@ -97,6 +89,7 @@ public partial class TimedEventScheduler : TickerGrain, IGrainBase, ITimedEventS
                 Annotations = annotations,
                 Owner = owner
             },
+            Template = template,
             Spec = spec
         };
         _eTag = await _store.SetAsync(_state, _eTag);
@@ -115,7 +108,7 @@ public partial class TimedEventScheduler : TickerGrain, IGrainBase, ITimedEventS
         return _state;
     }
 
-    internal override async Task Tick(DateTimeOffset? expectedTickTime)
+    internal override async Task Tick(DateTimeOffset expectedTickTime)
     {
         if (_state is null || _state.Metadata.DeletionTimestamp is not null)
         {
@@ -126,37 +119,16 @@ public partial class TimedEventScheduler : TickerGrain, IGrainBase, ITimedEventS
 
         var envelop = _state.ToCloudEvent(_state.Spec.Schedule, _options.JsonSerializerOptions);
         await DispatchNew(envelop);
-
         await StopTicker();
     }
-    public static partial class Log
+
+    internal static partial class Log
     {
         [LoggerMessage(
             EventId = 23000,
             Level = LogLevel.Warning,
             Message = "[{key}]: Schedule {schedule} is in the past, but still ticking now.")]
         public static partial void TickingForPast(ILogger logger, string key, DateTimeOffset schedule);
-    }
-
-    private async Task DispatchNew(CloudEventEnvelop cloudEvent)
-    {
-        Guard.IsNotNull(_state, nameof(_state));
-        var utcNow = _clock.UtcNow;
-        var sw = ValueStopwatch.StartNew();
-        RecordTick(utcNow);
-        Meters.RecordCloudEventDispatchTardiness(utcNow, cloudEvent.Time);
-        try
-        {
-            await _dispatcher.DispatchAsync(_state.Metadata, cloudEvent);
-            Meters.CloudEventDispatchCount.Add(1);
-            Meters.CloudEventDispatchDuration.Record(sw.GetElapsedTime().TotalMilliseconds);
-        }
-        catch (Exception e)
-        {
-            TickerLog.ErrorOnTicking(_logger, _key, e);
-            Meters.CloudEventDispatchFailedCount.Add(1);
-            return;
-        }
     }
 }
 

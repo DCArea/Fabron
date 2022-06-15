@@ -1,14 +1,11 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Fabron.Core.CloudEvents;
-using Fabron.Diagnostics;
+using Fabron.CloudEvents;
 using Fabron.Models;
 using Fabron.Store;
-using Microsoft.Extensions.Internal;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Toolkit.Diagnostics;
@@ -18,7 +15,7 @@ using Orleans.Runtime;
 
 namespace Fabron.Schedulers;
 
-public interface ICronEventScheduler : IGrainWithStringKey
+public interface ICronScheduler : IGrainWithStringKey
 {
     [ReadOnly]
     ValueTask<CronEvent?> GetState();
@@ -27,6 +24,7 @@ public interface ICronEventScheduler : IGrainWithStringKey
     Task<TickerStatus> GetTickerStatus();
 
     Task<CronEvent> Schedule(
+        string template,
         CronEventSpec spec,
         Dictionary<string, string>? labels,
         Dictionary<string, string>? annotations,
@@ -36,13 +34,9 @@ public interface ICronEventScheduler : IGrainWithStringKey
     Task Unregister();
 }
 
-public class CronEventScheduler : TickerGrain, IGrainBase, ICronEventScheduler
+public class CronEventScheduler : SchedulerGrain<CronEvent>, IGrainBase, ICronScheduler
 {
-    private readonly ILogger _logger;
-    private readonly ISystemClock _clock;
-    private readonly ICronEventStore _store;
     private readonly CronSchedulerOptions _options;
-    private readonly IEventDispatcher _dispatcher;
 
     public CronEventScheduler(
         IGrainContext context,
@@ -51,22 +45,17 @@ public class CronEventScheduler : TickerGrain, IGrainBase, ICronEventScheduler
         IOptions<CronSchedulerOptions> options,
         ISystemClock clock,
         ICronEventStore store,
-        IEventDispatcher dispatcher) : base(context, runtime, logger, options.Value.TickerInterval)
+        IEventDispatcher dispatcher) : base(context, runtime, logger, clock, options.Value, store, dispatcher)
     {
-        _logger = logger;
-        _clock = clock;
-        _store = store;
         _options = options.Value;
-        _dispatcher = dispatcher;
     }
-
-    private CronEvent? _state;
-    private string? _eTag;
 
     async Task IGrainBase.OnActivateAsync(CancellationToken cancellationToken)
     {
         _key = this.GetPrimaryKeyString();
-        (_state, _eTag) = await _store.GetAsync(_key);
+        var entry = await _store.GetAsync(_key);
+        _state = entry?.State;
+        _eTag = entry?.ETag;
     }
 
     public async Task Unregister()
@@ -81,6 +70,7 @@ public class CronEventScheduler : TickerGrain, IGrainBase, ICronEventScheduler
     public ValueTask<CronEvent?> GetState() => new(_state);
 
     public async Task<CronEvent> Schedule(
+        string template,
         CronEventSpec spec,
         Dictionary<string, string>? labels,
         Dictionary<string, string>? annotations,
@@ -97,41 +87,41 @@ public class CronEventScheduler : TickerGrain, IGrainBase, ICronEventScheduler
                 Annotations = annotations,
                 Owner = owner
             },
+            Template = template,
             Spec = spec
         };
         _eTag = await _store.SetAsync(_state, _eTag);
 
         if (!_state.Spec.Suspend && (_state.Spec.NotBefore is null || _state.Spec.NotBefore.Value <= utcNow))
         {
-            await Tick(utcNow);
+            await Tick(default);
         }
         return _state;
     }
 
-    internal override async Task Tick(DateTimeOffset? expectedTickTime)
+    internal override async Task Tick(DateTimeOffset expectedTickTime)
     {
+        DateTimeOffset now = _clock.UtcNow;
+        TickerLog.Ticking(_logger, _key, now, expectedTickTime);
+
         if (_state is null || _state.Metadata.DeletionTimestamp is not null)
         {
             TickerLog.UnexpectedTick(_logger, _key, expectedTickTime, "NotRegistered");
             await StopTicker();
             return;
         }
-
         if (_state.Spec.Suspend)
         {
             TickerLog.UnexpectedTick(_logger, _key, expectedTickTime, "Suspended");
             await StopTicker();
             return;
         }
-
-        DateTimeOffset now = _clock.UtcNow;
         if (now > _state.Spec.ExpirationTime)
         {
             TickerLog.UnexpectedTick(_logger, _key, expectedTickTime, "Expired");
             await StopTicker();
             return;
         }
-
         if (_state.Spec.NotBefore.HasValue && now < _state.Spec.NotBefore.Value)
         {
             TickerLog.UnexpectedTick(_logger, _key, expectedTickTime, "NotStarted");
@@ -141,18 +131,24 @@ public class CronEventScheduler : TickerGrain, IGrainBase, ICronEventScheduler
 
         Cronos.CronExpression cron = Cronos.CronExpression.Parse(_state.Spec.Schedule, _options.CronFormat);
 
-        DateTimeOffset from = expectedTickTime ?? new DateTimeOffset(now.Year, now.Month, now.Day, now.Hour, now.Minute, now.Second, 0, now.Offset);
+        bool shouldDispatchForCurrentTick = expectedTickTime != default;
+        DateTimeOffset from = expectedTickTime == default ? now : expectedTickTime;
         var to = from.AddMinutes(2);
         if (to > _state.Spec.ExpirationTime)
         {
             to = _state.Spec.ExpirationTime.Value;
         }
 
-        var schedules = cron.GetOccurrences(from, to, _options.TimeZone, fromInclusive: true, toInclusive: false);
-        if (schedules.Any())
+        var schedules = cron.GetOccurrences(from, to, _options.TimeZone, fromInclusive: false, toInclusive: false);
+        if (shouldDispatchForCurrentTick)
         {
-            Dispatch(now, schedules);
+            Dispatch(expectedTickTime);
         }
+        foreach (var schedule in schedules)
+        {
+            Dispatch(schedule);
+        }
+
         from = to;
         var nextTick = cron.GetNextOccurrence(from, _options.TimeZone, inclusive: true);
         if (!nextTick.HasValue || (_state.Spec.ExpirationTime.HasValue && nextTick.Value > _state.Spec.ExpirationTime.Value))
@@ -164,42 +160,17 @@ public class CronEventScheduler : TickerGrain, IGrainBase, ICronEventScheduler
         await TickAfter(nextTick.Value.Subtract(now));
     }
 
-    private void Dispatch(DateTimeOffset now, IEnumerable<DateTimeOffset> schedules)
+    private void Dispatch(DateTimeOffset schedule)
     {
         Guard.IsNotNull(_state, nameof(_state));
-        // var now = _clock.UtcNow;
-        foreach (var schedule in schedules)
-        {
-            var dueTime = schedule > now ? schedule.Subtract(now) : TimeSpan.Zero;
-            var cloudEvent = _state.ToCloudEvent(schedule, _options.JsonSerializerOptions);
-            Runtime.TimerRegistry.RegisterTimer(
-                GrainContext,
-                obj => DispatchNew((CloudEventEnvelop)obj),
-                cloudEvent,
-                dueTime,
-                Timeout.InfiniteTimeSpan);
-        }
-    }
-
-    private async Task DispatchNew(CloudEventEnvelop cloudEvent)
-    {
-        Guard.IsNotNull(_state, nameof(_state));
-        var utcNow = _clock.UtcNow;
-        var sw = ValueStopwatch.StartNew();
-        RecordTick(utcNow);
-        Meters.RecordCloudEventDispatchTardiness(utcNow, cloudEvent.Time);
-        try
-        {
-            await _dispatcher.DispatchAsync(_state.Metadata, cloudEvent);
-            Meters.CloudEventDispatchCount.Add(1);
-            Meters.CloudEventDispatchDuration.Record(sw.GetElapsedTime().TotalMilliseconds);
-        }
-        catch (Exception e)
-        {
-            TickerLog.ErrorOnTicking(_logger, _key, e);
-            Meters.CloudEventDispatchFailedCount.Add(1);
-            return;
-        }
+        var now = _clock.UtcNow;
+        var dueTime = schedule > now ? schedule.Subtract(now) : TimeSpan.Zero;
+        var cloudEvent = _state.ToCloudEvent(schedule, _options.JsonSerializerOptions);
+        _runtime.TimerRegistry.RegisterTimer(
+            GrainContext,
+            obj => DispatchNew((CloudEventEnvelop)obj),
+            cloudEvent,
+            dueTime,
+            Timeout.InfiniteTimeSpan);
     }
 }
-

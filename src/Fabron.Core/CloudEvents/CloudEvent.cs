@@ -2,7 +2,7 @@ using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Fabron.Core.CloudEvents;
+namespace Fabron.CloudEvents;
 
 public record CloudEventTemplate(
     [property: JsonPropertyName("data")]

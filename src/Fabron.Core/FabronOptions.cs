@@ -5,7 +5,7 @@ using Cronos;
 
 namespace Fabron
 {
-    public class CommonOptions
+    public class SchedulerOptions
     {
         public JsonSerializerOptions JsonSerializerOptions { get; set; }
             = new(JsonSerializerDefaults.Web)
@@ -13,16 +13,15 @@ namespace Fabron
                 DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
             };
 
-        public bool UseSynchronousTicker { get; set; } = false;
         public TimeZoneInfo TimeZone { get; set; } = TimeZoneInfo.Utc;
         public TimeSpan TickerInterval { get; set; } = TimeSpan.FromMinutes(2);
     }
 
-    public class FabronClientOptions : CommonOptions
+    public class FabronClientOptions : SchedulerOptions
     {
     }
 
-    public class SimpleSchedulerOptions : CommonOptions
+    public class SimpleSchedulerOptions : SchedulerOptions
     {
         public SimpleSchedulerOptions()
         {
@@ -30,12 +29,12 @@ namespace Fabron
         }
     }
 
-    public class CronSchedulerOptions : CommonOptions
+    public class CronSchedulerOptions : SchedulerOptions
     {
         public CronFormat CronFormat { get; set; } = CronFormat.Standard;
     }
 
-    public class PeriodicSchedulerOptions : CommonOptions
+    public class PeriodicSchedulerOptions : SchedulerOptions
     {
     }
 

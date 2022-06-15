@@ -4,7 +4,7 @@ using System.Security.Claims;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Fabron;
-using Fabron.Core.CloudEvents;
+using Fabron.CloudEvents;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 

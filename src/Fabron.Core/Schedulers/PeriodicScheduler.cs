@@ -3,11 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Fabron.Core.CloudEvents;
-using Fabron.Diagnostics;
+using Fabron.CloudEvents;
 using Fabron.Models;
 using Fabron.Store;
-using Microsoft.Extensions.Internal;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Toolkit.Diagnostics;
@@ -17,7 +15,7 @@ using Orleans.Runtime;
 
 namespace Fabron.Schedulers;
 
-public interface IPeriodicEventScheduler : IGrainWithStringKey
+public interface IPeriodicScheduler : IGrainWithStringKey
 {
     [ReadOnly]
     ValueTask<PeriodicEvent?> GetState();
@@ -26,6 +24,7 @@ public interface IPeriodicEventScheduler : IGrainWithStringKey
     Task<TickerStatus> GetTickerStatus();
 
     Task<PeriodicEvent> Schedule(
+        string template,
         PeriodicEventSpec spec,
         Dictionary<string, string>? labels,
         Dictionary<string, string>? annotations,
@@ -35,13 +34,9 @@ public interface IPeriodicEventScheduler : IGrainWithStringKey
     Task Unregister();
 }
 
-public class PeriodicEventScheduler : TickerGrain, IGrainBase, IPeriodicEventScheduler
+public class PeriodicEventScheduler : SchedulerGrain<PeriodicEvent>, IGrainBase, IPeriodicScheduler
 {
-    private readonly ILogger _logger;
-    private readonly ISystemClock _clock;
-    private readonly IPeriodicEventStore _store;
     private readonly PeriodicSchedulerOptions _options;
-    private readonly IEventDispatcher _dispatcher;
 
     public PeriodicEventScheduler(
         IGrainContext context,
@@ -50,22 +45,17 @@ public class PeriodicEventScheduler : TickerGrain, IGrainBase, IPeriodicEventSch
         IOptions<PeriodicSchedulerOptions> options,
         ISystemClock clock,
         IPeriodicEventStore store,
-        IEventDispatcher dispatcher) : base(context, runtime, logger, options.Value.TickerInterval)
+        IEventDispatcher dispatcher) : base(context, runtime, logger, clock, options.Value, store, dispatcher)
     {
-        _logger = logger;
-        _clock = clock;
-        _store = store;
         _options = options.Value;
-        _dispatcher = dispatcher;
     }
-
-    private PeriodicEvent? _state;
-    private string? _eTag;
 
     async Task IGrainBase.OnActivateAsync(CancellationToken cancellationToken)
     {
         _key = GrainContext.GrainReference.GetPrimaryKeyString();
-        (_state, _eTag) = await _store.GetAsync(_key);
+        var entry = await _store.GetAsync(_key);
+        _state = entry?.State;
+        _eTag = entry?.ETag;
     }
 
     public async Task Unregister()
@@ -80,6 +70,7 @@ public class PeriodicEventScheduler : TickerGrain, IGrainBase, IPeriodicEventSch
     public ValueTask<PeriodicEvent?> GetState() => new(_state);
 
     public async Task<PeriodicEvent> Schedule(
+        string template,
         PeriodicEventSpec spec,
         Dictionary<string, string>? labels,
         Dictionary<string, string>? annotations,
@@ -109,7 +100,7 @@ public class PeriodicEventScheduler : TickerGrain, IGrainBase, IPeriodicEventSch
         return _state;
     }
 
-    internal override async Task Tick(DateTimeOffset? expectedTickTime)
+    internal override async Task Tick(DateTimeOffset expectedTickTime)
     {
         if (_state is null || _state.Metadata.DeletionTimestamp is not null)
         {
@@ -163,7 +154,7 @@ public class PeriodicEventScheduler : TickerGrain, IGrainBase, IPeriodicEventSch
         while (schedule < to)
         {
             var cloudEvent = _state.ToCloudEvent(schedule, _options.JsonSerializerOptions);
-            Runtime.TimerRegistry.RegisterTimer(
+            _runtime.TimerRegistry.RegisterTimer(
                 GrainContext,
                 obj => DispatchNew((CloudEventEnvelop)obj),
                 cloudEvent,
@@ -173,26 +164,5 @@ public class PeriodicEventScheduler : TickerGrain, IGrainBase, IPeriodicEventSch
             schedule = now.Add(dueTime);
         }
         return schedule;
-    }
-
-    private async Task DispatchNew(CloudEventEnvelop cloudEvent)
-    {
-        Guard.IsNotNull(_state, nameof(_state));
-        var utcNow = _clock.UtcNow;
-        var sw = ValueStopwatch.StartNew();
-        RecordTick(utcNow);
-        Meters.RecordCloudEventDispatchTardiness(utcNow, cloudEvent.Time);
-        try
-        {
-            await _dispatcher.DispatchAsync(_state.Metadata, cloudEvent);
-            Meters.CloudEventDispatchCount.Add(1);
-            Meters.CloudEventDispatchDuration.Record(sw.GetElapsedTime().TotalMilliseconds);
-        }
-        catch (Exception e)
-        {
-            TickerLog.ErrorOnTicking(_logger, _key, e);
-            Meters.CloudEventDispatchFailedCount.Add(1);
-            return;
-        }
     }
 }

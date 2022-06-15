@@ -72,7 +72,7 @@ WHERE key = @key AND etag = @expected_etag;";
         return newETag;
     }
 
-    internal async Task<(TState? data, string? etag)> GetStateAsync<TState>(string key)
+    internal async Task<StateEntry<TState>?> GetStateAsync<TState>(string key)
     {
         Log.GettingState(_logger, key);
 
@@ -85,11 +85,11 @@ WHERE key = @key AND etag = @expected_etag;";
 
         if (await reader.ReadAsync())
         {
-            var data = JsonSerializer.Deserialize<TState>(reader.GetString(0), _jsonSerializerOptions);
+            var data = JsonSerializer.Deserialize<TState>(reader.GetString(0), _jsonSerializerOptions)!;
             string etag = reader.GetString(1);
-            return (data, etag);
+            return new(data, etag);
         }
-        return (default, null);
+        return null;
     }
 
     internal async Task RemoveStateAsync(string key, string? expectedETag)

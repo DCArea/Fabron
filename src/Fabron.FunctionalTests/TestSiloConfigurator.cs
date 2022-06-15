@@ -1,6 +1,7 @@
 
 using System;
-using Fabron.Core.CloudEvents;
+using Fabron.CloudEvents;
+using Fabron.Schedulers;
 using Fabron.Store;
 using Microsoft.Extensions.DependencyInjection;
 using Orleans.Configuration;
@@ -31,8 +32,9 @@ namespace Fabron.FunctionalTests
                 .UseInMemoryReminderService();
             siloBuilder.ConfigureServices(services =>
             {
-                services.AddSingleton<ITimedEventStore, InMemoryTimedEventStore>();
-                services.AddSingleton<ICronEventStore, InMemoryCronEventStore>();
+                services.AddScoped<ITimedEventStore, InMemoryTimedEventStore>();
+                services.AddScoped<ICronEventStore, InMemoryCronEventStore>();
+                services.AddScoped<IPeriodicEventStore, InMemoryPeriodicEventStore>();
                 services.AddSingleton<IEventDispatcher, EventDispatcher>();
                 services.AddSingleton<ISystemClock, SystemClock>();
             });

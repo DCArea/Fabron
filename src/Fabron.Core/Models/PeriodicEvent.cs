@@ -1,47 +1,38 @@
 
 using System;
-using Fabron.Core.CloudEvents;
+using Fabron.CloudEvents;
 using Orleans;
 
 namespace Fabron.Models;
 
 [GenerateSerializer]
-public class PeriodicEvent
-{
-    [Id(0)]
-    public ScheduleMetadata Metadata { get; set; } = default!;
-
-    [Id(1)]
-    public PeriodicEventSpec Spec { get; set; } = default!;
-};
+public class PeriodicEvent : ScheduledEvent<PeriodicEventSpec>
+{ }
 
 [GenerateSerializer]
-public class PeriodicEventSpec
+public class PeriodicEventSpec: ISchedulerSpec
 {
 
-    [Id(0)]
-    public string Template { get; init; } = default!;
-
     [Id(1)]
-    public TimeSpan Period { get; init; } = default!;
+    public TimeSpan Period { get; init; }
 
     [Id(2)]
-    public DateTimeOffset? NotBefore { get; set; }
+    public DateTimeOffset? NotBefore { get; init; }
 
     [Id(3)]
-    public DateTimeOffset? ExpirationTime { get; set; }
+    public DateTimeOffset? ExpirationTime { get; init; }
 
     [Id(4)]
-    public bool Suspend { get; set; }
+    public bool Suspend { get; init; }
 }
 
 public record PeriodicEvent<TData>(
     ScheduleMetadata Metadata,
+    CloudEventTemplate<TData> Template,
     PeriodicEventSpec<TData> Spec
 );
 
 public record PeriodicEventSpec<TData>(
-    CloudEventTemplate<TData> Template,
     TimeSpan Period,
     DateTimeOffset? NotBefore,
     DateTimeOffset? ExpirationTime,

@@ -5,7 +5,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Cronos;
-using Fabron.Core.CloudEvents;
+using Fabron.CloudEvents;
 using Fabron.Models;
 using Fabron.Schedulers;
 using Fabron.Store;
@@ -15,27 +15,14 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
 using Orleans.Runtime;
-using Orleans.Timers;
 using Xunit;
 
-namespace Fabron.Core.Test.SchedulerTests.CronEventSchedulerTests;
+namespace Fabron.Core.Test.SchedulerTests.CronSchedulerTests;
 
 public class CronEventTickingTests
 {
-    private Fakes PrepareGrain(string schedule, [CallerMemberName] string key = "Default")
+    private Fakes PrepareGrain(string? schedule = null, [CallerMemberName] string key = "Default")
     {
-        var state = new CronEvent
-        {
-            Metadata = new ScheduleMetadata
-            {
-                Key = key,
-            },
-            Spec = new CronEventSpec
-            {
-                Template = JsonSerializer.Serialize(new { data = new { foo = "bar" } }),
-                Schedule = schedule,
-            }
-        };
         var clock = new FakeSystemClock();
         var reminderRegistry = new FakeReminderRegistry();
         var timerRegistry = new FakeTimerRegistry();
@@ -46,7 +33,23 @@ public class CronEventTickingTests
             .Returns(GrainId.Create(nameof(CronEventScheduler), key));
         A.CallTo(() => runtime.ReminderRegistry).Returns(reminderRegistry);
         A.CallTo(() => runtime.TimerRegistry).Returns(timerRegistry);
-        A.CallTo(() => store.GetAsync(key)).Returns(Task.FromResult<(CronEvent? state, string? eTag)>((state, "0")));
+
+        if (schedule is not null)
+        {
+            var state = new CronEvent
+            {
+                Metadata = new ScheduleMetadata
+                {
+                    Key = key,
+                },
+                Template = JsonSerializer.Serialize(new { data = new { foo = "bar" } }),
+                Spec = new CronEventSpec
+                {
+                    Schedule = schedule,
+                }
+            };
+            A.CallTo(() => store.GetAsync(key)).Returns(Task.FromResult<StateEntry<CronEvent>?>(new(state, "0")));
+        }
 
         var grain = new CronEventScheduler(
             context,
@@ -76,6 +79,35 @@ public class CronEventTickingTests
         timerRegistry.Timers[4].DueTime.Should().Be(tickTime.AddSeconds(80) - clock.UtcNow);
         timerRegistry.Timers[5].DueTime.Should().Be(tickTime.AddSeconds(100) - clock.UtcNow);
         reminderRegistry.Reminders.Single().Value.DueTime.Should().Be(tickTime.AddSeconds(120) - clock.UtcNow);
+    }
+
+    [Fact]
+    public async Task ShouldDispatchForCurrentTick()
+    {
+        var (scheduler, timerRegistry, reminderRegistry, clock, _) = PrepareGrain("0 0 0 * * *");
+        await (scheduler as IGrainBase).OnActivateAsync(default);
+        var tickTime = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero).AddMilliseconds(20);
+        await reminderRegistry.RegisterOrUpdateReminder(scheduler.GetGrainId(), Names.TickerReminder, TimeSpan.FromMilliseconds(10), Timeout.InfiniteTimeSpan);
+        clock.UtcNow = tickTime.AddMilliseconds(100);
+        await reminderRegistry.Fire(scheduler, Names.TickerReminder, TickStatus.Create(tickTime.UtcDateTime, Timeout.InfiniteTimeSpan, clock.UtcNow.UtcDateTime));
+        timerRegistry.Timers.Should().HaveCount(1);
+        timerRegistry.Timers[0].DueTime.Should().Be(TimeSpan.Zero);
+    }
+
+    [Fact]
+    public async Task ShouldRegisterNextTickOnSchedule()
+    {
+        var (scheduler, _, reminderRegistry, clock, _) = PrepareGrain();
+        await (scheduler as IGrainBase).OnActivateAsync(default);
+        clock.UtcNow = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero).AddMilliseconds(20);
+        await scheduler.Schedule(
+            JsonSerializer.Serialize(new { data = new { foo = "bar" } }),
+            new CronEventSpec { Schedule = "0 0 0 * * *" },
+            null,
+            null,
+            null);
+        reminderRegistry.Reminders.Should().HaveCount(1);
+        reminderRegistry.Reminders.Single().Value.DueTime.Should().Be(new DateTimeOffset(2020, 1, 2, 0, 0, 0, TimeSpan.Zero) - clock.UtcNow);
     }
 }
 

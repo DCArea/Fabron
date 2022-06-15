@@ -25,3 +25,27 @@ public class ScheduleMetadata
     [Id(5)]
     public string? Owner { get; set; }
 }
+
+public interface IScheduledEvent
+{
+    ScheduleMetadata Metadata { get; }
+    string Template { get; }
+}
+
+public interface ISchedulerSpec
+{
+}
+
+[GenerateSerializer]
+public class ScheduledEvent<TScheduleSpec> : IScheduledEvent
+    where TScheduleSpec : ISchedulerSpec
+{
+    [Id(0)]
+    public ScheduleMetadata Metadata { get; set; } = default!;
+
+    [Id(1)]
+    public string Template { get; init; } = default!;
+
+    [Id(2)]
+    public TScheduleSpec Spec { get; set; } = default!;
+}

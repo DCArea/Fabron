@@ -8,8 +8,8 @@ namespace Fabron.Models;
 public class TickerStatus
 {
     [Id(0)]
-    public DateTime? StartAt { get; set; }
+    public DateTime? NextTick { get; set; }
 
     [Id(1)]
-    public List<DateTimeOffset> RecentTicks { get; set; } = new();
+    public List<DateTimeOffset> RecentDispatches { get; set; } = new();
 }

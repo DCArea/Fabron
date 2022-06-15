@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using Fabron.Core.CloudEvents;
+using Fabron.CloudEvents;
+using Fabron.Schedulers;
 using Fabron.Store;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -58,9 +59,9 @@ public class FabronServerBuilder
     {
         HostBuilder.ConfigureServices((context, services) =>
         {
-            services.AddSingleton<ITimedEventStore, InMemoryTimedEventStore>();
-            services.AddSingleton<ICronEventStore, InMemoryCronEventStore>();
-            services.AddSingleton<IPeriodicEventStore, InMemoryPeriodicEventStore>();
+            services.AddScoped<ITimedEventStore, InMemoryTimedEventStore>();
+            services.AddScoped<ICronEventStore, InMemoryCronEventStore>();
+            services.AddScoped<IPeriodicEventStore, InMemoryPeriodicEventStore>();
         });
 
         ConfigureOrleans((context, siloBuilder) =>

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Fabron.Models;
 
-namespace Fabron.Core.CloudEvents;
+namespace Fabron.CloudEvents;
 
 public interface IEventDispatcher
 {

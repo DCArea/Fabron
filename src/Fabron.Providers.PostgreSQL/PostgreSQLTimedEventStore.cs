@@ -27,7 +27,7 @@ public class PostgreSQLTimedEventStore : ITimedEventStore
     public Task<string> SetAsync(TimedEvent state, string? expectedETag)
         => _store.SetStateAsync(state.Metadata.Key, state, expectedETag);
 
-    public Task<(TimedEvent? state, string? eTag)> GetAsync(string key)
+    public Task<StateEntry<TimedEvent>?> GetAsync(string key)
         => _store.GetStateAsync<TimedEvent>(key);
 
     public Task RemoveAsync(string key, string? expectedETag)

@@ -27,7 +27,7 @@ public class PostgreSQLCronEventStore : ICronEventStore
     public Task<string> SetAsync(CronEvent state, string? expectedETag)
         => _store.SetStateAsync(state.Metadata.Key, state, expectedETag);
 
-    public Task<(CronEvent? state, string? eTag)> GetAsync(string key)
+    public Task<StateEntry<CronEvent>?> GetAsync(string key)
         => _store.GetStateAsync<CronEvent>(key);
 
     public Task RemoveAsync(string key, string? expectedETag)

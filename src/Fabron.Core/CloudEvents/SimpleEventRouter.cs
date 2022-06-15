@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Fabron.Models;
 using Microsoft.Extensions.Options;
 
-namespace Fabron.Core.CloudEvents;
+namespace Fabron.CloudEvents;
 
 public class SimpleEventRouter : IEventRouter
 {

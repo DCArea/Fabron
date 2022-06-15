@@ -27,7 +27,7 @@ public class PostgreSQLPeriodicEventStore : IPeriodicEventStore
     public Task<string> SetAsync(PeriodicEvent state, string? expectedETag)
         => _store.SetStateAsync(state.Metadata.Key, state, expectedETag);
 
-    public Task<(PeriodicEvent? state, string? eTag)> GetAsync(string key)
+    public Task<StateEntry<PeriodicEvent>?> GetAsync(string key)
         => _store.GetStateAsync<PeriodicEvent>(key);
 
     public Task RemoveAsync(string key, string? expectedETag)

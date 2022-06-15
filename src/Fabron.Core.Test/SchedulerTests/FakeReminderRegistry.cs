@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Orleans;
 using Orleans.Runtime;
 using Orleans.Timers;
 
@@ -10,6 +11,11 @@ namespace Fabron.Core.Test.SchedulerTests
     public class FakeReminderRegistry : IReminderRegistry
     {
         public Dictionary<string, FakeGrainReminder> Reminders { get; } = new();
+
+        public Task Fire(IRemindable remindable, string reminderName, TickStatus tickerStatus)
+        {
+            return remindable.ReceiveReminder(reminderName, tickerStatus);
+        }
 
         public Task<IGrainReminder?> GetReminder(GrainId callingGrainId, string reminderName)
         {
@@ -35,6 +41,7 @@ namespace Fabron.Core.Test.SchedulerTests
             Reminders.Remove(((FakeGrainReminder)reminder).ReminderName);
             return Task.CompletedTask;
         }
+
     }
 
     public class FakeGrainReminder : IGrainReminder

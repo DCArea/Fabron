@@ -1,36 +1,27 @@
 
 using System;
-using Fabron.Core.CloudEvents;
+using Fabron.CloudEvents;
 using Orleans;
 
 namespace Fabron.Models;
 
 [GenerateSerializer]
-public class TimedEvent
-{
-    [Id(0)]
-    public ScheduleMetadata Metadata { get; set; } = default!;
-
-    [Id(1)]
-    public TimedEventSpec Spec { get; set; } = default!;
-};
+public class TimedEvent : ScheduledEvent<TimedEventSpec>
+{ }
 
 [GenerateSerializer]
-public class TimedEventSpec
+public class TimedEventSpec: ISchedulerSpec
 {
     [Id(0)]
-    public string Template { get; init; } = default!;
-
-    [Id(1)]
     public DateTimeOffset Schedule { get; init; } = default!;
 }
 
 public record TimedEvent<TData>(
     ScheduleMetadata Metadata,
+    CloudEventTemplate<TData> Template,
     TimedEventSpec<TData> Spec
 );
 
 public record TimedEventSpec<TData>(
-    DateTimeOffset Schedule,
-    CloudEventTemplate<TData> Template
+    DateTimeOffset Schedule
 );

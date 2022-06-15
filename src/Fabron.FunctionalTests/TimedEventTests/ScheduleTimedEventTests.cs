@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Fabron.Core.CloudEvents;
+using Fabron.CloudEvents;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -27,7 +27,7 @@ namespace Fabron.FunctionalTests.JobTests
             var timedEvent = await Client.GetTimedEvent<EventData>(key);
 
             Assert.NotNull(timedEvent);
-            Assert.Equal("Bar", timedEvent!.Spec.Template.Data.Foo);
+            Assert.Equal("Bar", timedEvent!.Template.Data.Foo);
         }
 
     }

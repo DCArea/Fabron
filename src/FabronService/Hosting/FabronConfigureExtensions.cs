@@ -1,5 +1,5 @@
 using Fabron;
-using Fabron.Core.CloudEvents;
+using Fabron.CloudEvents;
 using Fabron.Providers.PostgreSQL;
 using FabronService.EventRouters;
 using Microsoft.AspNetCore.Builder;

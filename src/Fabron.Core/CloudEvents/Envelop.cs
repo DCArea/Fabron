@@ -2,12 +2,12 @@ using System;
 using System.Text.Json;
 using Fabron.Models;
 
-namespace Fabron.Core.CloudEvents;
+namespace Fabron.CloudEvents;
 public static class EnvelopeExtensions
 {
     public static CloudEventEnvelop ToCloudEvent(this PeriodicEvent cron, DateTimeOffset timestamp, JsonSerializerOptions jsonSerializerOptions)
     {
-        var template = JsonSerializer.Deserialize<CloudEventTemplate>(cron.Spec.Template, jsonSerializerOptions)!;
+        var template = JsonSerializer.Deserialize<CloudEventTemplate>(cron.Template, jsonSerializerOptions)!;
         string id = $"{cron.Metadata.Key}-{timestamp.ToUnixTimeSeconds()}";
         string source = template.Source ?? "fabron.io/periodicevents";
         string type = template.Type ?? "fabron.periodicevents.fired";
@@ -16,7 +16,7 @@ public static class EnvelopeExtensions
 
     public static CloudEventEnvelop ToCloudEvent(this CronEvent cron, DateTimeOffset timestamp, JsonSerializerOptions jsonSerializerOptions)
     {
-        var template = JsonSerializer.Deserialize<CloudEventTemplate>(cron.Spec.Template, jsonSerializerOptions)!;
+        var template = JsonSerializer.Deserialize<CloudEventTemplate>(cron.Template, jsonSerializerOptions)!;
         string id = $"{cron.Metadata.Key}-{timestamp.ToUnixTimeSeconds()}";
         string source = template.Source ?? "fabron.io/cronevents";
         string type = template.Type ?? "fabron.cronevents.fired";
@@ -25,7 +25,7 @@ public static class EnvelopeExtensions
 
     public static CloudEventEnvelop ToCloudEvent(this TimedEvent schedule, DateTimeOffset timestamp, JsonSerializerOptions jsonSerializerOptions)
     {
-        var template = JsonSerializer.Deserialize<CloudEventTemplate>(schedule.Spec.Template, jsonSerializerOptions)!;
+        var template = JsonSerializer.Deserialize<CloudEventTemplate>(schedule.Template, jsonSerializerOptions)!;
         string id = $"{schedule.Metadata.Key}-{timestamp.ToUnixTimeSeconds()}";
         string source = template.Source ?? "fabron.io/timedevents";
         string type = template.Type ?? "fabron.timedevents.fired";

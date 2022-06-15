@@ -1,6 +1,6 @@
 using System;
 using System.Threading.Tasks;
-using Fabron.Core.CloudEvents;
+using Fabron.CloudEvents;
 using Fabron.Models;
 using Microsoft.Toolkit.Diagnostics;
 

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Fabron.Core.CloudEvents;
+namespace Fabron.CloudEvents;
 
 public class SimpleEventRouterOptions
 {

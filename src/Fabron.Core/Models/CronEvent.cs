@@ -1,48 +1,38 @@
 
 using System;
-using Fabron.Core.CloudEvents;
+using Fabron.CloudEvents;
 using Orleans;
 
 namespace Fabron.Models;
 
 [GenerateSerializer]
-public class CronEvent
-{
-    [Id(0)]
-    public ScheduleMetadata Metadata { get; set; } = default!;
-
-    [Id(1)]
-    public CronEventSpec Spec { get; set; } = default!;
-};
+public class CronEvent : ScheduledEvent<CronEventSpec>
+{ };
 
 [GenerateSerializer]
-public class CronEventSpec
+public class CronEventSpec: ISchedulerSpec
 {
-
     [Id(0)]
-    public string Template { get; init; } = default!;
-
-    [Id(1)]
     public string Schedule { get; init; } = default!;
 
-    [Id(2)]
+    [Id(1)]
     public DateTimeOffset? NotBefore { get; set; }
 
-    [Id(3)]
+    [Id(2)]
     public DateTimeOffset? ExpirationTime { get; set; }
 
-    [Id(4)]
+    [Id(3)]
     public bool Suspend { get; set; }
 }
 
 public record CronEvent<TData>(
     ScheduleMetadata Metadata,
+    CloudEventTemplate<TData> Template,
     CronEventSpec<TData> Spec
 );
 
 public record CronEventSpec<TData>(
     string Schedule,
-    CloudEventTemplate<TData> Template,
     DateTimeOffset? NotBefore,
     DateTimeOffset? ExpirationTime,
     bool Suspend
