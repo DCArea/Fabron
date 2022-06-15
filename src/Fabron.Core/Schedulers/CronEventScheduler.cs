@@ -62,11 +62,10 @@ public class CronEventScheduler : TickerGrain, IGrainBase, ICronEventScheduler
 
     private CronEvent? _state;
     private string? _eTag;
-    private DateTimeOffset? _lastSchedule;
 
     async Task IGrainBase.OnActivateAsync(CancellationToken cancellationToken)
     {
-        _key = GrainContext.GrainReference.GetPrimaryKeyString();
+        _key = this.GetPrimaryKeyString();
         (_state, _eTag) = await _store.GetAsync(_key);
     }
 
@@ -109,7 +108,7 @@ public class CronEventScheduler : TickerGrain, IGrainBase, ICronEventScheduler
         return _state;
     }
 
-    protected override async Task Tick(DateTimeOffset? expectedTickTime)
+    internal override async Task Tick(DateTimeOffset? expectedTickTime)
     {
         if (_state is null || _state.Metadata.DeletionTimestamp is not null)
         {
@@ -142,25 +141,20 @@ public class CronEventScheduler : TickerGrain, IGrainBase, ICronEventScheduler
 
         Cronos.CronExpression cron = Cronos.CronExpression.Parse(_state.Spec.Schedule, _options.CronFormat);
 
-        DateTimeOffset from = now;
-        if (_lastSchedule.HasValue && _lastSchedule.Value > from)
-        {
-            from = _lastSchedule.Value;
-        }
-        var to = now.AddMinutes(1);
+        DateTimeOffset from = expectedTickTime ?? new DateTimeOffset(now.Year, now.Month, now.Day, now.Hour, now.Minute, now.Second, 0, now.Offset);
+        var to = from.AddMinutes(2);
         if (to > _state.Spec.ExpirationTime)
         {
             to = _state.Spec.ExpirationTime.Value;
         }
 
-        var schedules = cron.GetOccurrences(from, to, _options.TimeZone, fromInclusive: false, toInclusive: true);
+        var schedules = cron.GetOccurrences(from, to, _options.TimeZone, fromInclusive: true, toInclusive: false);
         if (schedules.Any())
         {
-            Dispatch(schedules);
-            _lastSchedule = schedules.Last();
+            Dispatch(now, schedules);
         }
         from = to;
-        var nextTick = cron.GetNextOccurrence(from, _options.TimeZone);
+        var nextTick = cron.GetNextOccurrence(from, _options.TimeZone, inclusive: true);
         if (!nextTick.HasValue || (_state.Spec.ExpirationTime.HasValue && nextTick.Value > _state.Spec.ExpirationTime.Value))
         {
             // no more next tick
@@ -170,13 +164,13 @@ public class CronEventScheduler : TickerGrain, IGrainBase, ICronEventScheduler
         await TickAfter(nextTick.Value.Subtract(now));
     }
 
-    private void Dispatch(IEnumerable<DateTimeOffset> schedules)
+    private void Dispatch(DateTimeOffset now, IEnumerable<DateTimeOffset> schedules)
     {
         Guard.IsNotNull(_state, nameof(_state));
-        var now = _clock.UtcNow;
+        // var now = _clock.UtcNow;
         foreach (var schedule in schedules)
         {
-            var dueTime = schedule.Subtract(now);
+            var dueTime = schedule > now ? schedule.Subtract(now) : TimeSpan.Zero;
             var cloudEvent = _state.ToCloudEvent(schedule, _options.JsonSerializerOptions);
             Runtime.TimerRegistry.RegisterTimer(
                 GrainContext,

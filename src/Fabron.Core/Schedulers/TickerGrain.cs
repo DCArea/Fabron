@@ -38,7 +38,7 @@ public abstract partial class TickerGrain : IRemindable
     protected IGrainRuntime Runtime { get; }
     protected Queue<DateTimeOffset> RecentTicks { get; } = new(20);
 
-    protected abstract Task Tick(DateTimeOffset? expectedTickTime = null);
+    internal abstract Task Tick(DateTimeOffset? expectedTickTime = null);
 
     protected async Task TickAfter(TimeSpan dueTime)
     {

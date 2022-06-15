@@ -109,7 +109,7 @@ public class PeriodicEventScheduler : TickerGrain, IGrainBase, IPeriodicEventSch
         return _state;
     }
 
-    protected override async Task Tick(DateTimeOffset? expectedTickTime)
+    internal override async Task Tick(DateTimeOffset? expectedTickTime)
     {
         if (_state is null || _state.Metadata.DeletionTimestamp is not null)
         {
