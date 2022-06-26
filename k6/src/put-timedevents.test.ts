@@ -10,7 +10,7 @@ export let options: Options = {
         contacts: {
             executor: 'shared-iterations',
             vus: 1000,
-            iterations: 50000,
+            iterations: 100000,
             maxDuration: '100s',
         }
     },
@@ -19,7 +19,7 @@ export let options: Options = {
 
 export function setup() {
     const now = Date.now();
-    const schedule = new Date(now + 1 * 60000).toISOString();
+    const schedule = new Date(now + 2 * 60000).toISOString();
     // const schedule = "2022-06-10T08:11:00Z";
     console.log(schedule);
     return { now, schedule };

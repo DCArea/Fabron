@@ -7,6 +7,7 @@ COPY .editorconfig .
 COPY Directory.Build.props .
 COPY global.json .
 COPY nuget.config .
+COPY pkgs ./pkgs
 COPY src/FabronService/*.csproj ./src/FabronService/
 COPY src/FabronService.FunctionalTests/*.csproj ./src/FabronService.FunctionalTests/
 COPY src/Fabron.Core/*.csproj ./src/Fabron.Core/
