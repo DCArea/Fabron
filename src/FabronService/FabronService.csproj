@@ -6,21 +6,21 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AspNetCore.Authentication.ApiKey" Version="$(AspNetCoreAuthenticationApiKeyVersion)" />
-    <PackageReference Include="DCA.DotNet.Extensions.OpenTelemetry.AspNetCore" Version="$(DCAExtensionsVersion)" />
-    <PackageReference Include="DCA.DotNet.Extensions.Logging" Version="$(DCAExtensionsVersion)" />
-    <PackageReference Include="Npgsql" Version="$(NpgsqlVersion)" />
-    <PackageReference Include="Npgsql.OpenTelemetry" Version="$(NpgsqlVersion)" />
-    <PackageReference Include="Microsoft.Orleans.SDK" Version="$(OrleansVersion)" />
-    <PackageReference Include="Microsoft.Orleans.Hosting.Kubernetes" Version="$(OrleansVersion)" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="$(SwashbuckleAspNetCoreVersion)" />
-    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="$(OpenTelemetryCoreVersion)" />
-    <PackageReference Include="OpenTelemetry.Exporter.Prometheus" Version="$(OpenTelemetryCoreVersion)" />
-    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="$(OpenTelemetryNonCoreVersion)" />
-    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="$(OpenTelemetryNonCoreVersion)" />
-    <PackageReference Include="OpenTelemetry.Instrumentation.GrpcNetClient" Version="$(OpenTelemetryNonCoreVersion)" />
-    <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="$(OpenTelemetryNonCoreVersion)" />
-    <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="$(OpenTelemetryInstrumentationRuntimeVersion)" />
+    <PackageReference Include="AspNetCore.Authentication.ApiKey" />
+    <PackageReference Include="DCA.DotNet.Extensions.OpenTelemetry.AspNetCore" />
+    <PackageReference Include="DCA.DotNet.Extensions.Logging" />
+    <PackageReference Include="Npgsql" />
+    <PackageReference Include="Npgsql.OpenTelemetry" />
+    <PackageReference Include="Microsoft.Orleans.SDK" />
+    <PackageReference Include="Microsoft.Orleans.Hosting.Kubernetes" />
+    <PackageReference Include="Swashbuckle.AspNetCore" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
+    <PackageReference Include="OpenTelemetry.Exporter.Prometheus" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.GrpcNetClient" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Http" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" />
   </ItemGroup>
 
   <ItemGroup>

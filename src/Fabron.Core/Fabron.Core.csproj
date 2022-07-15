@@ -11,9 +11,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Cronos" Version="$(CronosVersion)" />
-    <PackageReference Include="Microsoft.Orleans.Sdk" Version="$(OrleansVersion)" />
-    <PackageReference Include="Microsoft.Toolkit.Diagnostics" Version="$(MicrosoftToolkitDiagnostics)" />
+    <PackageReference Include="Cronos" />
+    <PackageReference Include="Microsoft.Orleans.Sdk" />
+    <PackageReference Include="Microsoft.Toolkit.Diagnostics" />
   </ItemGroup>
 
 </Project>

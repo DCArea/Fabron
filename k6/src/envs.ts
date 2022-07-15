@@ -1,4 +1,4 @@
 
 export const baseUrl = __ENV.BaseUrl || 'http://localhost:5600';
-export const apiKey = __ENV.ApiKey || 'abc';
-export const targetUrl = __ENV.TargetUrl || 'https://localhost:6001/cloudevents';
+export const apiKey = __ENV.ApiKey || 'debug';
+export const targetUrl = __ENV.TargetUrl || 'http://localhost:6000/cloudevents';
