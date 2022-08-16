@@ -11,10 +11,12 @@ using Fabron.Schedulers;
 using Fabron.Store;
 using FakeItEasy;
 using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
 using Orleans.Runtime;
+using Orleans.Timers;
 using Xunit;
 
 namespace Fabron.Core.Test.SchedulerTests.CronSchedulerTests;
@@ -31,7 +33,7 @@ public class CronEventTickingTests
         var store = A.Fake<ICronEventStore>();
         A.CallTo(() => context.GrainId)
             .Returns(GrainId.Create(nameof(CronEventScheduler), key));
-        A.CallTo(() => runtime.ReminderRegistry).Returns(reminderRegistry);
+        A.CallTo(() => context.ActivationServices.GetService(typeof(IReminderRegistry))).Returns(reminderRegistry);
         A.CallTo(() => runtime.TimerRegistry).Returns(timerRegistry);
 
         if (schedule is not null)

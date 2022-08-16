@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Orleans;
+using Orleans.Hosting;
 using Orleans.TestingHost;
 
 namespace Fabron.FunctionalTests

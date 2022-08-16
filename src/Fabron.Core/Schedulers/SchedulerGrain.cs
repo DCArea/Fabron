@@ -13,6 +13,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Toolkit.Diagnostics;
 using Orleans;
 using Orleans.Runtime;
+using Orleans.Timers;
 
 namespace Fabron.Schedulers;
 
@@ -24,6 +25,7 @@ public abstract class SchedulerGrain<TState> : IRemindable
     private readonly SchedulerOptions _options;
     protected readonly IStateStore<TState> _store;
     private readonly IEventDispatcher _dispatcher;
+    private readonly IReminderRegistry _reminderRegistry;
 
     public SchedulerGrain(
         IGrainContext context,
@@ -41,6 +43,7 @@ public abstract class SchedulerGrain<TState> : IRemindable
         _options = options;
         _store = store;
         _dispatcher = dispatcher;
+        _reminderRegistry = GrainContext.ActivationServices.GetRequiredService<IReminderRegistry>();
     }
 
     public IGrainContext GrainContext { get; }
@@ -55,7 +58,7 @@ public abstract class SchedulerGrain<TState> : IRemindable
 
     protected async Task TickAfter(TimeSpan dueTime)
     {
-        _tickReminder = await _runtime.ReminderRegistry.RegisterOrUpdateReminder(GrainContext.GrainId, Names.TickerReminder, dueTime, _options.TickerInterval);
+        _tickReminder = await _reminderRegistry.RegisterOrUpdateReminder(GrainContext.GrainId, Names.TickerReminder, dueTime, _options.TickerInterval);
         TickerLog.TickerRegistered(_logger, _key, dueTime);
     }
 
@@ -66,12 +69,12 @@ public abstract class SchedulerGrain<TState> : IRemindable
         {
             if (_tickReminder is null)
             {
-                _tickReminder = await _runtime.ReminderRegistry.GetReminder(GrainContext.GrainId, Names.TickerReminder);
+                _tickReminder = await _reminderRegistry.GetReminder(GrainContext.GrainId, Names.TickerReminder);
             }
             if (_tickReminder is null) break;
             try
             {
-                await _runtime.ReminderRegistry.UnregisterReminder(GrainContext.GrainId, _tickReminder);
+                await _reminderRegistry.UnregisterReminder(GrainContext.GrainId, _tickReminder);
                 _tickReminder = null;
                 TickerLog.TickerDisposed(_logger, _key);
                 _runtime.DeactivateOnIdle(GrainContext);
@@ -143,7 +146,7 @@ public abstract class SchedulerGrain<TState> : IRemindable
         TickerLog.ReceivedReminder(_logger, _key, status);
         if (_tickReminder is null)
         {
-            _tickReminder = await _runtime.ReminderRegistry.GetReminder(GrainContext.GrainId, Names.TickerReminder);
+            _tickReminder = await _reminderRegistry.GetReminder(GrainContext.GrainId, Names.TickerReminder);
         }
 
         Activity.Current?.Dispose();

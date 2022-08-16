@@ -14,6 +14,7 @@
     <PackageReference Include="Microsoft.Orleans.SDK" />
     <PackageReference Include="Microsoft.Orleans.Hosting.Kubernetes" />
     <PackageReference Include="Swashbuckle.AspNetCore" />
+    <PackageReference Include="OpenTelemetry" />
     <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
     <PackageReference Include="OpenTelemetry.Exporter.Prometheus" />
     <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
