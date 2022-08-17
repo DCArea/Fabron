@@ -1,41 +1,41 @@
 name: CI
 on:
   push:
-    branches: [ main ]
+    branches: [main]
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: '6.0.301'
-        include-prerelease: true
-    - name: Restore dependencies
-      run: dotnet restore
-    - name: Build
-      run: dotnet build --no-restore
-    - name: Test
-      run: dotnet test --no-build --verbosity normal --collect:"XPlat Code Coverage"
-    - name: Codecov
-      uses: codecov/codecov-action@v1
+      - uses: actions/checkout@v2
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: "6.0.302"
+      - name: Restore dependencies
+        run: dotnet restore
+      - name: Build
+        run: dotnet build --no-restore
+      - name: Test
+        run: dotnet test --no-build --verbosity normal --collect:"XPlat Code Coverage"
+      - name: Codecov
+        uses: codecov/codecov-action@v3
   publish_packages:
-    runs-on: ubuntu-latest
     needs: test
+    runs-on: ubuntu-latest
+    env:
+      ContinuousIntegrationBuild: true
     steps:
-    - uses: actions/checkout@v2
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: '6.0.301'
-        include-prerelease: true
-    - name: Restore dependencies
-      run: dotnet restore
-    - name: Build
-      run: dotnet build --configuration Release --no-restore
-    - name: Pack
-      run: dotnet pack --configuration Release --no-build --version-suffix ci.${{ github.run_number }} -o nupkgs
-    - name: NuGet Push
-      run: Get-Item nupkgs/*.nupkg |% { dotnet nuget push $_ --source https://www.myget.org/F/dca/api/v3/index.json --api-key ${{ secrets.MYGET_APIKEY }} }
-      shell: pwsh
+      - uses: actions/checkout@v2
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: "6.0.302"
+      - name: Restore dependencies
+        run: dotnet restore
+      - name: Restore tools
+        run: dotnet tool restore
+      - name: Build
+        run: dotnet build --configuration Release --no-restore --version-suffix="ci.${GITHUB_RUN_NUMBER}"
+      - name: Validate
+        run: Get-Item pkgs/*.nupkg |% { dotnet tool run dotnet-validate package local $_ }
+        shell: pwsh

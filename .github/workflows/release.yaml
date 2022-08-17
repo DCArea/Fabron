@@ -1,0 +1,27 @@
+name: Release
+on:
+  push:
+    tags: [v*]
+jobs:
+  publish_packages:
+    runs-on: ubuntu-latest
+    env:
+      ContinuousIntegrationBuild: true
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: "6.0.302"
+      - name: Restore dependencies
+        run: dotnet restore
+      - name: Restore tools
+        run: dotnet tool restore
+      - name: Build
+        run: dotnet build --configuration Release --no-restore /p:version="${GITHUB_REF_NAME//v/}"
+      - name: Validate
+        run: Get-Item pkgs/*.nupkg |% { dotnet tool run dotnet-validate package local $_ }
+        shell: pwsh
+      - name: NuGet Push
+        run: Get-Item pkgs/*.nupkg |% { dotnet nuget push $_ --source ${{ secrets.NUGET_SOURCE }} --api-key ${{ secrets.NUGET_APIKEY }} }
+        shell: pwsh
