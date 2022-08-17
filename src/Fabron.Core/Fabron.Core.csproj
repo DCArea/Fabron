@@ -15,6 +15,7 @@
     <PackageReference Include="Microsoft.Orleans.Sdk" />
     <PackageReference Include="Microsoft.Orleans.Reminders" />
     <PackageReference Include="Microsoft.Toolkit.Diagnostics" />
+    <PackageReference Include="InstrumentAggregators" />
   </ItemGroup>
 
 </Project>

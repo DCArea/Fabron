@@ -64,7 +64,7 @@ namespace Fabron.Providers.PostgreSQL
             return client;
         }
 
-        public static FabronServerBuilder UsePostgreSQL(this FabronServerBuilder server, string connectionString!!)
+        public static FabronServerBuilder UsePostgreSQL(this FabronServerBuilder server, string connectionString)
         {
             server.UsePostgreSQLClustering(connectionString);
             server.UsePosgreSQLReminder(connectionString);
@@ -73,7 +73,7 @@ namespace Fabron.Providers.PostgreSQL
         }
 
 
-        public static FabronServerBuilder UsePostgreSQLClustering(this FabronServerBuilder server, string connectionString!!)
+        public static FabronServerBuilder UsePostgreSQLClustering(this FabronServerBuilder server, string connectionString)
         {
             server.ConfigureOrleans((ctx, sb) =>
             {
@@ -86,7 +86,7 @@ namespace Fabron.Providers.PostgreSQL
             return server;
         }
 
-        public static FabronServerBuilder UsePosgreSQLReminder(this FabronServerBuilder server, string connectionString!!)
+        public static FabronServerBuilder UsePosgreSQLReminder(this FabronServerBuilder server, string connectionString)
         {
             server.ConfigureOrleans((ctx, sb) =>
             {

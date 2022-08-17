@@ -104,7 +104,7 @@ public partial class TimedEventScheduler : SchedulerGrain<TimedEvent>, IGrainBas
         {
             await TickAfter(schedule_ - utcNow);
         }
-        Meters.TimedEventScheduledCount.Add(1);
+        Telemetry.CloudEventScheduled.Add(1);
         return _state;
     }
 

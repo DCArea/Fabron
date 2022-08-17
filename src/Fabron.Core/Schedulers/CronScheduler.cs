@@ -104,6 +104,12 @@ public class CronEventScheduler : SchedulerGrain<CronEvent>, IGrainBase, ICronSc
         DateTimeOffset now = _clock.UtcNow;
         TickerLog.Ticking(_logger, _key, now, expectedTickTime);
 
+        bool shouldDispatchForCurrentTick = expectedTickTime != default;
+        if (shouldDispatchForCurrentTick && now.Subtract(expectedTickTime) > TimeSpan.FromMinutes(5))
+        {
+            TickerLog.UnexpectedTick(_logger, _key, expectedTickTime, "Missed");
+            shouldDispatchForCurrentTick = false;
+        }
         if (_state is null || _state.Metadata.DeletionTimestamp is not null)
         {
             TickerLog.UnexpectedTick(_logger, _key, expectedTickTime, "NotRegistered");
@@ -131,8 +137,9 @@ public class CronEventScheduler : SchedulerGrain<CronEvent>, IGrainBase, ICronSc
 
         Cronos.CronExpression cron = Cronos.CronExpression.Parse(_state.Spec.Schedule, _options.CronFormat);
 
-        bool shouldDispatchForCurrentTick = expectedTickTime != default;
-        DateTimeOffset from = expectedTickTime == default ? now : expectedTickTime;
+
+
+        DateTimeOffset from = shouldDispatchForCurrentTick ? expectedTickTime : now;
         var to = from.AddMinutes(2);
         if (to > _state.Spec.ExpirationTime)
         {
@@ -157,7 +164,10 @@ public class CronEventScheduler : SchedulerGrain<CronEvent>, IGrainBase, ICronSc
             await StopTicker();
             return;
         }
-        await TickAfter(nextTick.Value.Subtract(now));
+        else
+        {
+            await TickAfter(nextTick.Value.Subtract(now));
+        }
     }
 
     private void Dispatch(DateTimeOffset schedule)

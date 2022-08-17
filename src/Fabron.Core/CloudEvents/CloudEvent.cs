@@ -44,7 +44,9 @@ public record CloudEventEnvelop(
     [property: JsonPropertyName("dataschema")]
     Uri? DataSchema,
     [property: JsonPropertyName("subject")]
-    string? Subject
+    string? Subject,
+    [property: JsonPropertyName("scheduler")]
+    string? Scheduler = null
 )
 {
     [JsonPropertyName("datacontenttype")]

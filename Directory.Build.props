@@ -10,7 +10,7 @@
     <LangVersion>preview</LangVersion>
     <Nullable>enable</Nullable>
     <DebugType>portable</DebugType>
-    <NoWarn>AD0001,CA1816</NoWarn>
+    <NoWarn>AD0001,CA1816,SYSLIB1006</NoWarn>
   </PropertyGroup>
 
   <!-- framework versions -->

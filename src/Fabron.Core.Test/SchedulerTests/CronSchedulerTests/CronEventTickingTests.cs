@@ -111,6 +111,29 @@ public class CronEventTickingTests
         reminderRegistry.Reminders.Should().HaveCount(1);
         reminderRegistry.Reminders.Single().Value.DueTime.Should().Be(new DateTimeOffset(2020, 1, 2, 0, 0, 0, TimeSpan.Zero) - clock.UtcNow);
     }
+
+
+    [Fact]
+    public async Task ShouldIgnoreMissedTick()
+    {
+        var (scheduler, _, reminderRegistry, clock, _) = PrepareGrain();
+        await (scheduler as IGrainBase).OnActivateAsync(default);
+        clock.UtcNow = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero);
+        await scheduler.Schedule(
+            JsonSerializer.Serialize(new { data = new { foo = "bar" } }),
+            new CronEventSpec { Schedule = "0 0 0 * * *" },
+            null,
+            null,
+            null);
+
+        clock.UtcNow = new DateTimeOffset(2021, 1, 1, 0, 0, 0, TimeSpan.Zero);
+
+        await ((IRemindable)scheduler).ReceiveReminder(Names.TickerReminder, TickStatus.Create(new DateTimeOffset(2020, 1, 1, 1, 0, 0, TimeSpan.Zero).DateTime, TimeSpan.FromMinutes(2), clock.UtcNow.AddMilliseconds(100).DateTime));
+
+        reminderRegistry.Reminders.Should().HaveCount(1);
+        reminderRegistry.Reminders.Single().Value.DueTime.Should().Be(new DateTimeOffset(2021, 1, 2, 0, 0, 0, TimeSpan.Zero) - clock.UtcNow);
+    }
+
 }
 
 internal record Fakes(

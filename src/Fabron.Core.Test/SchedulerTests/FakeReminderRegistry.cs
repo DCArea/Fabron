@@ -46,7 +46,7 @@ namespace Fabron.Core.Test.SchedulerTests
 
     public class FakeGrainReminder : IGrainReminder
     {
-        public FakeGrainReminder(string reminderName!!, TimeSpan dueTime, TimeSpan period)
+        public FakeGrainReminder(string reminderName, TimeSpan dueTime, TimeSpan period)
         {
             ReminderName = reminderName;
             DueTime = dueTime;

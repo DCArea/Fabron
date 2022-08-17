@@ -7,12 +7,17 @@ import { apiKey, baseUrl, targetUrl } from './envs';
 export let options: Options = {
     discardResponseBodies: true,
     scenarios: {
+        // contacts: {
+        //     executor: 'shared-iterations',
+        //     vus: 2000,
+        //     iterations: 30000,
+        //     maxDuration: '100s',
+        // },
         contacts: {
-            executor: 'shared-iterations',
+            executor: 'constant-vus',
             vus: 1000,
-            iterations: 50000,
-            maxDuration: '100s',
-        }
+            duration: '10m',
+        },
     },
 };
 
@@ -28,6 +33,10 @@ export function setup() {
 export default function ({ now, schedule }: { now: number, schedule: string }) {
     const scenario = execution.default.scenario;
     const name = `${now}-${scenario.iterationInTest}`;
+
+    now = Date.now();
+    schedule = new Date(now + 1 * 60000).toISOString();
+
     const url = `${baseUrl}/timedevents/${name}`
     const req_body = {
         "schedule": schedule,

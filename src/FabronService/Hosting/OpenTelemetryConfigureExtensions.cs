@@ -23,7 +23,7 @@ public static class OpenTelemetryConfigureExtensions
                 .AddEncrichedAspNetCoreInstrumentation()
                 // .AddNpgsql()
                 .AddSource("Microsoft.Orleans")
-                .AddSource(Activities.ActivitySourceName)
+                .AddSource("Fabron")
                 .AddHttpClientInstrumentation()
                 .AddGrpcClientInstrumentation()
                 .SetSampler<MySampler>()
@@ -32,7 +32,7 @@ public static class OpenTelemetryConfigureExtensions
 
         builder.Services.AddOpenTelemetryMetrics((builder) => builder
             .AddRuntimeMetrics()
-            .AddMeter(Meters.MeterName)
+            .AddMeter("Fabron")
             .AddPrometheusExporter()
         );
 

@@ -5,11 +5,12 @@ WORKDIR /source
 COPY *.sln .
 COPY .editorconfig .
 COPY Directory.Build.props .
+COPY Directory.Packages.props .
 COPY global.json .
 COPY nuget.config .
 COPY perf/**/*.csproj .
 COPY src/**/*.csproj .
-COPY src/Directory.Build.props ./src/
+# COPY src/Directory.Build.props ./src/
 RUN dotnet sln list | grep ".csproj" \
     | while read -r line; do \
     mkdir -p $(dirname $line); \

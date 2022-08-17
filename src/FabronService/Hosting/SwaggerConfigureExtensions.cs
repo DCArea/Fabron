@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 
 namespace FabronService.Hosting;
@@ -19,8 +20,10 @@ public static class SwaggerConfigureExtensions
 
     public static WebApplication UseConfiguredSwagger(this WebApplication app)
     {
-        app.UseSwagger()
-            .UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "FabronService v1"));
+        if (!app.Environment.IsProduction())
+        {
+            app.MapSwagger();
+        }
         return app;
     }
 }

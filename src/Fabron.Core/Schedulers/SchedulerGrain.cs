@@ -58,6 +58,10 @@ public abstract class SchedulerGrain<TState> : IRemindable
 
     protected async Task TickAfter(TimeSpan dueTime)
     {
+        if (dueTime < TimeSpan.Zero)
+        {
+            dueTime = TimeSpan.Zero;
+        }
         _tickReminder = await _reminderRegistry.RegisterOrUpdateReminder(GrainContext.GrainId, Names.TickerReminder, dueTime, _options.TickerInterval);
         TickerLog.TickerRegistered(_logger, _key, dueTime);
     }
@@ -121,22 +125,20 @@ public abstract class SchedulerGrain<TState> : IRemindable
     protected async Task DispatchNew(CloudEventEnvelop cloudEvent)
     {
         Guard.IsNotNull(_state, nameof(_state));
+
         var utcNow = _clock.UtcNow;
         RecordTick(utcNow);
-        Meters.RecordCloudEventDispatchTardiness(utcNow, cloudEvent.Time);
-        TickerLog.Dispatching(_logger, _key, utcNow, cloudEvent.Time);
+        Telemetry.OnCloudEventDispatching(_logger, _key, cloudEvent, utcNow);
 
         var sw = ValueStopwatch.StartNew();
         try
         {
             await _dispatcher.DispatchAsync(_state.Metadata, cloudEvent);
-            Meters.CloudEventDispatchCount.Add(1);
-            Meters.CloudEventDispatchDuration.Record(sw.GetElapsedTime().TotalMilliseconds);
+            Telemetry.OnCloudEventDispatched(sw.GetElapsedTime());
         }
         catch (Exception e)
         {
-            TickerLog.ErrorOnTicking(_logger, _key, e);
-            Meters.CloudEventDispatchFailedCount.Add(1);
+            Telemetry.OnCloudEventDispatchFailed(_logger, _key, e);
             return;
         }
     }
@@ -144,14 +146,9 @@ public abstract class SchedulerGrain<TState> : IRemindable
     async Task IRemindable.ReceiveReminder(string reminderName, TickStatus status)
     {
         TickerLog.ReceivedReminder(_logger, _key, status);
-        if (_tickReminder is null)
-        {
-            _tickReminder = await _reminderRegistry.GetReminder(GrainContext.GrainId, Names.TickerReminder);
-        }
+        _tickReminder ??= await _reminderRegistry.GetReminder(GrainContext.GrainId, Names.TickerReminder);
 
-        Activity.Current?.Dispose();
-        Activity.Current = null;
-        using var activity = Activities.Source.StartActivity("Ticking");
+        using var activity = Telemetry.OnTicking();
         await Tick(status.FirstTickTime);
     }
 }
