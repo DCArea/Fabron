@@ -6,10 +6,12 @@ using Orleans;
 namespace Fabron.Models;
 
 [GenerateSerializer]
+[Immutable]
 public class CronEvent : ScheduledEvent<CronEventSpec>
 { };
 
 [GenerateSerializer]
+[Immutable]
 public class CronEventSpec: ISchedulerSpec
 {
     [Id(0)]

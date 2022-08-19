@@ -9,11 +9,14 @@ public static class SwaggerConfigureExtensions
 {
     public static WebApplicationBuilder ConfigureSwagger(this WebApplicationBuilder builder)
     {
-        builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddSwaggerGen(c =>
+        if (!builder.Environment.IsProduction())
         {
-            c.SwaggerDoc("v1", new OpenApiInfo { Title = "FabronService", Version = "v1" });
-        });
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "FabronService", Version = "v1" });
+            });
+        }
 
         return builder;
     }
@@ -22,7 +25,7 @@ public static class SwaggerConfigureExtensions
     {
         if (!app.Environment.IsProduction())
         {
-            app.MapSwagger();
+            app.MapSwagger().AllowAnonymous();
         }
         return app;
     }

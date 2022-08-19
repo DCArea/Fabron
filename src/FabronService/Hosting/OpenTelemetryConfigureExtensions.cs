@@ -33,6 +33,7 @@ public static class OpenTelemetryConfigureExtensions
         builder.Services.AddOpenTelemetryMetrics((builder) => builder
             .AddRuntimeMetrics()
             .AddMeter("Fabron")
+            .AddMeter("Orleans")
             .AddPrometheusExporter()
         );
 

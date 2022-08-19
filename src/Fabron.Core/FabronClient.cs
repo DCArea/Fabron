@@ -23,7 +23,7 @@ public class FabronClient : IFabronClient
         _options = options.Value;
     }
 
-    public async Task ScheduleTimedEvent<T>(
+    public Task ScheduleTimedEvent<T>(
         string key,
         DateTimeOffset schedule,
         CloudEventTemplate<T> template,
@@ -36,13 +36,13 @@ public class FabronClient : IFabronClient
         {
             Schedule = schedule,
         };
-        await grain.Schedule(templateJSON, spec, labels, annotations, null);
+        return grain.Schedule(templateJSON, spec, labels, annotations, null);
     }
 
-    public async Task CancelTimedEvent(string key)
+    public Task CancelTimedEvent(string key)
     {
         var grain = _client.GetGrain<ITimedScheduler>(key);
-        await grain.Unregister();
+        return grain.Unregister();
     }
 
     public async Task<TimedEvent<TData>?> GetTimedEvent<TData>(string key)

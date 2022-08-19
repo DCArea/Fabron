@@ -5,6 +5,7 @@ using Orleans;
 namespace Fabron.Models;
 
 [GenerateSerializer]
+[Immutable]
 public class TickerStatus
 {
     [Id(0)]

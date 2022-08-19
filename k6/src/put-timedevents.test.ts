@@ -15,8 +15,8 @@ export let options: Options = {
         // },
         contacts: {
             executor: 'constant-vus',
-            vus: 1000,
-            duration: '10m',
+            vus: 2000,
+            duration: '2m',
         },
     },
 };
@@ -35,7 +35,7 @@ export default function ({ now, schedule }: { now: number, schedule: string }) {
     const name = `${now}-${scenario.iterationInTest}`;
 
     now = Date.now();
-    schedule = new Date(now + 1 * 60000).toISOString();
+    schedule = new Date(now + 5 * 60000).toISOString();
 
     const url = `${baseUrl}/timedevents/${name}`
     const req_body = {

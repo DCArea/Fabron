@@ -5,6 +5,7 @@ using Orleans;
 namespace Fabron.Models;
 
 [GenerateSerializer]
+[Immutable]
 public class ScheduleMetadata
 {
     [Id(0)]
@@ -37,6 +38,7 @@ public interface ISchedulerSpec
 }
 
 [GenerateSerializer]
+[Immutable]
 public class ScheduledEvent<TScheduleSpec> : IScheduledEvent
     where TScheduleSpec : ISchedulerSpec
 {
