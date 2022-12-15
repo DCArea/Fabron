@@ -33,8 +33,8 @@ public static class FabronConfigureExtensions
                     siloBuilder.UseKubernetesHosting();
                     siloBuilder.AddActivityPropagation();
                 })
-                .UsePostgreSQL(builder.Configuration["PGSQL"]);
-            client.UsePostgreSQL(builder.Configuration["PGSQL"]);
+                .UsePostgreSQL(builder.Configuration["PGSQL"]!);
+            client.UsePostgreSQL(builder.Configuration["PGSQL"]!);
         }
 
         return builder;

@@ -1,10 +1,4 @@
-using System.Collections.Generic;
-using Fabron.Diagnostics;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Npgsql;
+﻿using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
@@ -14,12 +8,13 @@ public static class OpenTelemetryConfigureExtensions
 {
     public static WebApplicationBuilder ConfigureOpenTelemetry(this WebApplicationBuilder builder)
     {
-        builder.Configuration.AddInMemoryCollection(new Dictionary<string, string>{
+        builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>{
             { "Logging:Console:FormatterOptions:IncludeScopes", "true" },
         });
         builder.Logging.AddEnrichedJsonConsole();
         builder.Services
-            .AddOpenTelemetryTracing(options => options
+            .AddOpenTelemetry()
+            .WithTracing(options => options
                 .AddEncrichedAspNetCoreInstrumentation()
                 // .AddNpgsql()
                 .AddSource("Microsoft.Orleans")
@@ -27,15 +22,12 @@ public static class OpenTelemetryConfigureExtensions
                 .AddHttpClientInstrumentation()
                 .AddGrpcClientInstrumentation()
                 .SetSampler<MySampler>()
-                .AddOtlpExporter()
-            );
-
-        builder.Services.AddOpenTelemetryMetrics((builder) => builder
-            .AddRuntimeMetrics()
+                .AddOtlpExporter())
+            .WithMetrics((builder) => builder
+            //.AddRuntimeMetrics()
             .AddMeter("Fabron")
             .AddMeter("Orleans")
-            .AddPrometheusExporter()
-        );
+            .AddPrometheusExporter());
 
         return builder;
     }
@@ -53,18 +45,15 @@ internal class MySampler : Sampler
     private static readonly SamplingResult s_drop = new(SamplingDecision.Drop);
     public override SamplingResult ShouldSample(in SamplingParameters param)
     {
-        if (param.Name == "Health checks"
+        return param.Name == "Health checks"
             || param.Name == "HTTP GET"
             || param.Name.StartsWith("IDeploymentLoadPublisher")
             || param.Name.StartsWith("IMembershipService")
             || param.Name.StartsWith("ISiloManifestSystemTarget")
             || param.Name.StartsWith("IDhtGrainDirectory")
             || param.Name.StartsWith("IRemoteClientDirectory")
-            || param.Name.StartsWith("IRemoteGrainDirectory"))
-        {
-            return s_drop;
-        }
-
-        return s_recordAndSample;
+            || param.Name.StartsWith("IRemoteGrainDirectory")
+            ? s_drop
+            : s_recordAndSample;
     }
 }

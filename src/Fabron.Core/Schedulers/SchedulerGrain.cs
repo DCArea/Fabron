@@ -105,7 +105,7 @@ public abstract class SchedulerGrain<TState> : IRemindable
     public async Task<TickerStatus> GetTickerStatus()
     {
         var reminderTable = _runtime.ServiceProvider.GetRequiredService<IReminderTable>();
-        var entry = await reminderTable.ReadRow(GrainContext.GrainReference, Names.TickerReminder);
+        var entry = await reminderTable.ReadRow(GrainContext.GrainId, Names.TickerReminder);
         return new TickerStatus
         {
             NextTick = entry?.StartAt,

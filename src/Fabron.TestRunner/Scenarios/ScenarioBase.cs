@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using OpenTelemetry;
 using Orleans;
 using Orleans.Hosting;
 
@@ -38,7 +39,7 @@ public abstract class ScenarioBase : IScenario
         return builder;
     }
 
-    protected virtual IEnumerable<KeyValuePair<string, string>> Configs => new Dictionary<string, string>
+    protected virtual IEnumerable<KeyValuePair<string, string?>> Configs => new Dictionary<string, string?>
         {
             { "Logging:LogLevel:Default", "Warning" },
             { "Logging:LogLevel:Orleans", "Warning" },
@@ -54,9 +55,9 @@ public abstract class ScenarioBase : IScenario
             })
             .ConfigureServices(services =>
             {
-                services.AddOpenTelemetryTracing(options => options
-                    .AddSource("orleans.runtime.graincall")
-                );
+                services.AddOpenTelemetry()
+                    .WithTracing(options => options
+                    .AddSource("orleans.runtime.graincall"));
             });
 
         builder = ConfigureHost(builder);

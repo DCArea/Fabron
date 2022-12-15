@@ -91,7 +91,7 @@ public class CronEventTickingTests
         var tickTime = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero).AddMilliseconds(20);
         await reminderRegistry.RegisterOrUpdateReminder(scheduler.GetGrainId(), Names.TickerReminder, TimeSpan.FromMilliseconds(10), Timeout.InfiniteTimeSpan);
         clock.UtcNow = tickTime.AddMilliseconds(100);
-        await reminderRegistry.Fire(scheduler, Names.TickerReminder, TickStatus.Create(tickTime.UtcDateTime, Timeout.InfiniteTimeSpan, clock.UtcNow.UtcDateTime));
+        await reminderRegistry.Fire(scheduler, Names.TickerReminder, new TickStatus(tickTime.UtcDateTime, Timeout.InfiniteTimeSpan, clock.UtcNow.UtcDateTime));
         timerRegistry.Timers.Should().HaveCount(1);
         timerRegistry.Timers[0].DueTime.Should().Be(TimeSpan.Zero);
     }
@@ -128,7 +128,7 @@ public class CronEventTickingTests
 
         clock.UtcNow = new DateTimeOffset(2021, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
-        await ((IRemindable)scheduler).ReceiveReminder(Names.TickerReminder, TickStatus.Create(new DateTimeOffset(2020, 1, 1, 1, 0, 0, TimeSpan.Zero).DateTime, TimeSpan.FromMinutes(2), clock.UtcNow.AddMilliseconds(100).DateTime));
+        await ((IRemindable)scheduler).ReceiveReminder(Names.TickerReminder, new TickStatus(new DateTimeOffset(2020, 1, 1, 1, 0, 0, TimeSpan.Zero).DateTime, TimeSpan.FromMinutes(2), clock.UtcNow.AddMilliseconds(100).DateTime));
 
         reminderRegistry.Reminders.Should().HaveCount(1);
         reminderRegistry.Reminders.Single().Value.DueTime.Should().Be(new DateTimeOffset(2021, 1, 2, 0, 0, 0, TimeSpan.Zero) - clock.UtcNow);

@@ -31,7 +31,7 @@ namespace Fabron.FunctionalTests
             var builder = new TestClusterBuilder();
             builder.ConfigureHostConfiguration(config =>
             {
-                config.AddInMemoryCollection(new Dictionary<string, string>
+                config.AddInMemoryCollection(new Dictionary<string, string?>
                 {
                     { "Logging:LogLevel:Default", "Error" },
                     // { "Logging:LogLevel:Fabron", "Debug" }

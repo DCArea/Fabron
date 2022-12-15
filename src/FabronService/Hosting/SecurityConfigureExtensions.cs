@@ -11,7 +11,7 @@ public static class SecurityConfigureExtensions
     public static WebApplicationBuilder ConfigureSecurity(this WebApplicationBuilder builder)
     {
         builder.Services
-            .AddApiKeyAuth(builder.Configuration["ApiKey"])
+            .AddApiKeyAuth(builder.Configuration["ApiKey"]!)
             .AddAuthorization(options =>
             {
                 options.FallbackPolicy = new AuthorizationPolicyBuilder()

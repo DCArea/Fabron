@@ -14,7 +14,7 @@ namespace Fabron.Providers.PostgreSQL
         public static ISiloBuilder UsePosgreSQL(this ISiloBuilder silo, IConfiguration configuration)
         {
             silo.Configure<PostgreSQLOptions>(configuration);
-            silo.UsePosgreSQL(configuration["ConnectionString"]);
+            silo.UsePosgreSQL(configuration["ConnectionString"]!);
             return silo;
         }
 

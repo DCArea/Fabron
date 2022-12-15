@@ -34,7 +34,7 @@ namespace FabronService.FunctionalTests
         {
             builder = builder.ConfigureAppConfiguration(config =>
                 {
-                    config.AddInMemoryCollection(new Dictionary<string, string> { { "ApiKey", "debug" } });
+                    config.AddInMemoryCollection(new Dictionary<string, string?> { { "ApiKey", "debug" } });
                 })
                 .ConfigureServices((ctx, services) =>
                 {

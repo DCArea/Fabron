@@ -1,7 +1,8 @@
 <Project>
 
   <PropertyGroup>
-    <DefaultTargetFramework>net6.0</DefaultTargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
     <VersionPrefix>0.0.1</VersionPrefix>
   </PropertyGroup>
 
