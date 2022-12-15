@@ -1,5 +1,4 @@
 using FabronService.Resources.CronEvents;
-using Microsoft.AspNetCore.Builder;
 
 namespace Microsoft.AspNetCore.Routing;
 

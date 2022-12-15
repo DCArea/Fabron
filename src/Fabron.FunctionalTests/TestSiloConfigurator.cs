@@ -1,21 +1,15 @@
-
-using System;
 using Fabron.CloudEvents;
 using Fabron.Schedulers;
-using Fabron.Store;
+using Fabron.Stores;
 using Microsoft.Extensions.DependencyInjection;
 using Orleans.Configuration;
-using Orleans.Hosting;
 using Orleans.TestingHost;
 
 namespace Fabron.FunctionalTests
 {
     public class TestSiloConfigurator : ISiloConfigurator
     {
-        public virtual void ConfigureServices(IServiceCollection services)
-        {
-            services.AddHttpClient();
-        }
+        public virtual void ConfigureServices(IServiceCollection services) => services.AddHttpClient();
 
         public virtual void ConfigureSilo(ISiloBuilder siloBuilder)
         {

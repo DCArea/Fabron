@@ -1,14 +1,11 @@
-using System;
-using System.Collections.Generic;
 using System.Reflection;
 using Fabron.CloudEvents;
 using Fabron.Schedulers;
-using Fabron.Store;
+using Fabron.Stores;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Orleans.Hosting;
 
-namespace Fabron;
+namespace Fabron.Server;
 
 public class FabronServerBuilder
 {
@@ -78,7 +75,7 @@ public class FabronServerBuilder
         HostBuilder.ConfigureServices((context, services) =>
         {
             services.AddSingleton<IEventRouter, SimpleEventRouter>();
-            services.Configure<SimpleEventRouterOptions>(configure);
+            services.Configure(configure);
         });
         return this;
     }

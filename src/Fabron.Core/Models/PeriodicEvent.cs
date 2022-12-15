@@ -1,7 +1,4 @@
-
-using System;
 using Fabron.CloudEvents;
-using Orleans;
 
 namespace Fabron.Models;
 
@@ -12,7 +9,7 @@ public class PeriodicEvent : ScheduledEvent<PeriodicEventSpec>
 
 [GenerateSerializer]
 [Immutable]
-public class PeriodicEventSpec: ISchedulerSpec
+public class PeriodicEventSpec : ISchedulerSpec
 {
 
     [Id(1)]

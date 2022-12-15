@@ -1,10 +1,8 @@
-﻿using System;
-using System.Threading.Tasks;
-using Fabron.CloudEvents;
+﻿using Fabron.CloudEvents;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Fabron.FunctionalTests.JobTests
+namespace Fabron.FunctionalTests.TimedEventTests
 {
     public record EventData(string Foo);
     public class ScheduleTimedEventTests : TestBase
@@ -15,7 +13,7 @@ namespace Fabron.FunctionalTests.JobTests
         [Fact]
         public async Task ScheduleAndGet()
         {
-            string key = $"{nameof(ScheduleTimedEventTests)}.{nameof(ScheduleAndGet)}";
+            var key = $"{nameof(ScheduleTimedEventTests)}.{nameof(ScheduleAndGet)}";
             await Client.ScheduleTimedEvent(
                 key,
                 DateTimeOffset.UtcNow.AddMonths(1),

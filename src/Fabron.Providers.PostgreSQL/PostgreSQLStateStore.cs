@@ -1,7 +1,6 @@
-using System;
 using System.Text.Json;
-using System.Threading.Tasks;
-using Fabron.Providers.PostgreSQL.Exceptions;
+using Fabron.Providers.PostgreSQL;
+using Fabron.Stores;
 using Microsoft.Extensions.Logging;
 using Npgsql;
 using NpgsqlTypes;
@@ -41,8 +40,8 @@ WHERE key = @key AND etag = @expected_etag;";
     {
         Log.SavingState(_logger, key);
 
-        string value = JsonSerializer.Serialize(data, _jsonSerializerOptions);
-        string newETag = Guid.NewGuid().ToString();
+        var value = JsonSerializer.Serialize(data, _jsonSerializerOptions);
+        var newETag = Guid.NewGuid().ToString();
 
         await using var conn = new NpgsqlConnection(_connectionString);
         await conn.OpenAsync();
@@ -63,7 +62,7 @@ WHERE key = @key AND etag = @expected_etag;";
             cmd.Parameters.AddWithValue("@expected_etag", expectedETag);
         }
 
-        int rows = await cmd.ExecuteNonQueryAsync();
+        var rows = await cmd.ExecuteNonQueryAsync();
         if (rows != 1)
         {
             ThrowHelper.NoItemWasUpdated();
@@ -86,7 +85,7 @@ WHERE key = @key AND etag = @expected_etag;";
         if (await reader.ReadAsync())
         {
             var data = JsonSerializer.Deserialize<TState>(reader.GetString(0), _jsonSerializerOptions)!;
-            string etag = reader.GetString(1);
+            var etag = reader.GetString(1);
             return new(data, etag);
         }
         return null;
@@ -111,7 +110,7 @@ WHERE key = @key AND etag = @expected_etag;";
             cmd.Parameters.AddWithValue("@expected_etag", expectedETag);
         }
 
-        int rows = await cmd.ExecuteNonQueryAsync();
+        var rows = await cmd.ExecuteNonQueryAsync();
         if (rows != 1 && expectedETag is not null)
         {
             ThrowHelper.NoItemWasUpdated();

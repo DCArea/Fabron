@@ -14,45 +14,4 @@
     <NoWarn>AD0001,CA1816,SYSLIB1006</NoWarn>
   </PropertyGroup>
 
-  <!-- framework versions -->
-  <PropertyGroup>
-    <AspNetCoreVersion>6.0.5</AspNetCoreVersion>
-    <MEXVersion>6.0.0</MEXVersion>
-    <OrleansVersion>3.9.9-ci.20220612.1</OrleansVersion>
-    <DCAExtensionsVersion>0.0.1-alpha3.0</DCAExtensionsVersion>
-  </PropertyGroup>
-
-  <!-- library versions -->
-  <PropertyGroup>
-    <AspNetCoreAuthenticationApiKeyVersion>6.0.1</AspNetCoreAuthenticationApiKeyVersion>
-    <CassandraCSharpDriverVersion>3.17.0</CassandraCSharpDriverVersion>
-    <CronosVersion>0.7.1</CronosVersion>
-    <MapsterVersion>7.2.0</MapsterVersion>
-    <MicrosoftToolkitDiagnostics>7.1.2</MicrosoftToolkitDiagnostics>
-    <NpgsqlVersion>6.0.4</NpgsqlVersion>
-    <OpenTelemetryCoreVersion>1.3.0-rc.2</OpenTelemetryCoreVersion>
-    <OpenTelemetryNonCoreVersion>1.0.0-rc9.3</OpenTelemetryNonCoreVersion>
-    <OpenTelemetryInstrumentationRuntimeVersion>0.1.0-alpha.1</OpenTelemetryInstrumentationRuntimeVersion>
-    <OrleansCassandraUtilsVersion>1.0.1</OrleansCassandraUtilsVersion>
-    <OrleansClusteringRedisVersion>3.1.1</OrleansClusteringRedisVersion>
-    <OrleansProvidersMongoDBVersion>3.4.1</OrleansProvidersMongoDBVersion>
-    <PrometheusNetVersion>6.0.0</PrometheusNetVersion>
-    <StyleCopAnalyzersVersion>1.0.0</StyleCopAnalyzersVersion>
-    <SwashbuckleAspNetCoreVersion>6.3.1</SwashbuckleAspNetCoreVersion>
-    <NESTVersion>7.15.2</NESTVersion>
-  </PropertyGroup>
-
-  <!-- test pkgs -->
-  <PropertyGroup>
-    <CoverletCollectorVersion>3.1.2</CoverletCollectorVersion>
-    <FakeItEasyVersion>7.3.1</FakeItEasyVersion>
-    <FluentAssertionsVersion>6.7.0</FluentAssertionsVersion>
-    <MartinCostelloLoggingXUnitVersion>0.3.0</MartinCostelloLoggingXUnitVersion>
-    <MicrosoftTestSdkVersion>17.2.0</MicrosoftTestSdkVersion>
-    <MoqContribHttpClientVersion>1.3.0</MoqContribHttpClientVersion>
-    <MoqVersion>4.18.1</MoqVersion>
-    <OrleansTestKitVersion>3.1.7</OrleansTestKitVersion>
-    <xUnitRunnerVisualStudio>2.4.5</xUnitRunnerVisualStudio>
-    <xUnitVersion>2.4.1</xUnitVersion>
-  </PropertyGroup>
 </Project>

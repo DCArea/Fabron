@@ -1,8 +1,6 @@
-using System;
-using System.Threading.Tasks;
-using Fabron.Models;
+﻿using Fabron.Models;
 
-namespace Fabron.Store;
+namespace Fabron.Stores;
 
 public class InMemoryTimedEventStore : InMemoryStateStore<TimedEvent>, ITimedEventStore
 { }
@@ -18,10 +16,7 @@ public abstract class InMemoryStateStore<TState> : IStateStore<TState>
 {
     private StateEntry<TState>? _entry;
 
-    public Task<StateEntry<TState>?> GetAsync(string key)
-    {
-        return Task.FromResult(_entry);
-    }
+    public Task<StateEntry<TState>?> GetAsync(string key) => Task.FromResult(_entry);
 
     public Task RemoveAsync(string key, string? expectedETag)
     {
@@ -31,7 +26,7 @@ public abstract class InMemoryStateStore<TState> : IStateStore<TState>
 
     public Task<string> SetAsync(TState state, string? expectedETag)
     {
-        string newETag = Guid.NewGuid().ToString();
+        var newETag = Guid.NewGuid().ToString();
         _entry = new StateEntry<TState>(state, newETag);
         return Task.FromResult(newETag);
     }

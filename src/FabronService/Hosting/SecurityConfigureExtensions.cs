@@ -1,8 +1,5 @@
-using System.Threading.Tasks;
 using AspNetCore.Authentication.ApiKey;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace FabronService.Hosting;
 

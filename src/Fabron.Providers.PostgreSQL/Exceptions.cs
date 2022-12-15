@@ -1,7 +1,6 @@
-using System;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Fabron.Providers.PostgreSQL.Exceptions;
+namespace Fabron.Providers.PostgreSQL;
 
 public class FabronPostgreSQLProviderException : Exception
 {
@@ -17,14 +16,8 @@ public class FabronPostgreSQLProviderException : Exception
 internal static class ThrowHelper
 {
     [DoesNotReturn]
-    internal static void NoItemWasUpdated()
-    {
-        throw new FabronPostgreSQLProviderException("no item was updated");
-    }
+    internal static void NoItemWasUpdated() => throw new FabronPostgreSQLProviderException("no item was updated");
 
     [DoesNotReturn]
-    internal static void ETagMismatch()
-    {
-        throw new FabronPostgreSQLProviderException("ETag mismatch");
-    }
+    internal static void ETagMismatch() => throw new FabronPostgreSQLProviderException("ETag mismatch");
 }

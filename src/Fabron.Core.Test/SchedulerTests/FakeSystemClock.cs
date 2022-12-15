@@ -1,7 +1,6 @@
-using System;
 using Fabron.Schedulers;
 
-namespace Fabron.Core.Test
+namespace Fabron.Core.Test.SchedulerTests
 {
     public class FakeSystemClock : ISystemClock
     {

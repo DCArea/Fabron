@@ -1,4 +1,3 @@
-using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Cronos;
@@ -23,10 +22,7 @@ namespace Fabron
 
     public class SimpleSchedulerOptions : SchedulerOptions
     {
-        public SimpleSchedulerOptions()
-        {
-            TickerInterval = TimeSpan.FromMinutes(1);
-        }
+        public SimpleSchedulerOptions() => TickerInterval = TimeSpan.FromMinutes(1);
     }
 
     public class CronSchedulerOptions : SchedulerOptions

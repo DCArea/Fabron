@@ -1,10 +1,8 @@
 
 using System.Security.Claims;
 using System.Text.Encodings.Web;
-using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace FabronService.FunctionalTests
@@ -19,12 +17,12 @@ namespace FabronService.FunctionalTests
 
         protected override Task<AuthenticateResult> HandleAuthenticateAsync()
         {
-            Claim[]? claims = new[] { new Claim(ClaimTypes.Name, "Test user") };
+            var claims = new[] { new Claim(ClaimTypes.Name, "Test user") };
             ClaimsIdentity? identity = new(claims, "Test");
             ClaimsPrincipal? principal = new(identity);
             AuthenticationTicket? ticket = new(principal, "Test");
 
-            AuthenticateResult? result = AuthenticateResult.Success(ticket);
+            var result = AuthenticateResult.Success(ticket);
 
             return Task.FromResult(result);
         }

@@ -1,15 +1,10 @@
-
-using System.Collections.Generic;
 using System.Reflection;
-using Fabron;
+using Microsoft.Extensions.Hosting;
 
-namespace Microsoft.Extensions.Hosting
+namespace Fabron.Server
 {
     public static class FabronServerHostBuilderExtensions
     {
-        public static FabronServerBuilder UseFabronServer(this IHostBuilder hostBuilder, IEnumerable<Assembly>? commandAssemblies = null)
-        {
-            return new FabronServerBuilder(hostBuilder);
-        }
+        public static FabronServerBuilder UseFabronServer(this IHostBuilder hostBuilder, IEnumerable<Assembly>? commandAssemblies = null) => new(hostBuilder);
     }
 }

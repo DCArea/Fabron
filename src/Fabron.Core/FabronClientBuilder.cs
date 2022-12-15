@@ -1,11 +1,6 @@
-using System;
-using System.Collections.Generic;
 using System.Reflection;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
-using Orleans;
-using Orleans.Hosting;
 
 namespace Fabron;
 
@@ -43,7 +38,11 @@ public class FabronClientBuilder
 
     public FabronClientBuilder ConfigureOrleansClient(Action<HostBuilderContext, IClientBuilder> configure)
     {
-        if (Cohosted) throw new InvalidOperationException("Cannot configure Orleans client when cohosted.");
+        if (Cohosted)
+        {
+            throw new InvalidOperationException("Cannot configure Orleans client when cohosted.");
+        }
+
         HostBuilder.ConfigureServices((context, services) =>
         {
             services.AddOrleansClient(sb =>

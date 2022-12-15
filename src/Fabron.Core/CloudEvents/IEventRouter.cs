@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using Fabron.Models;
 
 namespace Fabron.CloudEvents;

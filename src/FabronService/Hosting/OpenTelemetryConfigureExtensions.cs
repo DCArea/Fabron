@@ -24,10 +24,10 @@ public static class OpenTelemetryConfigureExtensions
                 .SetSampler<MySampler>()
                 .AddOtlpExporter())
             .WithMetrics((builder) => builder
-            //.AddRuntimeMetrics()
-            .AddMeter("Fabron")
-            .AddMeter("Orleans")
-            .AddPrometheusExporter());
+                //.AddRuntimeMetrics()
+                .AddMeter("Fabron")
+                //.AddMeter("Microsoft.Orleans")
+                .AddPrometheusExporter());
 
         return builder;
     }

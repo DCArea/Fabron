@@ -23,7 +23,7 @@ WORKDIR /source/src/FabronService
 RUN dotnet publish -c release -o /app --no-restore
 
 # final stage/image
-FROM mcr.microsoft.com/dotnet/aspnet:7.0.0
+FROM mcr.microsoft.com/dotnet/aspnet:7.0.1
 WORKDIR /app
 ENV Logging__Console__FormatterName="ejson"
 COPY --from=build /app ./

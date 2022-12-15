@@ -13,7 +13,7 @@ public class HttpBenchmarks
     private readonly ServiceProvider _services;
     private readonly MediaTypeHeaderValue _contentType = new("application/cloudevents+json");
     private readonly CloudEventEnvelop _payload;
-    private int IterationCount = 10;
+    private readonly int IterationCount = 10;
 
     public HttpBenchmarks()
     {
@@ -40,7 +40,7 @@ public class HttpBenchmarks
     [Benchmark]
     public async Task HTTP()
     {
-        for (int i = 0; i < IterationCount; i++)
+        for (var i = 0; i < IterationCount; i++)
         {
             var client = _services.GetRequiredService<IHttpClientFactory>()
                 .CreateClient();
@@ -58,7 +58,7 @@ public class HttpBenchmarks
     [Benchmark]
     public async Task HTTPS()
     {
-        for (int i = 0; i < IterationCount; i++)
+        for (var i = 0; i < IterationCount; i++)
         {
             var client = _services.GetRequiredService<IHttpClientFactory>()
                 .CreateClient();
@@ -76,7 +76,7 @@ public class HttpBenchmarks
     [Benchmark]
     public async Task HTTPS_HeaderCompletion()
     {
-        for (int i = 0; i < IterationCount; i++)
+        for (var i = 0; i < IterationCount; i++)
         {
             var client = _services.GetRequiredService<IHttpClientFactory>()
                 .CreateClient();
@@ -94,7 +94,7 @@ public class HttpBenchmarks
     [Benchmark]
     public async Task HTTPS_HeaderCompletion_DisposeResponse()
     {
-        for (int i = 0; i < IterationCount; i++)
+        for (var i = 0; i < IterationCount; i++)
         {
             using var client = _services.GetRequiredService<IHttpClientFactory>()
                 .CreateClient();

@@ -1,7 +1,4 @@
 using FabronService.Hosting;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Routing;
-using Microsoft.Extensions.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.ConfigureFabron();
@@ -19,7 +16,4 @@ app.MapRoutes();
 
 app.Run();
 
-
-#pragma warning disable CA1050 // Declare types in namespaces
 public partial class Program { }
-#pragma warning restore CA1050 // Declare types in namespaces

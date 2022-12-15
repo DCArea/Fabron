@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Orleans;
 using Orleans.TestingHost;
 
 namespace Fabron.FunctionalTests
@@ -40,7 +36,7 @@ namespace Fabron.FunctionalTests
             builder.AddSiloBuilderConfigurator<TSiloConfigurator>();
             builder.AddClientBuilderConfigurator<TestClientConfigurator>();
 
-            TestCluster? testCluster = builder.Build();
+            var testCluster = builder.Build();
             if (testCluster.Primary == null)
             {
                 await testCluster.DeployAsync().ConfigureAwait(false);
@@ -52,7 +48,7 @@ namespace Fabron.FunctionalTests
 
         public virtual async Task DisposeAsync()
         {
-            TestCluster? cluster = HostedCluster;
+            var cluster = HostedCluster;
             if (cluster is null)
             {
                 return;

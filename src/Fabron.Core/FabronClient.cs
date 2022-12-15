@@ -1,12 +1,8 @@
-using System;
-using System.Collections.Generic;
 using System.Text.Json;
-using System.Threading.Tasks;
 using Fabron.CloudEvents;
 using Fabron.Models;
 using Fabron.Schedulers;
 using Microsoft.Extensions.Options;
-using Orleans;
 
 namespace Fabron;
 
@@ -31,7 +27,7 @@ public class FabronClient : IFabronClient
         Dictionary<string, string>? annotations = null)
     {
         var grain = _client.GetGrain<ITimedScheduler>(key);
-        string templateJSON = JsonSerializer.Serialize(template, _options.JsonSerializerOptions);
+        var templateJSON = JsonSerializer.Serialize(template, _options.JsonSerializerOptions);
         var spec = new TimedEventSpec
         {
             Schedule = schedule,
@@ -49,8 +45,9 @@ public class FabronClient : IFabronClient
     {
         var grain = _client.GetGrain<ITimedScheduler>(key);
         var state = await grain.GetState();
-        if (state is null) return null;
-        return new TimedEvent<TData>(
+        return state is null
+            ? null
+            : new TimedEvent<TData>(
             state.Metadata,
             JsonSerializer.Deserialize<CloudEventTemplate<TData>>(state.Template, _options.JsonSerializerOptions)!,
             new(
@@ -76,7 +73,7 @@ public class FabronClient : IFabronClient
         Dictionary<string, string>? annotations = null)
     {
         var grain = _client.GetGrain<ICronScheduler>(key);
-        string templateJSON = JsonSerializer.Serialize(template, _options.JsonSerializerOptions);
+        var templateJSON = JsonSerializer.Serialize(template, _options.JsonSerializerOptions);
         var spec = new CronEventSpec
         {
             Schedule = schedule,
@@ -91,8 +88,9 @@ public class FabronClient : IFabronClient
     {
         var grain = _client.GetGrain<ICronScheduler>(key);
         var state = await grain.GetState();
-        if (state is null) return null;
-        return new CronEvent<TData>(
+        return state is null
+            ? null
+            : new CronEvent<TData>(
             state.Metadata,
             JsonSerializer.Deserialize<CloudEventTemplate<TData>>(state.Template, _options.JsonSerializerOptions)!,
             new(
@@ -127,7 +125,7 @@ public class FabronClient : IFabronClient
         Dictionary<string, string>? annotations = null)
     {
         var grain = _client.GetGrain<IPeriodicScheduler>(key);
-        string templateJSON = JsonSerializer.Serialize(template, _options.JsonSerializerOptions);
+        var templateJSON = JsonSerializer.Serialize(template, _options.JsonSerializerOptions);
         var spec = new PeriodicEventSpec
         {
             Period = period,
@@ -142,8 +140,9 @@ public class FabronClient : IFabronClient
     {
         var grain = _client.GetGrain<IPeriodicScheduler>(key);
         var state = await grain.GetState();
-        if (state is null) return null;
-        return new PeriodicEvent<TData>(
+        return state is null
+            ? null
+            : new PeriodicEvent<TData>(
             state.Metadata,
             JsonSerializer.Deserialize<CloudEventTemplate<TData>>(state.Template, _options.JsonSerializerOptions)!,
             new(

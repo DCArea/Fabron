@@ -1,8 +1,6 @@
 
 using System.Security.Claims;
-using System.Threading.Tasks;
 using Fabron;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FabronService.Resources.CronEvents;
@@ -14,11 +12,13 @@ public static partial class CronEvents
         ClaimsPrincipal user,
         [FromServices] IFabronClient fabronClient)
     {
-        string? tenant = user.Identity?.Name;
+        var tenant = user.Identity?.Name;
         if (string.IsNullOrEmpty(tenant))
+        {
             return Results.Unauthorized();
+        }
 
-        string key = KeyUtils.BuildCronEventKey(tenant, name);
+        var key = KeyUtils.BuildCronEventKey(tenant, name);
         var tickerStatus = await fabronClient.GetCronEventTickerStatus(key);
         return Results.Ok(tickerStatus);
     }

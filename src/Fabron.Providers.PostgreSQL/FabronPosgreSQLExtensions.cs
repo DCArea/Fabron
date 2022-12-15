@@ -1,15 +1,13 @@
-using System;
-using Fabron.Store;
+using Fabron.Server;
+using Fabron.Stores;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Orleans;
-using Orleans.Hosting;
 
 namespace Fabron.Providers.PostgreSQL
 {
     public static class FabronPosgreSQLExtensions
     {
-        const string Invariant = "Npgsql";
+        private const string Invariant = "Npgsql";
 
         public static ISiloBuilder UsePosgreSQL(this ISiloBuilder silo, IConfiguration configuration)
         {

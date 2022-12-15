@@ -1,5 +1,3 @@
-using System;
-using System.Threading.Tasks;
 using Fabron.Models;
 using Microsoft.Extensions.Options;
 
@@ -9,10 +7,7 @@ public class SimpleEventRouter : IEventRouter
 {
     private readonly SimpleEventRouterOptions _options;
 
-    public SimpleEventRouter(IOptions<SimpleEventRouterOptions> options)
-    {
-        _options = options.Value;
-    }
+    public SimpleEventRouter(IOptions<SimpleEventRouterOptions> options) => _options = options.Value;
 
     public Task DispatchAsync(ScheduleMetadata metadata, CloudEventEnvelop envelop)
     {

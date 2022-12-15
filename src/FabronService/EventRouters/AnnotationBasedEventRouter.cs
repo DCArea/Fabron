@@ -1,5 +1,3 @@
-using System;
-using System.Threading.Tasks;
 using Fabron.CloudEvents;
 using Fabron.Models;
 using Microsoft.Toolkit.Diagnostics;
@@ -10,10 +8,7 @@ public class AnnotationBasedEventRouter : IEventRouter
 {
     private readonly IHttpDestinationHandler _http;
 
-    public AnnotationBasedEventRouter(IHttpDestinationHandler http)
-    {
-        _http = http;
-    }
+    public AnnotationBasedEventRouter(IHttpDestinationHandler http) => _http = http;
 
     public bool Matches(ScheduleMetadata metadata, CloudEventEnvelop envelop)
     {
@@ -23,13 +18,11 @@ public class AnnotationBasedEventRouter : IEventRouter
 
     public Task DispatchAsync(ScheduleMetadata metadata, CloudEventEnvelop envelop)
     {
-        string? destination = metadata.Annotations?["routing.fabron.io/destination"];
+        var destination = metadata.Annotations?["routing.fabron.io/destination"];
         Guard.IsNotNull(destination, nameof(destination));
-        if (destination.StartsWith("http"))
-        {
-            return _http.SendAsync(new Uri(destination), envelop);
-        }
-        return ThrowHelper.ThrowArgumentOutOfRangeException<Task>(nameof(destination));
+        return destination.StartsWith("http")
+            ? _http.SendAsync(new Uri(destination), envelop)
+            : ThrowHelper.ThrowArgumentOutOfRangeException<Task>(nameof(destination));
     }
 }
 

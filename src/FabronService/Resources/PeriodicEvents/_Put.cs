@@ -1,11 +1,7 @@
-using System;
-using System.Collections.Generic;
 using System.Security.Claims;
 using System.Text.Json;
-using System.Threading.Tasks;
 using Fabron;
 using Fabron.CloudEvents;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FabronService.Resources.PeriodicEvents;
@@ -18,11 +14,13 @@ public static partial class PeriodicEvents
         ClaimsPrincipal user,
         [FromServices] IFabronClient fabronClient)
     {
-        string? tenant = user.Identity?.Name;
+        var tenant = user.Identity?.Name;
         if (string.IsNullOrEmpty(tenant))
+        {
             return Results.Unauthorized();
+        }
 
-        string key = KeyUtils.BuildPeriodicEventKey(tenant, name);
+        var key = KeyUtils.BuildPeriodicEventKey(tenant, name);
         var annotations = new Dictionary<string, string>
         {
             { "routing.fabron.io/destination", req.RoutingDestination}

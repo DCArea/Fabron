@@ -1,7 +1,4 @@
-
-using System;
 using Fabron.CloudEvents;
-using Orleans;
 
 namespace Fabron.Models;
 
@@ -12,7 +9,7 @@ public class TimedEvent : ScheduledEvent<TimedEventSpec>
 
 [GenerateSerializer]
 [Immutable]
-public class TimedEventSpec: ISchedulerSpec
+public class TimedEventSpec : ISchedulerSpec
 {
     [Id(0)]
     public DateTimeOffset Schedule { get; init; } = default!;
