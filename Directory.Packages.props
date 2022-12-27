@@ -11,6 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="1.1.1" />
     <PackageVersion Include="DCA.DotNet.Extensions.OpenTelemetry.AspNetCore" Version="0.1.0-alpha1.0" />
     <PackageVersion Include="DCA.DotNet.Extensions.Logging" Version="$(DCAExtensionsVersion)" />
     <PackageVersion Include="InstrumentAggregators" Version="0.1.0-rc1.0" />
