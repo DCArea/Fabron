@@ -1,13 +1,8 @@
-
-using System;
-using System.Net.Http;
-
 using FakeItEasy;
 
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
-using Microsoft.Extensions.DependencyInjection;
 
 using Moq;
 
@@ -45,9 +40,9 @@ namespace FabronService.FunctionalTests
 
         public static WebApplicationFactory<Program> WithFakes(this WebApplicationFactory<Program> waf, params object[] fakes) => waf.WithServices(services =>
         {
-            foreach (object? fake in fakes)
+            foreach (var fake in fakes)
             {
-                Type? fakeType = Fake.GetFakeManager(fake).FakeObjectType;
+                var fakeType = Fake.GetFakeManager(fake).FakeObjectType;
                 services.AddScoped(fakeType, sp => fake);
             }
         });
@@ -55,9 +50,9 @@ namespace FabronService.FunctionalTests
         public static (HttpClient httpClient, TService fake) CreateClient<TService>(this WebApplicationFactory<Program> waf, WebApplicationFactoryClientOptions clientOptions)
             where TService : class
         {
-            TService? fake = A.Fake<TService>();
-            WebApplicationFactory<Program>? newWaf = waf.WithFakes(fake);
-            HttpClient? httpClient = newWaf.CreateClient(clientOptions);
+            var fake = A.Fake<TService>();
+            var newWaf = waf.WithFakes(fake);
+            var httpClient = newWaf.CreateClient(clientOptions);
             return (httpClient, fake);
         }
 
@@ -65,19 +60,19 @@ namespace FabronService.FunctionalTests
             where TService1 : class
             where TService2 : class
         {
-            TService1? fake1 = A.Fake<TService1>();
-            TService2? fake2 = A.Fake<TService2>();
-            WebApplicationFactory<Program>? newWaf = waf
+            var fake1 = A.Fake<TService1>();
+            var fake2 = A.Fake<TService2>();
+            var newWaf = waf
                 .WithFakes(fake1, fake2);
-            HttpClient? httpClient = newWaf.CreateClient(clientOptions);
+            var httpClient = newWaf.CreateClient(clientOptions);
             return (httpClient, fake1, fake2);
         }
 
         public static HttpClient CreateClient(this WebApplicationFactory<Program> waf, WebApplicationFactoryClientOptions clientOptions, params object[] fakes)
         {
-            WebApplicationFactory<Program>? newWaf = waf
+            var newWaf = waf
                 .WithFakes(fakes);
-            HttpClient? httpClient = newWaf.CreateClient(clientOptions);
+            var httpClient = newWaf.CreateClient(clientOptions);
             return httpClient;
         }
 

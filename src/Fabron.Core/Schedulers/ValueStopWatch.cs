@@ -1,12 +1,11 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System;
 using System.Diagnostics;
 
-namespace Microsoft.Extensions.Internal;
+namespace Fabron.Schedulers;
 
-internal struct ValueStopwatch
+internal readonly struct ValueStopwatch
 {
     private static readonly double TimestampToTicks = TimeSpan.TicksPerSecond / (double)Stopwatch.Frequency;
 
@@ -14,12 +13,9 @@ internal struct ValueStopwatch
 
     public bool IsActive => _startTimestamp != 0;
 
-    private ValueStopwatch(long startTimestamp)
-    {
-        _startTimestamp = startTimestamp;
-    }
+    private ValueStopwatch(long startTimestamp) => _startTimestamp = startTimestamp;
 
-    public static ValueStopwatch StartNew() => new ValueStopwatch(Stopwatch.GetTimestamp());
+    public static ValueStopwatch StartNew() => new(Stopwatch.GetTimestamp());
 
     public TimeSpan GetElapsedTime()
     {

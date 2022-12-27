@@ -1,7 +1,3 @@
-
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Fabron.Models;
 
 namespace Fabron.CloudEvents;
@@ -15,10 +11,7 @@ public interface IEventDispatcher
 
 public class EventDispatcher : IEventDispatcher
 {
-    public EventDispatcher(IEnumerable<IEventRouter> routers)
-    {
-        Routers = routers.ToList();
-    }
+    public EventDispatcher(IEnumerable<IEventRouter> routers) => Routers = routers.ToList();
 
     public List<IEventRouter> Routers { get; }
 

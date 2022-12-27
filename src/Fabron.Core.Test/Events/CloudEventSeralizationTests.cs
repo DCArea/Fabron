@@ -1,11 +1,10 @@
-using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Fabron.CloudEvents;
 using FluentAssertions;
 using Xunit;
 
-namespace Fabron.Core.Test;
+namespace Fabron.Core.Test.Events;
 
 public class CloudEventSeralizationTests
 {
@@ -31,8 +30,8 @@ public class CloudEventSeralizationTests
             DataSchema: null,
             Subject: null);
 
-        string result = JsonSerializer.Serialize(cloudEvent, _option);
-        string expected = @"{""id"":""1"",""source"":""http://example.com"",""type"":""completed"",""time"":""2020-01-01T00:00:00+00:00"",""data"":{""foo"":""bar""},""datacontenttype"":""application/json"",""specversion"":""1.0""}";
+        var result = JsonSerializer.Serialize(cloudEvent, _option);
+        var expected = @"{""id"":""1"",""source"":""http://example.com"",""type"":""completed"",""time"":""2020-01-01T00:00:00+00:00"",""data"":{""foo"":""bar""},""datacontenttype"":""application/json"",""specversion"":""1.0""}";
         result.Should().Be(expected);
     }
 }

@@ -1,7 +1,4 @@
-
-using System;
 using Fabron.CloudEvents;
-using Orleans;
 
 namespace Fabron.Models;
 
@@ -12,7 +9,7 @@ public class CronEvent : ScheduledEvent<CronEventSpec>
 
 [GenerateSerializer]
 [Immutable]
-public class CronEventSpec: ISchedulerSpec
+public class CronEventSpec : ISchedulerSpec
 {
     [Id(0)]
     public string Schedule { get; init; } = default!;

@@ -1,10 +1,10 @@
-using System.Threading.Tasks;
 using Fabron.Models;
-using Fabron.Providers.PostgreSQL;
+using Fabron.Store;
+using Fabron.Stores;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Fabron.Store;
+namespace Fabron.Providers.PostgreSQL;
 
 public class PostgreSQLTimedEventStore : ITimedEventStore
 {

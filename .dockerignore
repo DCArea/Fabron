@@ -2,6 +2,10 @@
 **/bin/
 **/obj/
 **/out/
+k6
+deploy
+dashboards
+.vs
 
 # files
 Dockerfile*

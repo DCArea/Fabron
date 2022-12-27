@@ -1,5 +1,4 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using CloudEventDotNet.Diagnostics.Aggregators;
 using Fabron.CloudEvents;
@@ -38,15 +37,12 @@ internal class Telemetry
         DateTimeOffset utcNow)
     {
         var scheduledTime = cloudEvent.Time;
-        double tardiness = (utcNow - scheduledTime).TotalMilliseconds;
+        var tardiness = (utcNow - scheduledTime).TotalMilliseconds;
         CloudEventDispatchTardiness.Record((long)tardiness);
         TickerLog.Dispatching(logger, schedulerKey, utcNow, cloudEvent.Time);
     }
 
-    public static void OnCloudEventDispatched(TimeSpan elapsed)
-    {
-        CloudEventDispatchDuration.Record((long)elapsed.TotalMilliseconds);
-    }
+    public static void OnCloudEventDispatched(TimeSpan elapsed) => CloudEventDispatchDuration.Record((long)elapsed.TotalMilliseconds);
 
     public static void OnCloudEventDispatchFailed(
         ILogger logger,

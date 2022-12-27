@@ -1,6 +1,3 @@
-
-using System.Threading.Tasks;
-
 using Xunit;
 
 namespace FabronService.FunctionalTests
@@ -14,10 +11,10 @@ namespace FabronService.FunctionalTests
         [Fact]
         public async Task HealthCheck()
         {
-            System.Net.Http.HttpClient? client = _waf.CreateClient();
-            System.Net.Http.HttpResponseMessage? response = await client.GetAsync("/health");
+            var client = _waf.CreateClient();
+            var response = await client.GetAsync("/health");
             response.EnsureSuccessStatusCode();
-            string? content = await response.Content.ReadAsStringAsync();
+            var content = await response.Content.ReadAsStringAsync();
             Assert.Equal("Healthy", content);
         }
 

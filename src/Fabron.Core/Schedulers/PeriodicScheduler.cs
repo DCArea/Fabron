@@ -1,15 +1,9 @@
-
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using Fabron.CloudEvents;
+﻿using Fabron.CloudEvents;
 using Fabron.Models;
-using Fabron.Store;
+using Fabron.Stores;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Toolkit.Diagnostics;
-using Orleans;
 using Orleans.Concurrency;
 using Orleans.Runtime;
 
@@ -45,10 +39,7 @@ public class PeriodicEventScheduler : SchedulerGrain<PeriodicEvent>, IGrainBase,
         IOptions<PeriodicSchedulerOptions> options,
         ISystemClock clock,
         IPeriodicEventStore store,
-        IEventDispatcher dispatcher) : base(context, runtime, logger, clock, options.Value, store, dispatcher)
-    {
-        _options = options.Value;
-    }
+        IEventDispatcher dispatcher) : base(context, runtime, logger, clock, options.Value, store, dispatcher) => _options = options.Value;
 
     async Task IGrainBase.OnActivateAsync(CancellationToken cancellationToken)
     {
@@ -116,7 +107,7 @@ public class PeriodicEventScheduler : SchedulerGrain<PeriodicEvent>, IGrainBase,
             return;
         }
 
-        DateTimeOffset now = _clock.UtcNow;
+        var now = _clock.UtcNow;
         if (now > _state.Spec.ExpirationTime)
         {
             TickerLog.UnexpectedTick(_logger, _key, expectedTickTime, "Expired");

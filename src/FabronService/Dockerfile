@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:6.0.302 AS build
+FROM mcr.microsoft.com/dotnet/sdk:7.0.100 AS build
 WORKDIR /source
 
 # copy csproj and restore as distinct layers
@@ -23,7 +23,7 @@ WORKDIR /source/src/FabronService
 RUN dotnet publish -c release -o /app --no-restore
 
 # final stage/image
-FROM mcr.microsoft.com/dotnet/aspnet:6.0.3
+FROM mcr.microsoft.com/dotnet/aspnet:7.0.1
 WORKDIR /app
 ENV Logging__Console__FormatterName="ejson"
 COPY --from=build /app ./

@@ -1,15 +1,9 @@
-
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using Fabron.CloudEvents;
+﻿using Fabron.CloudEvents;
 using Fabron.Models;
-using Fabron.Store;
+using Fabron.Stores;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Toolkit.Diagnostics;
-using Orleans;
 using Orleans.Concurrency;
 using Orleans.Runtime;
 
@@ -45,10 +39,7 @@ public class CronEventScheduler : SchedulerGrain<CronEvent>, IGrainBase, ICronSc
         IOptions<CronSchedulerOptions> options,
         ISystemClock clock,
         ICronEventStore store,
-        IEventDispatcher dispatcher) : base(context, runtime, logger, clock, options.Value, store, dispatcher)
-    {
-        _options = options.Value;
-    }
+        IEventDispatcher dispatcher) : base(context, runtime, logger, clock, options.Value, store, dispatcher) => _options = options.Value;
 
     async Task IGrainBase.OnActivateAsync(CancellationToken cancellationToken)
     {
@@ -101,10 +92,10 @@ public class CronEventScheduler : SchedulerGrain<CronEvent>, IGrainBase, ICronSc
 
     internal override async Task Tick(DateTimeOffset expectedTickTime)
     {
-        DateTimeOffset now = _clock.UtcNow;
+        var now = _clock.UtcNow;
         TickerLog.Ticking(_logger, _key, now, expectedTickTime);
 
-        bool shouldDispatchForCurrentTick = expectedTickTime != default;
+        var shouldDispatchForCurrentTick = expectedTickTime != default;
         if (shouldDispatchForCurrentTick && now.Subtract(expectedTickTime) > TimeSpan.FromMinutes(5))
         {
             TickerLog.UnexpectedTick(_logger, _key, expectedTickTime, "Missed");
@@ -135,11 +126,11 @@ public class CronEventScheduler : SchedulerGrain<CronEvent>, IGrainBase, ICronSc
             return;
         }
 
-        Cronos.CronExpression cron = Cronos.CronExpression.Parse(_state.Spec.Schedule, _options.CronFormat);
+        var cron = Cronos.CronExpression.Parse(_state.Spec.Schedule, _options.CronFormat);
 
 
 
-        DateTimeOffset from = shouldDispatchForCurrentTick ? expectedTickTime : now;
+        var from = shouldDispatchForCurrentTick ? expectedTickTime : now;
         var to = from.AddMinutes(2);
         if (to > _state.Spec.ExpirationTime)
         {

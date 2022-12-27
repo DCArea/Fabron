@@ -1,11 +1,8 @@
 using Fabron;
 using Fabron.CloudEvents;
 using Fabron.Providers.PostgreSQL;
+using Fabron.Server;
 using FabronService.EventRouters;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Orleans.Hosting;
 
 namespace FabronService.Hosting;
 
@@ -33,8 +30,8 @@ public static class FabronConfigureExtensions
                     siloBuilder.UseKubernetesHosting();
                     siloBuilder.AddActivityPropagation();
                 })
-                .UsePostgreSQL(builder.Configuration["PGSQL"]);
-            client.UsePostgreSQL(builder.Configuration["PGSQL"]);
+                .UsePostgreSQL(builder.Configuration["PGSQL"]!);
+            client.UsePostgreSQL(builder.Configuration["PGSQL"]!);
         }
 
         return builder;

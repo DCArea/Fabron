@@ -1,7 +1,3 @@
-
-using System.Net.Http;
-using System.Threading.Tasks;
-
 using Xunit;
 
 namespace FabronService.FunctionalTests
@@ -15,8 +11,8 @@ namespace FabronService.FunctionalTests
         [Fact]
         public async Task OpenAPISpec()
         {
-            HttpClient client = _waf.CreateClient();
-            HttpResponseMessage response = await client.GetAsync("/swagger/v1/swagger.json");
+            var client = _waf.CreateClient();
+            var response = await client.GetAsync("/swagger/v1/swagger.json");
             response.EnsureSuccessStatusCode();
             await response.Content.ReadAsStringAsync();
         }

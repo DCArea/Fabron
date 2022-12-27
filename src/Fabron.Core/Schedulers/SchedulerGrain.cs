@@ -1,17 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
-using Fabron.CloudEvents;
+﻿using Fabron.CloudEvents;
 using Fabron.Diagnostics;
 using Fabron.Models;
-using Fabron.Store;
+using Fabron.Stores;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Internal;
 using Microsoft.Extensions.Logging;
 using Microsoft.Toolkit.Diagnostics;
-using Orleans;
 using Orleans.Runtime;
 using Orleans.Timers;
 
@@ -68,14 +61,15 @@ public abstract class SchedulerGrain<TState> : IRemindable
 
     protected async Task StopTicker()
     {
-        int retry = 0;
+        var retry = 0;
         while (true)
         {
+            _tickReminder ??= await _reminderRegistry.GetReminder(GrainContext.GrainId, Names.TickerReminder);
             if (_tickReminder is null)
             {
-                _tickReminder = await _reminderRegistry.GetReminder(GrainContext.GrainId, Names.TickerReminder);
+                break;
             }
-            if (_tickReminder is null) break;
+
             try
             {
                 await _reminderRegistry.UnregisterReminder(GrainContext.GrainId, _tickReminder);
@@ -105,7 +99,7 @@ public abstract class SchedulerGrain<TState> : IRemindable
     public async Task<TickerStatus> GetTickerStatus()
     {
         var reminderTable = _runtime.ServiceProvider.GetRequiredService<IReminderTable>();
-        var entry = await reminderTable.ReadRow(GrainContext.GrainReference, Names.TickerReminder);
+        var entry = await reminderTable.ReadRow(GrainContext.GrainId, Names.TickerReminder);
         return new TickerStatus
         {
             NextTick = entry?.StartAt,

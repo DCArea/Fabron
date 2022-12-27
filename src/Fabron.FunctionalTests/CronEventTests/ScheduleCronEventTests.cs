@@ -1,7 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using Fabron.CloudEvents;
-using Fabron.FunctionalTests.JobTests;
+﻿using Fabron.CloudEvents;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -16,7 +13,7 @@ public class ScheduleCronEventTests : TestBase
     [Fact]
     public async Task ScheduleAndGet()
     {
-        string key = $"{nameof(ScheduleCronEventTests)}.{nameof(ScheduleAndGet)}";
+        var key = $"{nameof(ScheduleCronEventTests)}.{nameof(ScheduleAndGet)}";
         await Client.ScheduleCronEvent(
             key,
             "* * * * *",

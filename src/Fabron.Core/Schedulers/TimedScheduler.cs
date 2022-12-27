@@ -1,15 +1,9 @@
-
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using Fabron.CloudEvents;
+﻿using Fabron.CloudEvents;
 using Fabron.Diagnostics;
 using Fabron.Models;
-using Fabron.Store;
+using Fabron.Stores;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Orleans;
 using Orleans.Concurrency;
 using Orleans.Runtime;
 
@@ -45,10 +39,7 @@ public partial class TimedEventScheduler : SchedulerGrain<TimedEvent>, IGrainBas
         IOptions<SimpleSchedulerOptions> options,
         ISystemClock clock,
         ITimedEventStore store,
-        IEventDispatcher dispatcher) : base(context, runtime, logger, clock, options.Value, store, dispatcher)
-    {
-        _options = options.Value;
-    }
+        IEventDispatcher dispatcher) : base(context, runtime, logger, clock, options.Value, store, dispatcher) => _options = options.Value;
 
     async Task IGrainBase.OnActivateAsync(CancellationToken cancellationToken)
     {

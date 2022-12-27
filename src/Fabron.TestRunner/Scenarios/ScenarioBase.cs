@@ -1,12 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using Fabron.Server;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Orleans;
-using Orleans.Hosting;
+using OpenTelemetry;
 
 namespace Fabron.TestRunner.Scenarios;
 
@@ -23,22 +20,13 @@ public abstract class ScenarioBase : IScenario
     protected IClusterClient ClusterClient => ServiceProvider.GetRequiredService<IClusterClient>();
     protected IGrainFactory GrainFactory => ClusterClient;
 
-    protected virtual IHostBuilder ConfigureHost(IHostBuilder builder)
-    {
-        return builder;
-    }
+    protected virtual IHostBuilder ConfigureHost(IHostBuilder builder) => builder;
 
-    protected virtual FabronServerBuilder ConfigureServer(FabronServerBuilder builder)
-    {
-        return builder;
-    }
+    protected virtual FabronServerBuilder ConfigureServer(FabronServerBuilder builder) => builder;
 
-    protected virtual FabronClientBuilder ConfigureClient(FabronClientBuilder builder)
-    {
-        return builder;
-    }
+    protected virtual FabronClientBuilder ConfigureClient(FabronClientBuilder builder) => builder;
 
-    protected virtual IEnumerable<KeyValuePair<string, string>> Configs => new Dictionary<string, string>
+    protected virtual IEnumerable<KeyValuePair<string, string?>> Configs => new Dictionary<string, string?>
         {
             { "Logging:LogLevel:Default", "Warning" },
             { "Logging:LogLevel:Orleans", "Warning" },
@@ -54,9 +42,9 @@ public abstract class ScenarioBase : IScenario
             })
             .ConfigureServices(services =>
             {
-                services.AddOpenTelemetryTracing(options => options
-                    .AddSource("orleans.runtime.graincall")
-                );
+                services.AddOpenTelemetry()
+                    .WithTracing(options => options
+                    .AddSource("orleans.runtime.graincall"));
             });
 
         builder = ConfigureHost(builder);

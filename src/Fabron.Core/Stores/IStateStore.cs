@@ -1,7 +1,6 @@
-using System.Threading.Tasks;
-using Fabron.Models;
+﻿using Fabron.Models;
 
-namespace Fabron.Store;
+namespace Fabron.Stores;
 
 public record StateEntry<TState>(
     TState State,

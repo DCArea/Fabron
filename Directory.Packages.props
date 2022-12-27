@@ -4,32 +4,30 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <OrleansVersion>4.0.0-preview2</OrleansVersion>
-    <AspNetCoreVersion>6.0.7</AspNetCoreVersion>
-    <MExVersion>6.0.0</MExVersion>
-    <OpenTelemetryCoreVersion>1.3.0-rc.2</OpenTelemetryCoreVersion>
-    <OpenTelemetryNonCoreVersion>1.0.0-rc9.3</OpenTelemetryNonCoreVersion>
+    <OrleansVersion>7.0.0</OrleansVersion>
+    <AspNetCoreVersion>7.0.0</AspNetCoreVersion>
+    <MExVersion>7.0.0</MExVersion>
     <DCAExtensionsVersion>0.0.1-alpha4.1</DCAExtensionsVersion>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageVersion Include="DCA.DotNet.Extensions.OpenTelemetry.AspNetCore" Version="$(DCAExtensionsVersion)" />
+    <PackageVersion Include="DCA.DotNet.Extensions.OpenTelemetry.AspNetCore" Version="0.1.0-alpha1.0" />
     <PackageVersion Include="DCA.DotNet.Extensions.Logging" Version="$(DCAExtensionsVersion)" />
     <PackageVersion Include="InstrumentAggregators" Version="0.1.0-rc1.0" />
-    <PackageVersion Include="AspNetCore.Authentication.ApiKey" Version="6.0.1" />
+    <PackageVersion Include="AspNetCore.Authentication.ApiKey" Version="7.0.0" />
     <PackageVersion Include="Cronos" Version="0.7.1" />
     <PackageVersion Include="Microsoft.Toolkit.Diagnostics" Version="7.1.2" />
-    <PackageVersion Include="Npgsql" Version="6.0.6" />
-    <PackageVersion Include="Npgsql.OpenTelemetry" Version="6.0.6" />
-    <PackageVersion Include="OpenTelemetry" Version="$(OpenTelemetryCoreVersion)" />
-    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="$(OpenTelemetryCoreVersion)" />
-    <PackageVersion Include="OpenTelemetry.Exporter.Prometheus" Version="$(OpenTelemetryCoreVersion)" />
-    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="$(OpenTelemetryNonCoreVersion)" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="$(OpenTelemetryNonCoreVersion)" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.GrpcNetClient" Version="$(OpenTelemetryNonCoreVersion)" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="$(OpenTelemetryNonCoreVersion)" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="0.1.0-alpha.1" />
-    <PackageVersion Include="OpenTelemetry.Exporter.Console" Version="$(OpenTelemetryCoreVersion)" />
+    <PackageVersion Include="Npgsql" Version="7.0.1" />
+    <PackageVersion Include="Npgsql.OpenTelemetry" Version="7.0.1" />
+    <PackageVersion Include="OpenTelemetry" Version="1.4.0-rc.1" />
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.4.0-rc.1" />
+    <PackageVersion Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" Version="1.4.0-rc.1" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.4.0-rc.1" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.0.0-rc9.10" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.GrpcNetClient" Version="1.0.0-rc9.10" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.0.0-rc9.10" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.1.0-beta.2" />
+    <PackageVersion Include="OpenTelemetry.Exporter.Console" Version="1.4.0-rc.1" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="$(MExVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="$(MExVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="$(MExVersion)" />
@@ -46,16 +44,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageVersion Include="BenchmarkDotNet" Version="0.13.1" />
-    <PackageVersion Include="Moq" Version="4.18.2" />
+    <PackageVersion Include="BenchmarkDotNet" Version="0.13.2" />
+    <PackageVersion Include="Moq" Version="4.18.3" />
     <PackageVersion Include="Moq.Contrib.HttpClient" Version="1.4.0" />
     <PackageVersion Include="FakeItEasy" Version="7.3.1" />
-    <PackageVersion Include="FluentAssertions" Version="6.7.0" />
+    <PackageVersion Include="FluentAssertions" Version="6.8.0" />
     <PackageVersion Include="MartinCostello.Logging.XUnit" Version="0.3.0" />
-    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="$(AspNetCoreVersion)" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.3.0" />
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="7.0.1" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.4.1" />
     <PackageVersion Include="RichardSzalay.MockHttp" Version="6.0.0" />
-    <PackageVersion Include="coverlet.collector" Version="3.1.2" />
+    <PackageVersion Include="coverlet.collector" Version="3.2.0" />
     <PackageVersion Include="skwas.MockHttp" Version="3.0.1" />
     <PackageVersion Include="skwas.MockHttp.Json" Version="3.0.1" />
     <PackageVersion Include="xunit" Version="2.4.2" />

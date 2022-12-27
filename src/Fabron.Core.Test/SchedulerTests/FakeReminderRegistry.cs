@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Orleans;
 using Orleans.Runtime;
 using Orleans.Timers;
 
@@ -12,18 +7,13 @@ namespace Fabron.Core.Test.SchedulerTests
     {
         public Dictionary<string, FakeGrainReminder> Reminders { get; } = new();
 
-        public Task Fire(IRemindable remindable, string reminderName, TickStatus tickerStatus)
-        {
-            return remindable.ReceiveReminder(reminderName, tickerStatus);
-        }
+        public Task Fire(IRemindable remindable, string reminderName, TickStatus tickerStatus) => remindable.ReceiveReminder(reminderName, tickerStatus);
 
         public Task<IGrainReminder?> GetReminder(GrainId callingGrainId, string reminderName)
         {
-            if (Reminders.TryGetValue(reminderName, out var reminder))
-            {
-                return Task.FromResult<IGrainReminder?>(reminder);
-            }
-            return Task.FromResult<IGrainReminder?>(null);
+            return Reminders.TryGetValue(reminderName, out var reminder)
+                ? Task.FromResult<IGrainReminder?>(reminder)
+                : Task.FromResult<IGrainReminder?>(null);
         }
 
         public Task<List<IGrainReminder>> GetReminders(GrainId callingGrainId)
