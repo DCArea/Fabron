@@ -1,5 +1,5 @@
 using System.Reflection;
-using Fabron.CloudEvents;
+using Fabron.Events;
 using Fabron.Schedulers;
 using Fabron.Stores;
 using Microsoft.Extensions.DependencyInjection;

@@ -1,7 +1,6 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using System.Text.Json;
 using Fabron;
-using Fabron.CloudEvents;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FabronService.Resources.TimedEvents;
@@ -21,15 +20,15 @@ public static partial class TimedEvents
         }
 
         var key = KeyUtils.BuildTimedEventKey(tenant, name);
-        var annotations = new Dictionary<string, string>
+        var extensions = new Dictionary<string, string>
         {
             { "routing.fabron.io/destination", req.RoutingDestination}
         };
         await fabronClient.ScheduleTimedEvent(
             key,
             req.Schedule,
-            req.Template,
-            annotations: annotations);
+            req.Data,
+            extensions: extensions);
 
         return Results.CreatedAtRoute("TimedEvents_Get", new { name });
     }
@@ -38,6 +37,6 @@ public static partial class TimedEvents
 public record ScheduleTimedEventRequest
 (
     DateTimeOffset Schedule,
-    CloudEventTemplate<JsonElement> Template,
+    JsonElement Data,
     string RoutingDestination
 );

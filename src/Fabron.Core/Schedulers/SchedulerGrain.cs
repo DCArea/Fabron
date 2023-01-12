@@ -1,5 +1,5 @@
-﻿using Fabron.CloudEvents;
-using Fabron.Diagnostics;
+﻿using Fabron.Diagnostics;
+using Fabron.Events;
 using Fabron.Models;
 using Fabron.Stores;
 using Microsoft.Extensions.DependencyInjection;
@@ -116,23 +116,23 @@ public abstract class SchedulerGrain<TState> : IRemindable
         }
     }
 
-    protected async Task DispatchNew(CloudEventEnvelop cloudEvent)
+    protected async Task DispatchNew(FabronEventEnvelop envelop)
     {
         Guard.IsNotNull(_state, nameof(_state));
 
         var utcNow = _clock.UtcNow;
         RecordTick(utcNow);
-        Telemetry.OnCloudEventDispatching(_logger, _key, cloudEvent, utcNow);
+        Telemetry.OnFabronEventDispatching(_logger, _key, envelop, utcNow);
 
         var sw = ValueStopwatch.StartNew();
         try
         {
-            await _dispatcher.DispatchAsync(_state.Metadata, cloudEvent);
-            Telemetry.OnCloudEventDispatched(sw.GetElapsedTime());
+            await _dispatcher.DispatchAsync(envelop);
+            Telemetry.OnFabronEventDispatched(sw.GetElapsedTime());
         }
         catch (Exception e)
         {
-            Telemetry.OnCloudEventDispatchFailed(_logger, _key, e);
+            Telemetry.OnFabronEventDispatchFailed(_logger, _key, e);
             return;
         }
     }

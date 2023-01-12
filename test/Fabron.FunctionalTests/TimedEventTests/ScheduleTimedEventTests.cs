@@ -1,5 +1,4 @@
-﻿using Fabron.CloudEvents;
-using Xunit;
+﻿using Xunit;
 using Xunit.Abstractions;
 
 namespace Fabron.FunctionalTests.TimedEventTests
@@ -17,15 +16,13 @@ namespace Fabron.FunctionalTests.TimedEventTests
             await Client.ScheduleTimedEvent(
                 key,
                 DateTimeOffset.UtcNow.AddMonths(1),
-                new CloudEventTemplate<EventData>(
-                    new EventData("Bar")
-                )
+                new EventData("Bar")
             );
 
             var timedEvent = await Client.GetTimedEvent<EventData>(key);
 
             Assert.NotNull(timedEvent);
-            Assert.Equal("Bar", timedEvent!.Template.Data.Foo);
+            Assert.Equal("Bar", timedEvent!.Data.Foo);
         }
 
     }

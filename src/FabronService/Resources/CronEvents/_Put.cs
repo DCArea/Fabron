@@ -1,7 +1,6 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using System.Text.Json;
 using Fabron;
-using Fabron.CloudEvents;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FabronService.Resources.CronEvents;
@@ -21,7 +20,7 @@ public static partial class CronEvents
         }
 
         var key = KeyUtils.BuildCronEventKey(tenant, name);
-        var annotations = new Dictionary<string, string>
+        var extensions = new Dictionary<string, string>
         {
             { "routing.fabron.io/destination", req.RoutingDestination}
         };
@@ -29,11 +28,11 @@ public static partial class CronEvents
         await fabronClient.ScheduleCronEvent(
             key,
             req.Schedule,
-            req.Template,
+            req.Data,
             req.NotBefore,
             req.ExpirationTime,
             req.Suspend,
-            annotations: annotations);
+            extensions: extensions);
 
         return Results.CreatedAtRoute("CronEvents_Get", new { name });
     }
@@ -43,7 +42,7 @@ public record ScheduleCronEventRequest
 (
     string Name,
     string Schedule,
-    CloudEventTemplate<JsonElement> Template,
+    JsonElement Data,
     DateTimeOffset? NotBefore,
     DateTimeOffset? ExpirationTime,
     bool Suspend,

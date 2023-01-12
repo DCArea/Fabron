@@ -1,4 +1,4 @@
-﻿using Fabron.CloudEvents;
+﻿using Fabron.Events;
 using Fabron.Models;
 using Fabron.Stores;
 using Microsoft.Extensions.Logging;
@@ -20,9 +20,8 @@ public interface IPeriodicScheduler : IGrainWithStringKey
     Task<PeriodicEvent> Schedule(
         string template,
         PeriodicEventSpec spec,
-        Dictionary<string, string>? labels,
-        Dictionary<string, string>? annotations,
-        string? owner
+        string? owner,
+        Dictionary<string, string>? extensions
     );
 
     Task Unregister();
@@ -63,9 +62,8 @@ public class PeriodicEventScheduler : SchedulerGrain<PeriodicEvent>, IGrainBase,
     public async Task<PeriodicEvent> Schedule(
         string template,
         PeriodicEventSpec spec,
-        Dictionary<string, string>? labels,
-        Dictionary<string, string>? annotations,
-        string? owner)
+        string? owner,
+        Dictionary<string, string>? extensions)
     {
         Guard.IsGreaterThanOrEqualTo(spec.Period, TimeSpan.FromSeconds(5), nameof(spec.Period));
 
@@ -76,9 +74,8 @@ public class PeriodicEventScheduler : SchedulerGrain<PeriodicEvent>, IGrainBase,
             {
                 Key = _key,
                 CreationTimestamp = utcNow,
-                Labels = labels,
-                Annotations = annotations,
-                Owner = owner
+                Owner = owner,
+                Extensions = extensions ?? new()
             },
             Spec = spec
         };
@@ -147,7 +144,7 @@ public class PeriodicEventScheduler : SchedulerGrain<PeriodicEvent>, IGrainBase,
             var cloudEvent = _state.ToCloudEvent(schedule, _options.JsonSerializerOptions);
             _runtime.TimerRegistry.RegisterTimer(
                 GrainContext,
-                obj => DispatchNew((CloudEventEnvelop)obj),
+                obj => DispatchNew((FabronEventEnvelop)obj),
                 cloudEvent,
                 dueTime,
                 Timeout.InfiniteTimeSpan);

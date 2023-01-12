@@ -1,7 +1,7 @@
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Cronos;
-using Fabron.CloudEvents;
+using Fabron.Events;
 using Fabron.Models;
 using Fabron.Schedulers;
 using Fabron.Stores;
@@ -38,7 +38,7 @@ public class CronEventTickingTests
                 {
                     Key = key,
                 },
-                Template = JsonSerializer.Serialize(new { data = new { foo = "bar" } }),
+                Data = JsonSerializer.Serialize(new { data = new { foo = "bar" } }),
                 Spec = new CronEventSpec
                 {
                     Schedule = schedule,
@@ -97,9 +97,8 @@ public class CronEventTickingTests
         await (scheduler as IGrainBase).OnActivateAsync(default);
         clock.UtcNow = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero).AddMilliseconds(20);
         await scheduler.Schedule(
-            JsonSerializer.Serialize(new { data = new { foo = "bar" } }),
+            JsonSerializer.Serialize(new { foo = "bar" }),
             new CronEventSpec { Schedule = "0 0 0 * * *" },
-            null,
             null,
             null);
         reminderRegistry.Reminders.Should().HaveCount(1);
@@ -114,9 +113,8 @@ public class CronEventTickingTests
         await (scheduler as IGrainBase).OnActivateAsync(default);
         clock.UtcNow = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero);
         await scheduler.Schedule(
-            JsonSerializer.Serialize(new { data = new { foo = "bar" } }),
+            JsonSerializer.Serialize(new { foo = "bar" }),
             new CronEventSpec { Schedule = "0 0 0 * * *" },
-            null,
             null,
             null);
 

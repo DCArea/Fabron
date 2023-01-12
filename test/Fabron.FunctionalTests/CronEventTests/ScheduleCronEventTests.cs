@@ -1,5 +1,4 @@
-﻿using Fabron.CloudEvents;
-using Xunit;
+﻿using Xunit;
 using Xunit.Abstractions;
 
 namespace Fabron.FunctionalTests.CronEventTests;
@@ -17,15 +16,13 @@ public class ScheduleCronEventTests : TestBase
         await Client.ScheduleCronEvent(
             key,
             "* * * * *",
-            new CloudEventTemplate<EventData>(
-                new EventData("Bar")
-            )
+            new EventData("Bar")
         );
 
         var scheduledEvent = await Client.GetCronEvent<EventData>(key);
 
         Assert.NotNull(scheduledEvent);
-        Assert.Equal("Bar", scheduledEvent!.Template.Data.Foo);
+        Assert.Equal("Bar", scheduledEvent!.Data.Foo);
     }
 
 }

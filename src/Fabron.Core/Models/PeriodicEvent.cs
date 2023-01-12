@@ -1,6 +1,4 @@
-using Fabron.CloudEvents;
-
-namespace Fabron.Models;
+﻿namespace Fabron.Models;
 
 [GenerateSerializer]
 [Immutable]
@@ -27,14 +25,7 @@ public class PeriodicEventSpec : ISchedulerSpec
 
 public record PeriodicEvent<TData>(
     ScheduleMetadata Metadata,
-    CloudEventTemplate<TData> Template,
-    PeriodicEventSpec<TData> Spec
-);
-
-public record PeriodicEventSpec<TData>(
-    TimeSpan Period,
-    DateTimeOffset? NotBefore,
-    DateTimeOffset? ExpirationTime,
-    bool Suspend
+    TData Data,
+    PeriodicEventSpec Spec
 );
 

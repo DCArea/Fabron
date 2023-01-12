@@ -1,5 +1,5 @@
-using Fabron;
-using Fabron.CloudEvents;
+﻿using Fabron;
+using Fabron.Events;
 using Fabron.Providers.PostgreSQL;
 using Fabron.Server;
 using FabronService.EventRouters;

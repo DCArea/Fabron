@@ -1,16 +1,14 @@
-using Fabron.CloudEvents;
-using Fabron.Models;
+﻿using Fabron.Models;
 
 namespace Fabron;
 
 public interface IFabronClient
 {
-    Task ScheduleTimedEvent<T>(
+    Task ScheduleTimedEvent<TData>(
         string key,
         DateTimeOffset schedule,
-        CloudEventTemplate<T> template,
-        Dictionary<string, string>? labels = null,
-        Dictionary<string, string>? annotations = null);
+        TData data,
+        Dictionary<string, string>? extensions = null);
 
     Task<TimedEvent<TData>?> GetTimedEvent<TData>(string key);
 
@@ -18,15 +16,14 @@ public interface IFabronClient
 
     Task CancelTimedEvent(string key);
 
-    Task ScheduleCronEvent<T>(
+    Task ScheduleCronEvent<TData>(
         string key,
         string schedule,
-        CloudEventTemplate<T> template,
+        TData data,
         DateTimeOffset? notBefore = null,
         DateTimeOffset? expirationTime = null,
         bool suspend = false,
-        Dictionary<string, string>? labels = null,
-        Dictionary<string, string>? annotations = null);
+        Dictionary<string, string>? extensions = null);
 
     Task<CronEvent<TData>?> GetCronEvent<TData>(string key);
 
@@ -34,15 +31,14 @@ public interface IFabronClient
 
     Task CancelCronEvent(string key);
 
-    Task SchedulePeriodicEvent<T>(
+    Task SchedulePeriodicEvent<TData>(
         string key,
-        CloudEventTemplate<T> template,
+        TData data,
         TimeSpan period,
         DateTimeOffset? notBefore = null,
         DateTimeOffset? expirationTime = null,
         bool suspend = false,
-        Dictionary<string, string>? labels = null,
-        Dictionary<string, string>? annotations = null);
+        Dictionary<string, string>? extensions = null);
 
     Task<PeriodicEvent<TData>?> GetPeriodicEvent<TData>(string key);
 

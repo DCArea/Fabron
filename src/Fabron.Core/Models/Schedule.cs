@@ -1,4 +1,4 @@
-namespace Fabron.Models;
+﻿namespace Fabron.Models;
 
 [GenerateSerializer]
 [Immutable]
@@ -14,19 +14,16 @@ public class ScheduleMetadata
     public DateTimeOffset? DeletionTimestamp { get; set; }
 
     [Id(3)]
-    public Dictionary<string, string>? Labels { get; set; }
+    public string? Owner { get; set; }
 
     [Id(4)]
-    public Dictionary<string, string>? Annotations { get; set; }
-
-    [Id(5)]
-    public string? Owner { get; set; }
+    public Dictionary<string, string> Extensions { get; set; } = new();
 }
 
 public interface IScheduledEvent
 {
     ScheduleMetadata Metadata { get; }
-    string Template { get; }
+    string Data { get; }
 }
 
 public interface ISchedulerSpec
@@ -42,7 +39,7 @@ public class ScheduledEvent<TScheduleSpec> : IScheduledEvent
     public ScheduleMetadata Metadata { get; set; } = default!;
 
     [Id(1)]
-    public string Template { get; init; } = default!;
+    public string Data { get; init; } = default!;
 
     [Id(2)]
     public TScheduleSpec Spec { get; set; } = default!;

@@ -1,4 +1,4 @@
-﻿using Fabron.CloudEvents;
+﻿using Fabron.Events;
 using Fabron.Models;
 using Fabron.Stores;
 using Microsoft.Extensions.Logging;
@@ -20,9 +20,8 @@ public interface ICronScheduler : IGrainWithStringKey
     Task<CronEvent> Schedule(
         string template,
         CronEventSpec spec,
-        Dictionary<string, string>? labels,
-        Dictionary<string, string>? annotations,
-        string? owner
+        string? owner,
+        Dictionary<string, string>? extensions
     );
 
     Task Unregister();
@@ -63,9 +62,8 @@ public class CronEventScheduler : SchedulerGrain<CronEvent>, IGrainBase, ICronSc
     public async Task<CronEvent> Schedule(
         string template,
         CronEventSpec spec,
-        Dictionary<string, string>? labels,
-        Dictionary<string, string>? annotations,
-        string? owner)
+        string? owner,
+        Dictionary<string, string>? extensions)
     {
         var utcNow = _clock.UtcNow;
         _state = new CronEvent
@@ -74,11 +72,10 @@ public class CronEventScheduler : SchedulerGrain<CronEvent>, IGrainBase, ICronSc
             {
                 Key = _key,
                 CreationTimestamp = utcNow,
-                Labels = labels,
-                Annotations = annotations,
-                Owner = owner
+                Owner = owner,
+                Extensions = extensions ?? new(),
             },
-            Template = template,
+            Data = template,
             Spec = spec
         };
         _eTag = await _store.SetAsync(_state, _eTag);
@@ -169,7 +166,7 @@ public class CronEventScheduler : SchedulerGrain<CronEvent>, IGrainBase, ICronSc
         var cloudEvent = _state.ToCloudEvent(schedule, _options.JsonSerializerOptions);
         _runtime.TimerRegistry.RegisterTimer(
             GrainContext,
-            obj => DispatchNew((CloudEventEnvelop)obj),
+            obj => DispatchNew((FabronEventEnvelop)obj),
             cloudEvent,
             dueTime,
             Timeout.InfiniteTimeSpan);

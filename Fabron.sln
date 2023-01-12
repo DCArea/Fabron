@@ -5,35 +5,34 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{CD6A0BF5-B277-4B14-9A78-B94EC534969D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fabron.Core", "src\Fabron.Core\Fabron.Core.csproj", "{E02F8095-5486-463A-864A-490DD94995BD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fabron.Core", "src\Fabron.Core\Fabron.Core.csproj", "{E02F8095-5486-463A-864A-490DD94995BD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fabron.Providers.PostgreSQL", "src\Fabron.Providers.PostgreSQL\Fabron.Providers.PostgreSQL.csproj", "{39ED706F-154D-415B-9326-64638F8CBBDB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fabron.Providers.PostgreSQL", "src\Fabron.Providers.PostgreSQL\Fabron.Providers.PostgreSQL.csproj", "{39ED706F-154D-415B-9326-64638F8CBBDB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fabron.Server", "src\Fabron.Server\Fabron.Server.csproj", "{A2121508-254C-4CDE-9636-EF1EE7111A5F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fabron.Server", "src\Fabron.Server\Fabron.Server.csproj", "{A2121508-254C-4CDE-9636-EF1EE7111A5F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FabronService", "src\FabronService\FabronService.csproj", "{557508A6-4393-44E1-BDFE-70D35375A2ED}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FabronService", "src\FabronService\FabronService.csproj", "{557508A6-4393-44E1-BDFE-70D35375A2ED}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "perf", "perf", "{EEFA59D1-B74F-4B5D-87AB-71F6F0550BDF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Benchmarks", "perf\Benchmarks\Benchmarks.csproj", "{8A9841FB-8BB3-48DF-AAAC-A09132BC5B78}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Benchmarks", "perf\Benchmarks\Benchmarks.csproj", "{8A9841FB-8BB3-48DF-AAAC-A09132BC5B78}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{A12AAAFE-1ECF-40FC-971F-844EB0DCBE3E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fabron.Core.Test", "test\Fabron.Core.Test\Fabron.Core.Test.csproj", "{85D9DFDD-B2DE-4C7E-BD49-19BB50D46D8F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fabron.Core.Test", "test\Fabron.Core.Test\Fabron.Core.Test.csproj", "{85D9DFDD-B2DE-4C7E-BD49-19BB50D46D8F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fabron.FunctionalTests", "test\Fabron.FunctionalTests\Fabron.FunctionalTests.csproj", "{0491EA1F-3157-4409-BACF-CCD8CC4BFC43}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fabron.FunctionalTests", "test\Fabron.FunctionalTests\Fabron.FunctionalTests.csproj", "{0491EA1F-3157-4409-BACF-CCD8CC4BFC43}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fabron.TestRunner", "test\Fabron.TestRunner\Fabron.TestRunner.csproj", "{909F7D5F-4930-4D81-99F8-BA26D6510D3F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fabron.TestRunner", "test\Fabron.TestRunner\Fabron.TestRunner.csproj", "{909F7D5F-4930-4D81-99F8-BA26D6510D3F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FabronService.FunctionalTests", "test\FabronService.FunctionalTests\FabronService.FunctionalTests.csproj", "{B66F4E92-F26F-4F62-BD21-9B5F79EBC626}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FabronService.FunctionalTests", "test\FabronService.FunctionalTests\FabronService.FunctionalTests.csproj", "{B66F4E92-F26F-4F62-BD21-9B5F79EBC626}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{3B8BC1A2-3688-41F7-BCAE-D3B026819FBA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{E02F8095-5486-463A-864A-490DD94995BD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -73,6 +72,9 @@ Global
 		{B66F4E92-F26F-4F62-BD21-9B5F79EBC626}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B66F4E92-F26F-4F62-BD21-9B5F79EBC626}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{E02F8095-5486-463A-864A-490DD94995BD} = {CD6A0BF5-B277-4B14-9A78-B94EC534969D}
 		{39ED706F-154D-415B-9326-64638F8CBBDB} = {CD6A0BF5-B277-4B14-9A78-B94EC534969D}
@@ -83,5 +85,8 @@ Global
 		{0491EA1F-3157-4409-BACF-CCD8CC4BFC43} = {A12AAAFE-1ECF-40FC-971F-844EB0DCBE3E}
 		{909F7D5F-4930-4D81-99F8-BA26D6510D3F} = {A12AAAFE-1ECF-40FC-971F-844EB0DCBE3E}
 		{B66F4E92-F26F-4F62-BD21-9B5F79EBC626} = {A12AAAFE-1ECF-40FC-971F-844EB0DCBE3E}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {64207DBD-7E05-4025-B3CA-C58CD3010BB1}
 	EndGlobalSection
 EndGlobal

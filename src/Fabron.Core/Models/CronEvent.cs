@@ -1,6 +1,4 @@
-using Fabron.CloudEvents;
-
-namespace Fabron.Models;
+﻿namespace Fabron.Models;
 
 [GenerateSerializer]
 [Immutable]
@@ -26,14 +24,7 @@ public class CronEventSpec : ISchedulerSpec
 
 public record CronEvent<TData>(
     ScheduleMetadata Metadata,
-    CloudEventTemplate<TData> Template,
-    CronEventSpec<TData> Spec
-);
-
-public record CronEventSpec<TData>(
-    string Schedule,
-    DateTimeOffset? NotBefore,
-    DateTimeOffset? ExpirationTime,
-    bool Suspend
+    TData Data,
+    CronEventSpec Spec
 );
 

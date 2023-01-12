@@ -1,13 +1,13 @@
-using System.Net.Http.Headers;
+﻿using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Fabron.CloudEvents;
+using Fabron.Events;
 
 namespace FabronService.EventRouters;
 
 public interface IHttpDestinationHandler
 {
-    Task SendAsync(Uri destination, CloudEventEnvelop envelop);
+    Task SendAsync(Uri destination, FabronEventEnvelop envelop);
 }
 
 public class HttpDestinationHandler : IHttpDestinationHandler
@@ -25,7 +25,7 @@ public class HttpDestinationHandler : IHttpDestinationHandler
         _logger = logger;
     }
 
-    public async Task SendAsync(Uri destination, CloudEventEnvelop envelop)
+    public async Task SendAsync(Uri destination, FabronEventEnvelop envelop)
     {
         using var client = _factory.CreateClient();
         try

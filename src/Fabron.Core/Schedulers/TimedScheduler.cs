@@ -1,5 +1,5 @@
-﻿using Fabron.CloudEvents;
-using Fabron.Diagnostics;
+﻿using Fabron.Diagnostics;
+using Fabron.Events;
 using Fabron.Models;
 using Fabron.Stores;
 using Microsoft.Extensions.Logging;
@@ -20,9 +20,8 @@ public interface ITimedScheduler : IGrainWithStringKey
     Task<TimedEvent> Schedule(
         string template,
         TimedEventSpec spec,
-        Dictionary<string, string>? labels,
-        Dictionary<string, string>? annotations,
-        string? owner
+        string? owner,
+        Dictionary<string, string>? extensions
     );
 
     Task Unregister();
@@ -63,9 +62,8 @@ public partial class TimedEventScheduler : SchedulerGrain<TimedEvent>, IGrainBas
     public async Task<TimedEvent> Schedule(
         string template,
         TimedEventSpec spec,
-        Dictionary<string, string>? labels,
-        Dictionary<string, string>? annotations,
-        string? owner)
+        string? owner,
+        Dictionary<string, string>? extensions)
     {
         var utcNow = _clock.UtcNow;
         var schedule_ = spec.Schedule;
@@ -76,11 +74,10 @@ public partial class TimedEventScheduler : SchedulerGrain<TimedEvent>, IGrainBas
             {
                 Key = _key,
                 CreationTimestamp = utcNow,
-                Labels = labels,
-                Annotations = annotations,
-                Owner = owner
+                Owner = owner,
+                Extensions = extensions ?? new()
             },
-            Template = template,
+            Data = template,
             Spec = spec
         };
         _eTag = await _store.SetAsync(_state, _eTag);

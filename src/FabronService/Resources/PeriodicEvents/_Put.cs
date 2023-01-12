@@ -1,7 +1,6 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using System.Text.Json;
 using Fabron;
-using Fabron.CloudEvents;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FabronService.Resources.PeriodicEvents;
@@ -21,19 +20,19 @@ public static partial class PeriodicEvents
         }
 
         var key = KeyUtils.BuildPeriodicEventKey(tenant, name);
-        var annotations = new Dictionary<string, string>
+        var extensions = new Dictionary<string, string>
         {
             { "routing.fabron.io/destination", req.RoutingDestination}
         };
 
         await fabronClient.SchedulePeriodicEvent(
             key,
-            req.Template,
+            req.Data,
             req.Period,
             req.NotBefore,
             req.ExpirationTime,
             req.Suspend,
-            annotations: annotations);
+            extensions: extensions);
 
         return Results.CreatedAtRoute("PeriodicEvents_Get", new { name });
     }
@@ -41,7 +40,7 @@ public static partial class PeriodicEvents
 
 public record SchedulePeriodicEventRequest
 (
-    CloudEventTemplate<JsonElement> Template,
+    JsonElement Data,
     TimeSpan Period,
     DateTimeOffset? NotBefore,
     DateTimeOffset? ExpirationTime,

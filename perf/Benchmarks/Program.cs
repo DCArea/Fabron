@@ -1,4 +1,4 @@
-﻿using BenchmarkDotNet.Running;
-using Benchmarks;
+﻿
+//var summary = BenchmarkRunner.Run<HttpBenchmarks>();
 
-var summary = BenchmarkRunner.Run<HttpBenchmarks>();
+return 0;

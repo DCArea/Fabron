@@ -1,4 +1,4 @@
-namespace Fabron.CloudEvents;
+﻿namespace Fabron.Events;
 
 public class SimpleEventRouterOptions
 {

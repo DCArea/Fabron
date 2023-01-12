@@ -1,6 +1,4 @@
-using Fabron.CloudEvents;
-
-namespace Fabron.Models;
+﻿namespace Fabron.Models;
 
 [GenerateSerializer]
 [Immutable]
@@ -17,10 +15,6 @@ public class TimedEventSpec : ISchedulerSpec
 
 public record TimedEvent<TData>(
     ScheduleMetadata Metadata,
-    CloudEventTemplate<TData> Template,
-    TimedEventSpec<TData> Spec
-);
-
-public record TimedEventSpec<TData>(
-    DateTimeOffset Schedule
+    TData Data,
+    TimedEventSpec Spec
 );
