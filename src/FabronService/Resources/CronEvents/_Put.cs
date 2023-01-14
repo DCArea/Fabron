@@ -1,5 +1,4 @@
 ﻿using System.Security.Claims;
-using System.Text.Json;
 using Fabron;
 using Microsoft.AspNetCore.Mvc;
 
@@ -27,8 +26,8 @@ public static partial class CronEvents
 
         await fabronClient.ScheduleCronEvent(
             key,
-            req.Schedule,
             req.Data,
+            req.Schedule,
             req.NotBefore,
             req.ExpirationTime,
             req.Suspend,
@@ -41,8 +40,8 @@ public static partial class CronEvents
 public record ScheduleCronEventRequest
 (
     string Name,
+    string? Data,
     string Schedule,
-    JsonElement Data,
     DateTimeOffset? NotBefore,
     DateTimeOffset? ExpirationTime,
     bool Suspend,

@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Fabron;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,7 +8,6 @@ public static partial class TimedEvents
 {
     public static async Task<IResult> Cancel(
         [FromRoute] string name,
-        [FromBody] ScheduleTimedEventRequest req,
         ClaimsPrincipal user,
         [FromServices] IFabronClient fabronClient)
     {

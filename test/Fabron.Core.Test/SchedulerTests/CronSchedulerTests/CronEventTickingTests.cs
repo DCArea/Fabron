@@ -51,7 +51,7 @@ public class CronEventTickingTests
             context,
             runtime,
             A.Fake<ILogger<CronEventScheduler>>(),
-            Options.Create(new CronSchedulerOptions { CronFormat = CronFormat.IncludeSeconds }),
+            Options.Create(new SchedulerOptions { CronFormat = CronFormat.IncludeSeconds }),
             clock,
             store,
             A.Fake<IEventDispatcher>());
@@ -85,7 +85,7 @@ public class CronEventTickingTests
         var tickTime = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero).AddMilliseconds(20);
         await reminderRegistry.RegisterOrUpdateReminder(scheduler.GetGrainId(), Names.TickerReminder, TimeSpan.FromMilliseconds(10), Timeout.InfiniteTimeSpan);
         clock.UtcNow = tickTime.AddMilliseconds(100);
-        await reminderRegistry.Fire(scheduler, Names.TickerReminder, new TickStatus(tickTime.UtcDateTime, Timeout.InfiniteTimeSpan, clock.UtcNow.UtcDateTime));
+        await FakeReminderRegistry.Fire(scheduler, Names.TickerReminder, new TickStatus(tickTime.UtcDateTime, Timeout.InfiniteTimeSpan, clock.UtcNow.UtcDateTime));
         timerRegistry.Timers.Should().HaveCount(1);
         timerRegistry.Timers[0].DueTime.Should().Be(TimeSpan.Zero);
     }

@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using System.Text.Json;
 using Fabron;
 using Microsoft.AspNetCore.Mvc;
@@ -19,7 +19,7 @@ public static partial class TimedEvents
         }
 
         var key = KeyUtils.BuildTimedEventKey(tenant, name);
-        var timedEvent = await fabronClient.GetTimedEvent<JsonElement>(key);
+        var timedEvent = await fabronClient.GetTimedEvent(key);
         return timedEvent is null ? Results.NotFound() : Results.Ok(timedEvent);
     }
 }

@@ -11,7 +11,7 @@ public static class FabronConfigureExtensions
     public static WebApplicationBuilder ConfigureFabron(this WebApplicationBuilder builder)
     {
         builder.Services.AddHttpClient();
-        builder.Services.Configure<CronSchedulerOptions>(options => options.CronFormat = Cronos.CronFormat.IncludeSeconds);
+        builder.Services.Configure<SchedulerOptions>(options => options.CronFormat = Cronos.CronFormat.IncludeSeconds);
         builder.Services.AddSingleton<IEventRouter, AnnotationBasedEventRouter>();
         builder.Services.AddSingleton<IHttpDestinationHandler, HttpDestinationHandler>();
         var server = builder.Host.UseFabronServer();

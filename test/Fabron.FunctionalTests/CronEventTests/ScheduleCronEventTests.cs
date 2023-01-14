@@ -15,14 +15,13 @@ public class ScheduleCronEventTests : TestBase
         var key = $"{nameof(ScheduleCronEventTests)}.{nameof(ScheduleAndGet)}";
         await Client.ScheduleCronEvent(
             key,
-            "* * * * *",
-            new EventData("Bar")
+            "Bar",
+            "* * * * *"
         );
 
-        var scheduledEvent = await Client.GetCronEvent<EventData>(key);
+        var scheduledEvent = await Client.GetCronEvent(key);
 
         Assert.NotNull(scheduledEvent);
-        Assert.Equal("Bar", scheduledEvent!.Data.Foo);
+        Assert.Equal("Bar", scheduledEvent!.Data);
     }
-
 }

@@ -8,29 +8,24 @@ namespace Fabron;
 public class FabronClient : IFabronClient
 {
     private readonly IClusterClient _client;
-    private readonly FabronClientOptions _options;
 
-    public FabronClient(
-        IClusterClient client,
-        IOptions<FabronClientOptions> options)
+    public FabronClient(IClusterClient client)
     {
         _client = client;
-        _options = options.Value;
     }
 
-    public Task ScheduleTimedEvent<TData>(
+    public Task ScheduleTimedEvent(
         string key,
+        string? data,
         DateTimeOffset schedule,
-        TData data,
         Dictionary<string, string>? extensions = null)
     {
         var grain = _client.GetGrain<ITimedScheduler>(key);
-        var dataJSON = JsonSerializer.Serialize(data, _options.JsonSerializerOptions);
         var spec = new TimedEventSpec
         {
             Schedule = schedule,
         };
-        return grain.Schedule(dataJSON, spec, null, extensions);
+        return grain.Schedule(data, spec, null, extensions);
     }
 
     public Task CancelTimedEvent(string key)
@@ -39,20 +34,11 @@ public class FabronClient : IFabronClient
         return grain.Unregister();
     }
 
-    public async Task<TimedEvent<TData>?> GetTimedEvent<TData>(string key)
+    public async Task<TimedEvent?> GetTimedEvent(string key)
     {
         var grain = _client.GetGrain<ITimedScheduler>(key);
         var state = await grain.GetState();
-        return state is null
-            ? null
-            : new TimedEvent<TData>(
-            state.Metadata,
-            JsonSerializer.Deserialize<TData>(state.Data, _options.JsonSerializerOptions)!,
-            new()
-            {
-                Schedule = state.Spec.Schedule
-            }
-        );
+        return state;
     }
 
     public Task<TickerStatus> GetTimedEventTickerStatus(string key)
@@ -61,17 +47,16 @@ public class FabronClient : IFabronClient
             .GetTickerStatus();
     }
 
-    public async Task ScheduleCronEvent<TData>(
+    public async Task ScheduleCronEvent(
         string key,
+        string? data,
         string schedule,
-        TData data,
         DateTimeOffset? notBefore = null,
         DateTimeOffset? expirationTime = null,
         bool suspend = false,
         Dictionary<string, string>? extensions = null)
     {
         var grain = _client.GetGrain<ICronScheduler>(key);
-        var dataJSON = JsonSerializer.Serialize(data, _options.JsonSerializerOptions);
         var spec = new CronEventSpec
         {
             Schedule = schedule,
@@ -79,20 +64,14 @@ public class FabronClient : IFabronClient
             ExpirationTime = expirationTime,
             Suspend = suspend,
         };
-        await grain.Schedule(dataJSON, spec, null, extensions);
+        await grain.Schedule(data, spec, null, extensions);
     }
 
-    public async Task<CronEvent<TData>?> GetCronEvent<TData>(string key)
+    public async Task<CronEvent?> GetCronEvent(string key)
     {
         var grain = _client.GetGrain<ICronScheduler>(key);
         var state = await grain.GetState();
-        return state is null
-            ? null
-            : new CronEvent<TData>(
-            state.Metadata,
-            JsonSerializer.Deserialize<TData>(state.Data, _options.JsonSerializerOptions)!,
-            state.Spec
-        );
+        return state;
     }
 
     public Task<TickerStatus> GetCronEventTickerStatus(string key)
@@ -107,9 +86,9 @@ public class FabronClient : IFabronClient
         await grain.Unregister();
     }
 
-    public async Task SchedulePeriodicEvent<TData>(
+    public async Task SchedulePeriodicEvent(
         string key,
-        TData data,
+        string? data,
         TimeSpan period,
         DateTimeOffset? notBefore = null,
         DateTimeOffset? expirationTime = null,
@@ -117,7 +96,6 @@ public class FabronClient : IFabronClient
         Dictionary<string, string>? extensions = null)
     {
         var grain = _client.GetGrain<IPeriodicScheduler>(key);
-        var templateJSON = JsonSerializer.Serialize(data, _options.JsonSerializerOptions);
         var spec = new PeriodicEventSpec
         {
             Period = period,
@@ -125,26 +103,14 @@ public class FabronClient : IFabronClient
             ExpirationTime = expirationTime,
             Suspend = suspend,
         };
-        await grain.Schedule(templateJSON, spec, null, extensions);
+        await grain.Schedule(data, spec, null, extensions);
     }
 
-    public async Task<PeriodicEvent<TData>?> GetPeriodicEvent<TData>(string key)
+    public async Task<PeriodicEvent?> GetPeriodicEvent(string key)
     {
         var grain = _client.GetGrain<IPeriodicScheduler>(key);
         var state = await grain.GetState();
-        return state is null
-            ? null
-            : new PeriodicEvent<TData>(
-            state.Metadata,
-            JsonSerializer.Deserialize<TData>(state.Data, _options.JsonSerializerOptions)!,
-            new()
-            {
-                Period = state.Spec.Period,
-                NotBefore = state.Spec.NotBefore,
-                ExpirationTime = state.Spec.ExpirationTime,
-                Suspend = state.Spec.Suspend,
-            }
-        );
+        return state;
     }
 
     public Task<TickerStatus> GetPeriodicEventTickerStatus(string key)

@@ -1,13 +1,10 @@
-using System.Reflection;
-using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.Hosting;
 
 namespace Fabron
 {
     public static class FabronServerHostBuilderExtensions
     {
-        public static FabronClientBuilder UseFabronClient(
-            this IHostBuilder hostBuilder,
-            IEnumerable<Assembly>? commandAssemblies = null,
-            bool cohosted = false) => new(hostBuilder, commandAssemblies, cohosted);
+        public static FabronClientBuilder UseFabronClient(this IHostBuilder hostBuilder, bool cohosted = true)
+            => new(hostBuilder, cohosted);
     }
 }

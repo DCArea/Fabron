@@ -1,5 +1,5 @@
-﻿using Fabron.Events;
-using Microsoft.Toolkit.Diagnostics;
+﻿using CommunityToolkit.Diagnostics;
+using Fabron.Events;
 
 namespace FabronService.EventRouters;
 

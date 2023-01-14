@@ -1,9 +1,9 @@
-﻿using Fabron.Events;
+﻿using CommunityToolkit.Diagnostics;
+using Fabron.Events;
 using Fabron.Models;
 using Fabron.Stores;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.Toolkit.Diagnostics;
 using Orleans.Concurrency;
 using Orleans.Runtime;
 
@@ -18,7 +18,7 @@ public interface IPeriodicScheduler : IGrainWithStringKey
     Task<TickerStatus> GetTickerStatus();
 
     Task<PeriodicEvent> Schedule(
-        string template,
+        string? data,
         PeriodicEventSpec spec,
         string? owner,
         Dictionary<string, string>? extensions
@@ -29,16 +29,15 @@ public interface IPeriodicScheduler : IGrainWithStringKey
 
 public class PeriodicEventScheduler : SchedulerGrain<PeriodicEvent>, IGrainBase, IPeriodicScheduler
 {
-    private readonly PeriodicSchedulerOptions _options;
 
     public PeriodicEventScheduler(
         IGrainContext context,
         IGrainRuntime runtime,
         ILogger<PeriodicEventScheduler> logger,
-        IOptions<PeriodicSchedulerOptions> options,
+        IOptions<SchedulerOptions> options,
         ISystemClock clock,
         IPeriodicEventStore store,
-        IEventDispatcher dispatcher) : base(context, runtime, logger, clock, options.Value, store, dispatcher) => _options = options.Value;
+        IEventDispatcher dispatcher) : base(context, runtime, logger, clock, options.Value, store, dispatcher) { }
 
     async Task IGrainBase.OnActivateAsync(CancellationToken cancellationToken)
     {
@@ -60,7 +59,7 @@ public class PeriodicEventScheduler : SchedulerGrain<PeriodicEvent>, IGrainBase,
     public ValueTask<PeriodicEvent?> GetState() => new(_state);
 
     public async Task<PeriodicEvent> Schedule(
-        string template,
+        string? data,
         PeriodicEventSpec spec,
         string? owner,
         Dictionary<string, string>? extensions)
@@ -77,7 +76,8 @@ public class PeriodicEventScheduler : SchedulerGrain<PeriodicEvent>, IGrainBase,
                 Owner = owner,
                 Extensions = extensions ?? new()
             },
-            Spec = spec
+            Spec = spec,
+            Data = data
         };
         _eTag = await _store.SetAsync(_state, _eTag);
 
@@ -141,7 +141,7 @@ public class PeriodicEventScheduler : SchedulerGrain<PeriodicEvent>, IGrainBase,
         var dueTime = TimeSpan.Zero;
         while (schedule < to)
         {
-            var cloudEvent = _state.ToCloudEvent(schedule, _options.JsonSerializerOptions);
+            var cloudEvent = _state.ToCloudEvent(schedule);
             _runtime.TimerRegistry.RegisterTimer(
                 GrainContext,
                 obj => DispatchNew((FabronEventEnvelop)obj),

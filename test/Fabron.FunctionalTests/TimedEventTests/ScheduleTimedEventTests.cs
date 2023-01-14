@@ -15,14 +15,14 @@ namespace Fabron.FunctionalTests.TimedEventTests
             var key = $"{nameof(ScheduleTimedEventTests)}.{nameof(ScheduleAndGet)}";
             await Client.ScheduleTimedEvent(
                 key,
-                DateTimeOffset.UtcNow.AddMonths(1),
-                new EventData("Bar")
+                "Bar",
+                DateTimeOffset.UtcNow.AddMonths(1)
             );
 
-            var timedEvent = await Client.GetTimedEvent<EventData>(key);
+            var timedEvent = await Client.GetTimedEvent(key);
 
             Assert.NotNull(timedEvent);
-            Assert.Equal("Bar", timedEvent!.Data.Foo);
+            Assert.Equal("Bar", timedEvent!.Data);
         }
 
     }

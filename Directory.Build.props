@@ -8,7 +8,6 @@
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <VersionPrefix>0.1.0</VersionPrefix>
-    <VersionSuffix>dev</VersionSuffix>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -19,4 +18,13 @@
     <NoWarn>AD0001,CA1816,SYSLIB1006</NoWarn>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <GitHeadSha>Not found</GitHeadSha>
+    <DotGitDir>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory).git'))</DotGitDir>
+    <HeadFileContent Condition="Exists('$(DotGitDir)/HEAD')">$([System.IO.File]::ReadAllText('$(DotGitDir)/HEAD').Trim())</HeadFileContent>
+    <RefPath Condition="$(HeadFileContent.StartsWith('ref: '))">$(DotGitDir)/$(HeadFileContent.Substring(5))</RefPath>
+    <GitHeadSha Condition="'$(RefPath)' != '' AND Exists('$(RefPath)')">$([System.IO.File]::ReadAllText('$(RefPath)').Trim())</GitHeadSha>
+    <GitHeadSha Condition="'$(HeadFileContent)' != '' AND '$(RefPath)' == ''">$(HeadFileContent)</GitHeadSha>
+    <VersionSuffix>dev.$(GitHeadSha.Substring(0,7))</VersionSuffix>
+  </PropertyGroup>
 </Project>

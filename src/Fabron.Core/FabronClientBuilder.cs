@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 
@@ -8,7 +8,6 @@ public class FabronClientBuilder
 {
     public FabronClientBuilder(
         IHostBuilder hostBuilder,
-        IEnumerable<Assembly>? commandAssemblies,
         bool cohosted)
     {
         if (hostBuilder.Properties.ContainsKey("HasFabronClientBuilder"))

@@ -12,5 +12,5 @@ if (args.Length > 0)
 }
 else
 {
-    throw new ArgumentNullException($"Unknown scenario");
+    throw new InvalidOperationException($"Unknown scenario");
 }

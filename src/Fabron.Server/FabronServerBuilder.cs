@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using Fabron.Events;
 using Fabron.Schedulers;
 using Fabron.Stores;
@@ -9,7 +9,7 @@ namespace Fabron.Server;
 
 public class FabronServerBuilder
 {
-    public FabronServerBuilder(IHostBuilder hostBuilder, IEnumerable<Assembly>? commandAssemblies = null)
+    public FabronServerBuilder(IHostBuilder hostBuilder)
     {
         if (hostBuilder.Properties.ContainsKey("HasFabronServerBuilder"))
         {

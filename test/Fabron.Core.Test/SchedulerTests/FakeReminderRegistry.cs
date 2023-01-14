@@ -1,4 +1,4 @@
-using Orleans.Runtime;
+﻿using Orleans.Runtime;
 using Orleans.Timers;
 
 namespace Fabron.Core.Test.SchedulerTests
@@ -7,7 +7,7 @@ namespace Fabron.Core.Test.SchedulerTests
     {
         public Dictionary<string, FakeGrainReminder> Reminders { get; } = new();
 
-        public Task Fire(IRemindable remindable, string reminderName, TickStatus tickerStatus) => remindable.ReceiveReminder(reminderName, tickerStatus);
+        public static Task Fire(IRemindable remindable, string reminderName, TickStatus tickerStatus) => remindable.ReceiveReminder(reminderName, tickerStatus);
 
         public Task<IGrainReminder?> GetReminder(GrainId callingGrainId, string reminderName)
         {

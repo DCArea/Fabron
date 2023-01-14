@@ -40,7 +40,7 @@ public static partial class PeriodicEvents
 
 public record SchedulePeriodicEventRequest
 (
-    JsonElement Data,
+    string? Data,
     TimeSpan Period,
     DateTimeOffset? NotBefore,
     DateTimeOffset? ExpirationTime,

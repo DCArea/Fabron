@@ -23,7 +23,7 @@ public class ScheduleMetadata
 public interface IScheduledEvent
 {
     ScheduleMetadata Metadata { get; }
-    string Data { get; }
+    string? Data { get; }
 }
 
 public interface ISchedulerSpec
@@ -39,8 +39,8 @@ public class ScheduledEvent<TScheduleSpec> : IScheduledEvent
     public ScheduleMetadata Metadata { get; set; } = default!;
 
     [Id(1)]
-    public string Data { get; init; } = default!;
+    public TScheduleSpec Spec { get; set; } = default!;
 
     [Id(2)]
-    public TScheduleSpec Spec { get; set; } = default!;
+    public string? Data { get; set; }
 }

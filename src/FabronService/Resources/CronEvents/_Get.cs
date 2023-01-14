@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using System.Text.Json;
 using Fabron;
 using Microsoft.AspNetCore.Mvc;
@@ -19,7 +19,7 @@ public static partial class CronEvents
         }
 
         var key = KeyUtils.BuildCronEventKey(tenant, name);
-        var cronEvent = await fabronClient.GetCronEvent<JsonElement>(key);
+        var cronEvent = await fabronClient.GetCronEvent(key);
         return cronEvent is null ? Results.NotFound() : Results.Ok(cronEvent);
     }
 }

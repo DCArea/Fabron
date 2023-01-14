@@ -18,7 +18,7 @@ public interface ITimedScheduler : IGrainWithStringKey
     ValueTask<TimedEvent?> GetState();
 
     Task<TimedEvent> Schedule(
-        string template,
+        string? data,
         TimedEventSpec spec,
         string? owner,
         Dictionary<string, string>? extensions
@@ -29,16 +29,15 @@ public interface ITimedScheduler : IGrainWithStringKey
 
 public partial class TimedEventScheduler : SchedulerGrain<TimedEvent>, IGrainBase, ITimedScheduler
 {
-    private readonly SimpleSchedulerOptions _options;
 
     public TimedEventScheduler(
         IGrainContext context,
         IGrainRuntime runtime,
         ILogger<TimedEventScheduler> logger,
-        IOptions<SimpleSchedulerOptions> options,
+        IOptions<SchedulerOptions> options,
         ISystemClock clock,
         ITimedEventStore store,
-        IEventDispatcher dispatcher) : base(context, runtime, logger, clock, options.Value, store, dispatcher) => _options = options.Value;
+        IEventDispatcher dispatcher) : base(context, runtime, logger, clock, options.Value, store, dispatcher) { }
 
     async Task IGrainBase.OnActivateAsync(CancellationToken cancellationToken)
     {
@@ -60,7 +59,7 @@ public partial class TimedEventScheduler : SchedulerGrain<TimedEvent>, IGrainBas
     public ValueTask<TimedEvent?> GetState() => ValueTask.FromResult(_state);
 
     public async Task<TimedEvent> Schedule(
-        string template,
+        string? data,
         TimedEventSpec spec,
         string? owner,
         Dictionary<string, string>? extensions)
@@ -77,7 +76,7 @@ public partial class TimedEventScheduler : SchedulerGrain<TimedEvent>, IGrainBas
                 Owner = owner,
                 Extensions = extensions ?? new()
             },
-            Data = template,
+            Data = data,
             Spec = spec
         };
         _eTag = await _store.SetAsync(_state, _eTag);
@@ -105,7 +104,7 @@ public partial class TimedEventScheduler : SchedulerGrain<TimedEvent>, IGrainBas
             return;
         }
 
-        var envelop = _state.ToCloudEvent(_state.Spec.Schedule, _options.JsonSerializerOptions);
+        var envelop = _state.ToCloudEvent(_state.Spec.Schedule);
         await DispatchNew(envelop);
         await StopTicker();
     }

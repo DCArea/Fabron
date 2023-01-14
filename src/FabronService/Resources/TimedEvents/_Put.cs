@@ -26,8 +26,8 @@ public static partial class TimedEvents
         };
         await fabronClient.ScheduleTimedEvent(
             key,
-            req.Schedule,
             req.Data,
+            req.Schedule,
             extensions: extensions);
 
         return Results.CreatedAtRoute("TimedEvents_Get", new { name });
@@ -37,6 +37,6 @@ public static partial class TimedEvents
 public record ScheduleTimedEventRequest
 (
     DateTimeOffset Schedule,
-    JsonElement Data,
+    string? Data,
     string RoutingDestination
 );

@@ -1,9 +1,9 @@
-﻿using Fabron.Events;
+﻿using CommunityToolkit.Diagnostics;
+using Fabron.Events;
 using Fabron.Models;
 using Fabron.Stores;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.Toolkit.Diagnostics;
 using Orleans.Concurrency;
 using Orleans.Runtime;
 
@@ -18,7 +18,7 @@ public interface ICronScheduler : IGrainWithStringKey
     Task<TickerStatus> GetTickerStatus();
 
     Task<CronEvent> Schedule(
-        string template,
+        string? data,
         CronEventSpec spec,
         string? owner,
         Dictionary<string, string>? extensions
@@ -29,13 +29,13 @@ public interface ICronScheduler : IGrainWithStringKey
 
 public class CronEventScheduler : SchedulerGrain<CronEvent>, IGrainBase, ICronScheduler
 {
-    private readonly CronSchedulerOptions _options;
+    private readonly SchedulerOptions _options;
 
     public CronEventScheduler(
         IGrainContext context,
         IGrainRuntime runtime,
         ILogger<CronEventScheduler> logger,
-        IOptions<CronSchedulerOptions> options,
+        IOptions<SchedulerOptions> options,
         ISystemClock clock,
         ICronEventStore store,
         IEventDispatcher dispatcher) : base(context, runtime, logger, clock, options.Value, store, dispatcher) => _options = options.Value;
@@ -60,7 +60,7 @@ public class CronEventScheduler : SchedulerGrain<CronEvent>, IGrainBase, ICronSc
     public ValueTask<CronEvent?> GetState() => new(_state);
 
     public async Task<CronEvent> Schedule(
-        string template,
+        string? data,
         CronEventSpec spec,
         string? owner,
         Dictionary<string, string>? extensions)
@@ -75,7 +75,7 @@ public class CronEventScheduler : SchedulerGrain<CronEvent>, IGrainBase, ICronSc
                 Owner = owner,
                 Extensions = extensions ?? new(),
             },
-            Data = template,
+            Data = data,
             Spec = spec
         };
         _eTag = await _store.SetAsync(_state, _eTag);
@@ -163,7 +163,7 @@ public class CronEventScheduler : SchedulerGrain<CronEvent>, IGrainBase, ICronSc
         Guard.IsNotNull(_state, nameof(_state));
         var now = _clock.UtcNow;
         var dueTime = schedule > now ? schedule.Subtract(now) : TimeSpan.Zero;
-        var cloudEvent = _state.ToCloudEvent(schedule, _options.JsonSerializerOptions);
+        var cloudEvent = _state.ToCloudEvent(schedule);
         _runtime.TimerRegistry.RegisterTimer(
             GrainContext,
             obj => DispatchNew((FabronEventEnvelop)obj),

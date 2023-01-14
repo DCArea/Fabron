@@ -23,9 +23,3 @@ public class PeriodicEventSpec : ISchedulerSpec
     public bool Suspend { get; init; }
 }
 
-public record PeriodicEvent<TData>(
-    ScheduleMetadata Metadata,
-    TData Data,
-    PeriodicEventSpec Spec
-);
-

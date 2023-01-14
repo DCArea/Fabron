@@ -27,7 +27,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fabron.TestRunner", "test\F
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FabronService.FunctionalTests", "test\FabronService.FunctionalTests\FabronService.FunctionalTests.csproj", "{B66F4E92-F26F-4F62-BD21-9B5F79EBC626}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{3B8BC1A2-3688-41F7-BCAE-D3B026819FBA}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{475A55EC-DC34-477B-9E56-3D7C50FFC6FE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
