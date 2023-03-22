@@ -13,8 +13,3 @@ public class TimedEventSpec : ISchedulerSpec
     public DateTimeOffset Schedule { get; init; } = default!;
 }
 
-public record TimedEvent<TData>(
-    ScheduleMetadata Metadata,
-    TData Data,
-    TimedEventSpec Spec
-);

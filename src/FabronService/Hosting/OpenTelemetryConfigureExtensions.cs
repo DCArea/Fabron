@@ -1,4 +1,5 @@
-﻿using OpenTelemetry;
+﻿using FabronService.TelemetryExtensions;
+using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 

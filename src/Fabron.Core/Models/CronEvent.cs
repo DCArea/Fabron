@@ -22,9 +22,3 @@ public class CronEventSpec : ISchedulerSpec
     public bool Suspend { get; set; }
 }
 
-public record CronEvent<TData>(
-    ScheduleMetadata Metadata,
-    TData Data,
-    CronEventSpec Spec
-);
-

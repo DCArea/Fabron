@@ -9,47 +9,47 @@
     <DCAExtensionsVersion>0.0.1-alpha4.1</DCAExtensionsVersion>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="CommunityToolkit.Diagnostics" Version="8.0.0" />
+    <PackageVersion Include="CommunityToolkit.Diagnostics" Version="8.1.0" />
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="1.1.1" />
     <PackageVersion Include="DCA.DotNet.Extensions.OpenTelemetry.AspNetCore" Version="0.1.0-alpha1.0" />
     <PackageVersion Include="DCA.DotNet.Extensions.Logging" Version="$(DCAExtensionsVersion)" />
     <PackageVersion Include="InstrumentAggregators" Version="0.1.0-rc1.0" />
     <PackageVersion Include="AspNetCore.Authentication.ApiKey" Version="7.0.0" />
     <PackageVersion Include="Cronos" Version="0.7.1" />
-    <PackageVersion Include="Npgsql" Version="7.0.1" />
-    <PackageVersion Include="Npgsql.OpenTelemetry" Version="7.0.1" />
-    <PackageVersion Include="OpenTelemetry" Version="1.4.0-rc.1" />
-    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.4.0-rc.1" />
-    <PackageVersion Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" Version="1.4.0-rc.1" />
-    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.4.0-rc.1" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.0.0-rc9.10" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.GrpcNetClient" Version="1.0.0-rc9.10" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.0.0-rc9.10" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.1.0-beta.2" />
-    <PackageVersion Include="OpenTelemetry.Exporter.Console" Version="1.4.0-rc.1" />
+    <PackageVersion Include="Npgsql" Version="7.0.2" />
+    <PackageVersion Include="Npgsql.OpenTelemetry" Version="7.0.2" />
+    <PackageVersion Include="OpenTelemetry" Version="1.5.0-alpha.1" />
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.5.0-alpha.1" />
+    <PackageVersion Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" Version="1.5.0-alpha.1" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.5.0-alpha.1" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.0.0-rc9.14" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.GrpcNetClient" Version="1.0.0-rc9.14" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.0.0-rc9.14" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.1.0-rc.2" />
+    <PackageVersion Include="OpenTelemetry.Exporter.Console" Version="1.5.0-alpha.1" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="$(MExVersion)" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="$(MExVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="7.0.1" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="$(MExVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="$(MExVersion)" />
-    <PackageVersion Include="Microsoft.Orleans.SDK" Version="$(OrleansVersion)" />
-    <PackageVersion Include="Microsoft.Orleans.Reminders.AdoNet" Version="$(OrleansVersion)" />
-    <PackageVersion Include="Microsoft.Orleans.Clustering.AdoNet" Version="$(OrleansVersion)" />
-    <PackageVersion Include="Microsoft.Orleans.TestingHost" Version="$(OrleansVersion)" />
-    <PackageVersion Include="Microsoft.Orleans.Server" Version="$(OrleansVersion)" />
+    <PackageVersion Include="Microsoft.Orleans.SDK" Version="7.1.0" />
+    <PackageVersion Include="Microsoft.Orleans.Reminders.AdoNet" Version="7.1.0" />
+    <PackageVersion Include="Microsoft.Orleans.Clustering.AdoNet" Version="7.1.0" />
+    <PackageVersion Include="Microsoft.Orleans.TestingHost" Version="7.1.0" />
+    <PackageVersion Include="Microsoft.Orleans.Server" Version="7.1.0" />
     <PackageVersion Include="Microsoft.Orleans.Client" Version="$(OrleansVersion)" />
-    <PackageVersion Include="Microsoft.Orleans.Reminders" Version="$(OrleansVersion)" />
-    <PackageVersion Include="Microsoft.Orleans.Hosting.Kubernetes" Version="$(OrleansVersion)" />
-    <PackageVersion Include="Swashbuckle.AspNetCore" Version="6.4.0" />
+    <PackageVersion Include="Microsoft.Orleans.Reminders" Version="7.1.0" />
+    <PackageVersion Include="Microsoft.Orleans.Hosting.Kubernetes" Version="7.1.0" />
+    <PackageVersion Include="Swashbuckle.AspNetCore" Version="6.5.0" />
   </ItemGroup>
   <ItemGroup>
-    <PackageVersion Include="BenchmarkDotNet" Version="0.13.2" />
-    <PackageVersion Include="Moq" Version="4.18.3" />
+    <PackageVersion Include="BenchmarkDotNet" Version="0.13.5" />
+    <PackageVersion Include="Moq" Version="4.18.4" />
     <PackageVersion Include="Moq.Contrib.HttpClient" Version="1.4.0" />
     <PackageVersion Include="FakeItEasy" Version="7.3.1" />
-    <PackageVersion Include="FluentAssertions" Version="6.8.0" />
+    <PackageVersion Include="FluentAssertions" Version="6.10.0" />
     <PackageVersion Include="MartinCostello.Logging.XUnit" Version="0.3.0" />
-    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="7.0.1" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.4.1" />
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="7.0.4" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.5.0" />
     <PackageVersion Include="RichardSzalay.MockHttp" Version="6.0.0" />
     <PackageVersion Include="coverlet.collector" Version="3.2.0" />
     <PackageVersion Include="skwas.MockHttp" Version="3.0.1" />
