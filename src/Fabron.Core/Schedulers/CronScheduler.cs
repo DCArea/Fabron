@@ -27,14 +27,14 @@ public interface ICronScheduler : IGrainWithStringKey
     Task Unregister();
 }
 
-public class CronEventScheduler : SchedulerGrain<CronEvent>, IGrainBase, ICronScheduler
+public class CronScheduler : SchedulerGrain<CronEvent>, IGrainBase, ICronScheduler
 {
     private readonly SchedulerOptions _options;
 
-    public CronEventScheduler(
+    public CronScheduler(
         IGrainContext context,
         IGrainRuntime runtime,
-        ILogger<CronEventScheduler> logger,
+        ILogger<CronScheduler> logger,
         IOptions<SchedulerOptions> options,
         ISystemClock clock,
         ICronEventStore store,

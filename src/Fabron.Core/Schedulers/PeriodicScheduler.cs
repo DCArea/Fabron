@@ -27,13 +27,12 @@ public interface IPeriodicScheduler : IGrainWithStringKey
     Task Unregister();
 }
 
-public class PeriodicEventScheduler : SchedulerGrain<PeriodicEvent>, IGrainBase, IPeriodicScheduler
+public class PeriodicScheduler : SchedulerGrain<PeriodicEvent>, IGrainBase, IPeriodicScheduler
 {
-
-    public PeriodicEventScheduler(
+    public PeriodicScheduler(
         IGrainContext context,
         IGrainRuntime runtime,
-        ILogger<PeriodicEventScheduler> logger,
+        ILogger<PeriodicScheduler> logger,
         IOptions<SchedulerOptions> options,
         ISystemClock clock,
         IPeriodicEventStore store,

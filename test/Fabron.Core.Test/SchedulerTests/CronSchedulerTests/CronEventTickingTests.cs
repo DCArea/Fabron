@@ -26,7 +26,7 @@ public class CronEventTickingTests
         var runtime = A.Fake<IGrainRuntime>();
         var store = A.Fake<ICronEventStore>();
         A.CallTo(() => context.GrainId)
-            .Returns(GrainId.Create(nameof(CronEventScheduler), key));
+            .Returns(GrainId.Create(nameof(CronScheduler), key));
         A.CallTo(() => context.ActivationServices.GetService(typeof(IReminderRegistry))).Returns(reminderRegistry);
         A.CallTo(() => runtime.TimerRegistry).Returns(timerRegistry);
 
@@ -47,10 +47,10 @@ public class CronEventTickingTests
             A.CallTo(() => store.GetAsync(key)).Returns(Task.FromResult<StateEntry<CronEvent>?>(new(state, "0")));
         }
 
-        var grain = new CronEventScheduler(
+        var grain = new CronScheduler(
             context,
             runtime,
-            A.Fake<ILogger<CronEventScheduler>>(),
+            A.Fake<ILogger<CronScheduler>>(),
             Options.Create(new SchedulerOptions { CronFormat = CronFormat.IncludeSeconds }),
             clock,
             store,
@@ -129,7 +129,7 @@ public class CronEventTickingTests
 }
 
 internal record Fakes(
-    CronEventScheduler scheduler,
+    CronScheduler scheduler,
     FakeTimerRegistry timerRegistry,
     FakeReminderRegistry reminderRegistry,
     FakeSystemClock clock,

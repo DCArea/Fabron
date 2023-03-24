@@ -27,13 +27,13 @@ public interface ITimedScheduler : IGrainWithStringKey
     Task Unregister();
 }
 
-public partial class TimedEventScheduler : SchedulerGrain<TimedEvent>, IGrainBase, ITimedScheduler
+public partial class TimedScheduler : SchedulerGrain<TimedEvent>, IGrainBase, ITimedScheduler
 {
 
-    public TimedEventScheduler(
+    public TimedScheduler(
         IGrainContext context,
         IGrainRuntime runtime,
-        ILogger<TimedEventScheduler> logger,
+        ILogger<TimedScheduler> logger,
         IOptions<SchedulerOptions> options,
         ISystemClock clock,
         ITimedEventStore store,
