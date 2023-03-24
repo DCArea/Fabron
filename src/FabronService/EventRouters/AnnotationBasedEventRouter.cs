@@ -18,7 +18,7 @@ public class AnnotationBasedEventRouter : IEventRouter
     public Task DispatchAsync(FabronEventEnvelop envelop)
     {
         var destination = envelop.Extensions["routing.fabron.io/destination"];
-        Guard.IsNotNull(destination, nameof(destination));
+        Guard.IsNotEmpty(destination, nameof(destination));
         return destination.StartsWith("http")
             ? _http.SendAsync(new Uri(destination), envelop)
             : ThrowHelper.ThrowArgumentOutOfRangeException<Task>(nameof(destination));
