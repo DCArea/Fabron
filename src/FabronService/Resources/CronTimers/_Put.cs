@@ -30,7 +30,6 @@ public static partial class CronTimerApis
             req.Schedule,
             req.NotBefore,
             req.ExpirationTime,
-            req.Suspend,
             extensions: extensions);
 
         return Results.Ok(new { key });
@@ -44,6 +43,5 @@ public record ScheduleCronTimerRequest
     string Schedule,
     DateTimeOffset? NotBefore,
     DateTimeOffset? ExpirationTime,
-    bool Suspend,
     string RoutingDestination
 );

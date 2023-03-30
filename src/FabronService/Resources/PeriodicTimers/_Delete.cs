@@ -18,7 +18,7 @@ public static partial class PeriodicTimerApis
         }
 
         key = KeyUtils.BuildTimerKey(tenant, key);
-        await fabronClient.CancelPeriodicTimer(key);
+        await fabronClient.DeletePeriodicTimer(key);
 
         return Results.NoContent();
     }

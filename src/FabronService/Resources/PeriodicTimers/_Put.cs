@@ -30,7 +30,6 @@ public static partial class PeriodicTimerApis
             req.Period,
             req.NotBefore,
             req.ExpirationTime,
-            req.Suspend,
             extensions: extensions);
 
         return Results.Ok(new { key });
@@ -43,6 +42,5 @@ public record SchedulePeriodicTimerRequest
     TimeSpan Period,
     DateTimeOffset? NotBefore,
     DateTimeOffset? ExpirationTime,
-    bool Suspend,
     string RoutingDestination
 );

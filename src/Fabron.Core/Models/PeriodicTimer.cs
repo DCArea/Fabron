@@ -9,7 +9,6 @@ public class PeriodicTimer : DistributedTimer<PeriodicTimerSpec>
 [Immutable]
 public class PeriodicTimerSpec : ISchedulerSpec
 {
-
     [Id(1)]
     public TimeSpan Period { get; init; }
 
@@ -18,8 +17,5 @@ public class PeriodicTimerSpec : ISchedulerSpec
 
     [Id(3)]
     public DateTimeOffset? ExpirationTime { get; init; }
-
-    [Id(4)]
-    public bool Suspend { get; init; }
 }
 

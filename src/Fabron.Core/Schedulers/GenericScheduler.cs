@@ -1,4 +1,5 @@
-﻿using Fabron.Diagnostics;
+﻿using CommunityToolkit.Diagnostics;
+using Fabron.Diagnostics;
 using Fabron.Dispatching;
 using Fabron.Models;
 using Fabron.Stores;
@@ -9,7 +10,7 @@ using Orleans.Runtime;
 
 namespace Fabron.Schedulers;
 
-public interface ITimedScheduler : IGrainWithStringKey
+public interface IGenericScheduler : IGrainWithStringKey
 {
     [ReadOnly]
     Task<TickerStatus> GetTickerStatus();
@@ -24,16 +25,17 @@ public interface ITimedScheduler : IGrainWithStringKey
         Dictionary<string, string>? extensions
     );
 
-    Task Unregister();
+    Task Start();
+    Task Stop();
+    Task Delete();
 }
 
-public partial class TimedScheduler : SchedulerGrain<GenericTimer>, IGrainBase, ITimedScheduler
+public partial class GenericScheduler : SchedulerGrain<GenericTimer>, IGrainBase, IGenericScheduler
 {
-
-    public TimedScheduler(
+    public GenericScheduler(
         IGrainContext context,
         IGrainRuntime runtime,
-        ILogger<TimedScheduler> logger,
+        ILogger<GenericScheduler> logger,
         IOptions<SchedulerOptions> options,
         ISystemClock clock,
         IGenericTimerStore store,
@@ -47,7 +49,18 @@ public partial class TimedScheduler : SchedulerGrain<GenericTimer>, IGrainBase, 
         _eTag = entry?.ETag;
     }
 
-    public async Task Unregister()
+    public async Task Start()
+    {
+        await StartTicker();
+    }
+
+
+    public async Task Stop()
+    {
+        await StopTicker();
+    }
+
+    public async Task Delete()
     {
         if (_state is not null)
         {
@@ -81,18 +94,25 @@ public partial class TimedScheduler : SchedulerGrain<GenericTimer>, IGrainBase, 
         };
         _eTag = await _store.SetAsync(_state, _eTag);
 
-        utcNow = _clock.UtcNow;
+        await StartTicker();
+        Telemetry.TimerScheduled.Add(1);
+        return _state;
+    }
+
+    private Task StartTicker()
+    {
+        Guard.IsNotNull(_state);
+        var utcNow = _clock.UtcNow;
+        var schedule_ = _state.Spec.Schedule;
         if (schedule_ <= utcNow)
         {
             Log.TickingForPast(_logger, _key, schedule_);
-            await Tick(utcNow);
+            return Tick(utcNow);
         }
         else
         {
-            await TickAfter(schedule_ - utcNow);
+            return TickAfter(schedule_ - utcNow);
         }
-        Telemetry.TimerScheduled.Add(1);
-        return _state;
     }
 
     internal override async Task Tick(DateTimeOffset expectedTickTime)

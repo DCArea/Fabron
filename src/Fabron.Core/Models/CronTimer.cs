@@ -17,8 +17,5 @@ public class CronTimerSpec : ISchedulerSpec
 
     [Id(2)]
     public DateTimeOffset? ExpirationTime { get; set; }
-
-    [Id(3)]
-    public bool Suspend { get; set; }
 }
 

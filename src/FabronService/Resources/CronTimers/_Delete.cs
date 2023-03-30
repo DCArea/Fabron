@@ -18,7 +18,7 @@ public static partial class CronTimerApis
         }
 
         key = KeyUtils.BuildTimerKey(tenant, key);
-        await fabronClient.CancelCronTimer(key);
+        await fabronClient.DeleteCronTimer(key);
 
         return Results.NoContent();
     }

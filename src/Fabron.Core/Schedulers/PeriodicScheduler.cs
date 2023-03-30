@@ -24,7 +24,9 @@ public interface IPeriodicScheduler : IGrainWithStringKey
         Dictionary<string, string>? extensions
     );
 
-    Task Unregister();
+    Task Start();
+    Task Stop();
+    Task Delete();
 }
 
 public class PeriodicScheduler : SchedulerGrain<Models.PeriodicTimer>, IGrainBase, IPeriodicScheduler
@@ -46,7 +48,17 @@ public class PeriodicScheduler : SchedulerGrain<Models.PeriodicTimer>, IGrainBas
         _eTag = entry?.ETag;
     }
 
-    public async Task Unregister()
+    public async Task Start()
+    {
+        await StartTicker();
+    }
+
+    public async Task Stop()
+    {
+        await StopTicker();
+    }
+
+    public async Task Delete()
     {
         if (_state is not null)
         {
@@ -80,11 +92,20 @@ public class PeriodicScheduler : SchedulerGrain<Models.PeriodicTimer>, IGrainBas
         };
         _eTag = await _store.SetAsync(_state, _eTag);
 
-        if (!_state.Spec.Suspend && (_state.Spec.NotBefore is null || _state.Spec.NotBefore.Value <= utcNow))
-        {
-            await Tick(utcNow);
-        }
+        await StartTicker();
         return _state;
+    }
+
+    private Task StartTicker()
+    {
+        Guard.IsNotNull(_state);
+        var utcNow = _clock.UtcNow;
+        var notBefore = _state.Spec.NotBefore;
+        return notBefore switch
+        {
+            not null when notBefore.Value > utcNow => Tick(notBefore.Value),
+            _ => Tick(default)
+        };
     }
 
     internal override async Task Tick(DateTimeOffset expectedTickTime)
@@ -92,13 +113,6 @@ public class PeriodicScheduler : SchedulerGrain<Models.PeriodicTimer>, IGrainBas
         if (_state is null || _state.Metadata.DeletionTimestamp is not null)
         {
             TickerLog.UnexpectedTick(_logger, _key, expectedTickTime, "NotRegistered");
-            await StopTicker();
-            return;
-        }
-
-        if (_state.Spec.Suspend)
-        {
-            TickerLog.UnexpectedTick(_logger, _key, expectedTickTime, "Suspended");
             await StopTicker();
             return;
         }
