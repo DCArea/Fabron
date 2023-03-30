@@ -20,7 +20,7 @@ public class ScheduleMetadata
     public Dictionary<string, string> Extensions { get; set; } = new();
 }
 
-public interface IScheduledEvent
+public interface IDistributedTimer
 {
     ScheduleMetadata Metadata { get; }
     string? Data { get; }
@@ -32,7 +32,7 @@ public interface ISchedulerSpec
 
 [GenerateSerializer]
 [Immutable]
-public class ScheduledEvent<TScheduleSpec> : IScheduledEvent
+public class DistributedTimer<TScheduleSpec> : IDistributedTimer
     where TScheduleSpec : ISchedulerSpec
 {
     [Id(0)]

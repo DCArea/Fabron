@@ -1,4 +1,4 @@
-using Fabron.Server;
+﻿using Fabron.Server;
 using Fabron.Stores;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -105,9 +105,9 @@ namespace Fabron.Providers.PostgreSQL
                 {
                     options.ConnectionString = connectionString;
                 });
-                services.AddSingleton<ITimedEventStore, PostgreSQLTimedEventStore>();
-                services.AddSingleton<ICronEventStore, PostgreSQLCronEventStore>();
-                services.AddSingleton<IPeriodicEventStore, PostgreSQLPeriodicEventStore>();
+                services.AddSingleton<IGenericTimerStore, PostgreSQLGenericTimerStore>();
+                services.AddSingleton<ICronTimerStore, PostgreSQLCronTimerStore>();
+                services.AddSingleton<IPeriodicTimerStore, PostgreSQLPeriodicTimerStore>();
             });
             return server;
         }

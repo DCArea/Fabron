@@ -1,5 +1,5 @@
 ﻿using System.Reflection;
-using Fabron.Events;
+using Fabron.Dispatching;
 using Fabron.Schedulers;
 using Fabron.Stores;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,7 +22,7 @@ public class FabronServerBuilder
         {
             services.AddSingleton<ISystemClock, SystemClock>();
             services.AddSingleton<IFabronClient, FabronClient>();
-            services.AddSingleton<IEventDispatcher, EventDispatcher>();
+            services.AddSingleton<IFireDispatcher, FireDispatcher>();
         });
 
         HostBuilder = hostBuilder;
@@ -56,9 +56,9 @@ public class FabronServerBuilder
     {
         HostBuilder.ConfigureServices((context, services) =>
         {
-            services.AddScoped<ITimedEventStore, InMemoryTimedEventStore>();
-            services.AddScoped<ICronEventStore, InMemoryCronEventStore>();
-            services.AddScoped<IPeriodicEventStore, InMemoryPeriodicEventStore>();
+            services.AddScoped<IGenericTimerStore, InMemoryGenericTimerStore>();
+            services.AddScoped<ICronTimerStore, InMemoryCronTimerStore>();
+            services.AddScoped<IPeriodicTimerStore, InMemoryPeriodicTimerStore>();
         });
 
         ConfigureOrleans((context, siloBuilder) =>
@@ -70,11 +70,11 @@ public class FabronServerBuilder
         return this;
     }
 
-    public FabronServerBuilder AddSimpleEventRouter(Action<SimpleEventRouterOptions> configure)
+    public FabronServerBuilder AddSimpleFireRouter(Action<SimpleFireRouterOptions> configure)
     {
         HostBuilder.ConfigureServices((context, services) =>
         {
-            services.AddSingleton<IEventRouter, SimpleEventRouter>();
+            services.AddSingleton<IFireRouter, SimpleFireRouter>();
             services.Configure(configure);
         });
         return this;

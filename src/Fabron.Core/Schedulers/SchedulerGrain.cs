@@ -1,6 +1,6 @@
 ﻿using CommunityToolkit.Diagnostics;
 using Fabron.Diagnostics;
-using Fabron.Events;
+using Fabron.Dispatching;
 using Fabron.Models;
 using Fabron.Stores;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,13 +11,13 @@ using Orleans.Timers;
 namespace Fabron.Schedulers;
 
 public abstract class SchedulerGrain<TState> : IRemindable
-    where TState : class, IScheduledEvent
+    where TState : class, IDistributedTimer
 {
     protected readonly ILogger _logger;
     protected readonly ISystemClock _clock;
     private readonly SchedulerOptions _options;
     protected readonly IStateStore<TState> _store;
-    private readonly IEventDispatcher _dispatcher;
+    private readonly IFireDispatcher _dispatcher;
     private readonly IReminderRegistry _reminderRegistry;
 
     public SchedulerGrain(
@@ -27,7 +27,7 @@ public abstract class SchedulerGrain<TState> : IRemindable
         ISystemClock clock,
         SchedulerOptions options,
         IStateStore<TState> store,
-        IEventDispatcher dispatcher)
+        IFireDispatcher dispatcher)
     {
         GrainContext = context;
         _runtime = runtime;
@@ -116,23 +116,23 @@ public abstract class SchedulerGrain<TState> : IRemindable
         }
     }
 
-    protected async Task DispatchNew(FabronEventEnvelop envelop)
+    protected async Task DispatchNew(FireEnvelop envelop)
     {
         Guard.IsNotNull(_state, nameof(_state));
 
         var utcNow = _clock.UtcNow;
         RecordTick(utcNow);
-        Telemetry.OnFabronEventDispatching(_logger, _key, envelop, utcNow);
+        Telemetry.OnFabronTimerDispatching(_logger, _key, envelop, utcNow);
 
         var sw = ValueStopwatch.StartNew();
         try
         {
             await _dispatcher.DispatchAsync(envelop);
-            Telemetry.OnFabronEventDispatched(sw.GetElapsedTime());
+            Telemetry.OnFabronTimerDispatched(sw.GetElapsedTime());
         }
         catch (Exception e)
         {
-            Telemetry.OnFabronEventDispatchFailed(_logger, _key, e);
+            Telemetry.OnFabronTimerDispatchFailed(_logger, _key, e);
             return;
         }
     }

@@ -8,16 +8,16 @@ public record StateEntry<TState>(
 );
 
 public interface IStateStore<TState>
-    where TState : IScheduledEvent
+    where TState : IDistributedTimer
 {
     Task<string> SetAsync(TState state, string? expectedETag);
     Task<StateEntry<TState>?> GetAsync(string key);
     Task RemoveAsync(string key, string? expectedETag);
 }
 
-public interface ITimedEventStore : IStateStore<TimedEvent>
+public interface IGenericTimerStore : IStateStore<GenericTimer>
 { }
-public interface ICronEventStore : IStateStore<CronEvent>
+public interface ICronTimerStore : IStateStore<CronTimer>
 { }
-public interface IPeriodicEventStore : IStateStore<PeriodicEvent>
+public interface IPeriodicTimerStore : IStateStore<Models.PeriodicTimer>
 { }

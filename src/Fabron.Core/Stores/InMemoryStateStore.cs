@@ -2,17 +2,17 @@
 
 namespace Fabron.Stores;
 
-public class InMemoryTimedEventStore : InMemoryStateStore<TimedEvent>, ITimedEventStore
+public class InMemoryGenericTimerStore : InMemoryStateStore<GenericTimer>, IGenericTimerStore
 { }
 
-public class InMemoryCronEventStore : InMemoryStateStore<CronEvent>, ICronEventStore
+public class InMemoryCronTimerStore : InMemoryStateStore<CronTimer>, ICronTimerStore
 { }
 
-public class InMemoryPeriodicEventStore : InMemoryStateStore<PeriodicEvent>, IPeriodicEventStore
+public class InMemoryPeriodicTimerStore : InMemoryStateStore<Models.PeriodicTimer>, IPeriodicTimerStore
 { }
 
 public abstract class InMemoryStateStore<TState> : IStateStore<TState>
-    where TState : IScheduledEvent
+    where TState : IDistributedTimer
 {
     private StateEntry<TState>? _entry;
 

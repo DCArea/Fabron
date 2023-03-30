@@ -14,40 +14,40 @@ public class FabronClient : IFabronClient
         _client = client;
     }
 
-    public Task ScheduleTimedEvent(
+    public Task ScheduleGenericTimer(
         string key,
         string? data,
         DateTimeOffset schedule,
         Dictionary<string, string>? extensions = null)
     {
         var grain = _client.GetGrain<ITimedScheduler>(key);
-        var spec = new TimedEventSpec
+        var spec = new GenericTimerSpec
         {
             Schedule = schedule,
         };
         return grain.Schedule(data, spec, null, extensions);
     }
 
-    public Task CancelTimedEvent(string key)
+    public Task CancelGenericTimer(string key)
     {
         var grain = _client.GetGrain<ITimedScheduler>(key);
         return grain.Unregister();
     }
 
-    public async Task<TimedEvent?> GetTimedEvent(string key)
+    public async Task<GenericTimer?> GetGenericTimer(string key)
     {
         var grain = _client.GetGrain<ITimedScheduler>(key);
         var state = await grain.GetState();
         return state;
     }
 
-    public Task<TickerStatus> GetTimedEventTickerStatus(string key)
+    public Task<TickerStatus> GetGenericTimerTickerStatus(string key)
     {
         return _client.GetGrain<ITimedScheduler>(key)
             .GetTickerStatus();
     }
 
-    public async Task ScheduleCronEvent(
+    public async Task ScheduleCronTimer(
         string key,
         string? data,
         string schedule,
@@ -57,7 +57,7 @@ public class FabronClient : IFabronClient
         Dictionary<string, string>? extensions = null)
     {
         var grain = _client.GetGrain<ICronScheduler>(key);
-        var spec = new CronEventSpec
+        var spec = new CronTimerSpec
         {
             Schedule = schedule,
             NotBefore = notBefore,
@@ -67,26 +67,26 @@ public class FabronClient : IFabronClient
         await grain.Schedule(data, spec, null, extensions);
     }
 
-    public async Task<CronEvent?> GetCronEvent(string key)
+    public async Task<CronTimer?> GetCronTimer(string key)
     {
         var grain = _client.GetGrain<ICronScheduler>(key);
         var state = await grain.GetState();
         return state;
     }
 
-    public Task<TickerStatus> GetCronEventTickerStatus(string key)
+    public Task<TickerStatus> GetCronTimerTickerStatus(string key)
     {
         return _client.GetGrain<ICronScheduler>(key)
             .GetTickerStatus();
     }
 
-    public async Task CancelCronEvent(string key)
+    public async Task CancelCronTimer(string key)
     {
         var grain = _client.GetGrain<ICronScheduler>(key);
         await grain.Unregister();
     }
 
-    public async Task SchedulePeriodicEvent(
+    public async Task SchedulePeriodicTimer(
         string key,
         string? data,
         TimeSpan period,
@@ -96,7 +96,7 @@ public class FabronClient : IFabronClient
         Dictionary<string, string>? extensions = null)
     {
         var grain = _client.GetGrain<IPeriodicScheduler>(key);
-        var spec = new PeriodicEventSpec
+        var spec = new PeriodicTimerSpec
         {
             Period = period,
             NotBefore = notBefore,
@@ -106,20 +106,20 @@ public class FabronClient : IFabronClient
         await grain.Schedule(data, spec, null, extensions);
     }
 
-    public async Task<PeriodicEvent?> GetPeriodicEvent(string key)
+    public async Task<Models.PeriodicTimer?> GetPeriodicTimer(string key)
     {
         var grain = _client.GetGrain<IPeriodicScheduler>(key);
         var state = await grain.GetState();
         return state;
     }
 
-    public Task<TickerStatus> GetPeriodicEventTickerStatus(string key)
+    public Task<TickerStatus> GetPeriodicTimerTickerStatus(string key)
     {
         return _client.GetGrain<IPeriodicScheduler>(key)
             .GetTickerStatus();
     }
 
-    public Task CancelPeriodicEvent(string key)
+    public Task CancelPeriodicTimer(string key)
     {
         var grain = _client.GetGrain<IPeriodicScheduler>(key);
         return grain.Unregister();

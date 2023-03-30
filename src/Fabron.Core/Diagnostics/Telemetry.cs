@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using CloudEventDotNet.Diagnostics.Aggregators;
-using Fabron.Events;
+using Fabron.Dispatching;
 using Fabron.Schedulers;
 using Microsoft.Extensions.Logging;
 
@@ -13,44 +13,44 @@ internal class Telemetry
     private static readonly Meter s_meter = new(TelemetryName);
     private static readonly ActivitySource s_source = new(TelemetryName);
 
-    public static CounterAggregator CloudEventScheduled = new(s_meter, "fabron-event-scheduled");
+    public static CounterAggregator TimerScheduled = new(s_meter, "fabron-timer-scheduled");
 
-    public static HistogramAggregator CloudEventDispatchTardiness = new(
+    public static HistogramAggregator TimerDispatchTardiness = new(
         new(),
         new(Buckets: new[] { 0L, 1L, 5L, 50L, 1_000L, 5_000L, 60_000L }),
         s_meter,
-        "fabron-event-dispatch-tardiness");
+        "fabron-timer-dispatch-tardiness");
 
-    public static CounterAggregator FabronEventDispatchedFailed = new(s_meter, "fabron-event-dispatch-failed");
+    public static CounterAggregator FabronTimerDispatchedFailed = new(s_meter, "fabron-timer-dispatch-failed");
 
-    public static HistogramAggregator FabronEventDispatchDuration = new(
+    public static HistogramAggregator FabronTimerDispatchDuration = new(
         new(),
         new(Buckets: new[] { 0L, 1L, 5L, 50L, 1_000L, 5_000L, 10_000L }),
         s_meter,
-        "fabron-event-dispatch-duration");
+        "fabron-timer-dispatch-duration");
 
 
-    public static void OnFabronEventDispatching(
+    public static void OnFabronTimerDispatching(
         ILogger logger,
         string schedulerKey,
-        FabronEventEnvelop envelop,
+        FireEnvelop envelop,
         DateTimeOffset utcNow)
     {
         var scheduledTime = envelop.Time;
         var tardiness = (utcNow - scheduledTime).TotalMilliseconds;
-        CloudEventDispatchTardiness.Record((long)tardiness);
+        TimerDispatchTardiness.Record((long)tardiness);
         TickerLog.Dispatching(logger, schedulerKey, utcNow, envelop.Time);
     }
 
-    public static void OnFabronEventDispatched(TimeSpan elapsed) => FabronEventDispatchDuration.Record((long)elapsed.TotalMilliseconds);
+    public static void OnFabronTimerDispatched(TimeSpan elapsed) => FabronTimerDispatchDuration.Record((long)elapsed.TotalMilliseconds);
 
-    public static void OnFabronEventDispatchFailed(
+    public static void OnFabronTimerDispatchFailed(
         ILogger logger,
         string schedulerKey,
         Exception exception)
     {
         TickerLog.ErrorOnTicking(logger, schedulerKey, exception);
-        FabronEventDispatchedFailed.Add(1);
+        FabronTimerDispatchedFailed.Add(1);
     }
 
     public static Activity? OnTicking()

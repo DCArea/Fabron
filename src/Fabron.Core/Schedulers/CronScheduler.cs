@@ -1,5 +1,5 @@
 ﻿using CommunityToolkit.Diagnostics;
-using Fabron.Events;
+using Fabron.Dispatching;
 using Fabron.Models;
 using Fabron.Stores;
 using Microsoft.Extensions.Logging;
@@ -12,14 +12,14 @@ namespace Fabron.Schedulers;
 public interface ICronScheduler : IGrainWithStringKey
 {
     [ReadOnly]
-    ValueTask<CronEvent?> GetState();
+    ValueTask<CronTimer?> GetState();
 
     [ReadOnly]
     Task<TickerStatus> GetTickerStatus();
 
-    Task<CronEvent> Schedule(
+    Task<CronTimer> Schedule(
         string? data,
-        CronEventSpec spec,
+        CronTimerSpec spec,
         string? owner,
         Dictionary<string, string>? extensions
     );
@@ -27,7 +27,7 @@ public interface ICronScheduler : IGrainWithStringKey
     Task Unregister();
 }
 
-public class CronScheduler : SchedulerGrain<CronEvent>, IGrainBase, ICronScheduler
+public class CronScheduler : SchedulerGrain<CronTimer>, IGrainBase, ICronScheduler
 {
     private readonly SchedulerOptions _options;
 
@@ -37,8 +37,8 @@ public class CronScheduler : SchedulerGrain<CronEvent>, IGrainBase, ICronSchedul
         ILogger<CronScheduler> logger,
         IOptions<SchedulerOptions> options,
         ISystemClock clock,
-        ICronEventStore store,
-        IEventDispatcher dispatcher) : base(context, runtime, logger, clock, options.Value, store, dispatcher) => _options = options.Value;
+        ICronTimerStore store,
+        IFireDispatcher dispatcher) : base(context, runtime, logger, clock, options.Value, store, dispatcher) => _options = options.Value;
 
     async Task IGrainBase.OnActivateAsync(CancellationToken cancellationToken)
     {
@@ -57,16 +57,16 @@ public class CronScheduler : SchedulerGrain<CronEvent>, IGrainBase, ICronSchedul
         }
     }
 
-    public ValueTask<CronEvent?> GetState() => new(_state);
+    public ValueTask<CronTimer?> GetState() => new(_state);
 
-    public async Task<CronEvent> Schedule(
+    public async Task<CronTimer> Schedule(
         string? data,
-        CronEventSpec spec,
+        CronTimerSpec spec,
         string? owner,
         Dictionary<string, string>? extensions)
     {
         var utcNow = _clock.UtcNow;
-        _state = new CronEvent
+        _state = new CronTimer
         {
             Metadata = new()
             {
@@ -163,11 +163,11 @@ public class CronScheduler : SchedulerGrain<CronEvent>, IGrainBase, ICronSchedul
         Guard.IsNotNull(_state, nameof(_state));
         var now = _clock.UtcNow;
         var dueTime = schedule > now ? schedule.Subtract(now) : TimeSpan.Zero;
-        var cloudEvent = _state.ToCloudEvent(schedule);
+        var envelop = _state.ToEnvelop(schedule);
         _runtime.TimerRegistry.RegisterTimer(
             GrainContext,
-            obj => DispatchNew((FabronEventEnvelop)obj),
-            cloudEvent,
+            obj => DispatchNew((FireEnvelop)obj),
+            envelop,
             dueTime,
             Timeout.InfiniteTimeSpan);
     }

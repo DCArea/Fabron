@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Fabron.Providers.PostgreSQL
@@ -6,9 +6,9 @@ namespace Fabron.Providers.PostgreSQL
     public class PostgreSQLOptions
     {
         public string ConnectionString { get; set; } = default!;
-        public string TimedEventTableName { get; set; } = "fabron_timedevents_v1";
-        public string CronEventTableName { get; set; } = "fabron_cronevents_v1";
-        public string PeriodicEventTableName { get; set; } = "fabron_periodicevents_v1";
+        public string GenericTimerTableName { get; set; } = "fabron_generictimer_v1";
+        public string CronTimerTableName { get; set; } = "fabron_crontimer_v1";
+        public string PeriodicTimerTableName { get; set; } = "fabron_periodictimer_v1";
 
         public JsonSerializerOptions JsonSerializerOptions { get; set; } = new()
         {

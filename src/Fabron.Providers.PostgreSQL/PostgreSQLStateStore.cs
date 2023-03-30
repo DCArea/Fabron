@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using Fabron.Providers.PostgreSQL;
 using Fabron.Stores;
 using Microsoft.Extensions.Logging;
@@ -122,25 +122,21 @@ WHERE key = @key AND etag = @expected_etag;";
 public static partial class Log
 {
     [LoggerMessage(
-        EventId = 10000,
         Level = LogLevel.Information,
         Message = "Initialized PostgreSQL state store ({tableName})")]
     public static partial void StateStoreInitialized(ILogger logger, string tableName);
 
     [LoggerMessage(
-        EventId = 10100,
         Level = LogLevel.Debug,
         Message = "Saving state({key}) in PostgreSQL")]
     public static partial void SavingState(ILogger logger, string key);
 
     [LoggerMessage(
-        EventId = 10200,
         Level = LogLevel.Debug,
         Message = "Getting state({key}) from PostgreSQL")]
     public static partial void GettingState(ILogger logger, string key);
 
     [LoggerMessage(
-        EventId = 10300,
         Level = LogLevel.Debug,
         Message = "Deleting state({key}) from PostgreSQL")]
     public static partial void DeletingState(ILogger logger, string key);

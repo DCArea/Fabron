@@ -1,5 +1,5 @@
 ﻿using Fabron.Diagnostics;
-using Fabron.Events;
+using Fabron.Dispatching;
 using Fabron.Models;
 using Fabron.Stores;
 using Microsoft.Extensions.Logging;
@@ -15,11 +15,11 @@ public interface ITimedScheduler : IGrainWithStringKey
     Task<TickerStatus> GetTickerStatus();
 
     [ReadOnly]
-    ValueTask<TimedEvent?> GetState();
+    ValueTask<GenericTimer?> GetState();
 
-    Task<TimedEvent> Schedule(
+    Task<GenericTimer> Schedule(
         string? data,
-        TimedEventSpec spec,
+        GenericTimerSpec spec,
         string? owner,
         Dictionary<string, string>? extensions
     );
@@ -27,7 +27,7 @@ public interface ITimedScheduler : IGrainWithStringKey
     Task Unregister();
 }
 
-public partial class TimedScheduler : SchedulerGrain<TimedEvent>, IGrainBase, ITimedScheduler
+public partial class TimedScheduler : SchedulerGrain<GenericTimer>, IGrainBase, ITimedScheduler
 {
 
     public TimedScheduler(
@@ -36,8 +36,8 @@ public partial class TimedScheduler : SchedulerGrain<TimedEvent>, IGrainBase, IT
         ILogger<TimedScheduler> logger,
         IOptions<SchedulerOptions> options,
         ISystemClock clock,
-        ITimedEventStore store,
-        IEventDispatcher dispatcher) : base(context, runtime, logger, clock, options.Value, store, dispatcher) { }
+        IGenericTimerStore store,
+        IFireDispatcher dispatcher) : base(context, runtime, logger, clock, options.Value, store, dispatcher) { }
 
     async Task IGrainBase.OnActivateAsync(CancellationToken cancellationToken)
     {
@@ -56,18 +56,18 @@ public partial class TimedScheduler : SchedulerGrain<TimedEvent>, IGrainBase, IT
         }
     }
 
-    public ValueTask<TimedEvent?> GetState() => ValueTask.FromResult(_state);
+    public ValueTask<GenericTimer?> GetState() => ValueTask.FromResult(_state);
 
-    public async Task<TimedEvent> Schedule(
+    public async Task<GenericTimer> Schedule(
         string? data,
-        TimedEventSpec spec,
+        GenericTimerSpec spec,
         string? owner,
         Dictionary<string, string>? extensions)
     {
         var utcNow = _clock.UtcNow;
         var schedule_ = spec.Schedule;
 
-        _state = new TimedEvent
+        _state = new GenericTimer
         {
             Metadata = new()
             {
@@ -91,7 +91,7 @@ public partial class TimedScheduler : SchedulerGrain<TimedEvent>, IGrainBase, IT
         {
             await TickAfter(schedule_ - utcNow);
         }
-        Telemetry.CloudEventScheduled.Add(1);
+        Telemetry.TimerScheduled.Add(1);
         return _state;
     }
 
@@ -104,7 +104,7 @@ public partial class TimedScheduler : SchedulerGrain<TimedEvent>, IGrainBase, IT
             return;
         }
 
-        var envelop = _state.ToCloudEvent(_state.Spec.Schedule);
+        var envelop = _state.ToEnvelop(_state.Spec.Schedule);
         await DispatchNew(envelop);
         await StopTicker();
     }
@@ -112,7 +112,6 @@ public partial class TimedScheduler : SchedulerGrain<TimedEvent>, IGrainBase, IT
     internal static partial class Log
     {
         [LoggerMessage(
-            EventId = 23000,
             Level = LogLevel.Warning,
             Message = "[{key}]: Schedule {schedule} is in the past, but still ticking now.")]
         public static partial void TickingForPast(ILogger logger, string key, DateTimeOffset schedule);

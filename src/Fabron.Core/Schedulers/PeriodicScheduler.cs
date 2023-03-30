@@ -1,5 +1,5 @@
 ﻿using CommunityToolkit.Diagnostics;
-using Fabron.Events;
+using Fabron.Dispatching;
 using Fabron.Models;
 using Fabron.Stores;
 using Microsoft.Extensions.Logging;
@@ -12,14 +12,14 @@ namespace Fabron.Schedulers;
 public interface IPeriodicScheduler : IGrainWithStringKey
 {
     [ReadOnly]
-    ValueTask<PeriodicEvent?> GetState();
+    ValueTask<Models.PeriodicTimer?> GetState();
 
     [ReadOnly]
     Task<TickerStatus> GetTickerStatus();
 
-    Task<PeriodicEvent> Schedule(
+    Task<Models.PeriodicTimer> Schedule(
         string? data,
-        PeriodicEventSpec spec,
+        PeriodicTimerSpec spec,
         string? owner,
         Dictionary<string, string>? extensions
     );
@@ -27,7 +27,7 @@ public interface IPeriodicScheduler : IGrainWithStringKey
     Task Unregister();
 }
 
-public class PeriodicScheduler : SchedulerGrain<PeriodicEvent>, IGrainBase, IPeriodicScheduler
+public class PeriodicScheduler : SchedulerGrain<Models.PeriodicTimer>, IGrainBase, IPeriodicScheduler
 {
     public PeriodicScheduler(
         IGrainContext context,
@@ -35,8 +35,8 @@ public class PeriodicScheduler : SchedulerGrain<PeriodicEvent>, IGrainBase, IPer
         ILogger<PeriodicScheduler> logger,
         IOptions<SchedulerOptions> options,
         ISystemClock clock,
-        IPeriodicEventStore store,
-        IEventDispatcher dispatcher) : base(context, runtime, logger, clock, options.Value, store, dispatcher) { }
+        IPeriodicTimerStore store,
+        IFireDispatcher dispatcher) : base(context, runtime, logger, clock, options.Value, store, dispatcher) { }
 
     async Task IGrainBase.OnActivateAsync(CancellationToken cancellationToken)
     {
@@ -55,18 +55,18 @@ public class PeriodicScheduler : SchedulerGrain<PeriodicEvent>, IGrainBase, IPer
         }
     }
 
-    public ValueTask<PeriodicEvent?> GetState() => new(_state);
+    public ValueTask<Models.PeriodicTimer?> GetState() => new(_state);
 
-    public async Task<PeriodicEvent> Schedule(
+    public async Task<Models.PeriodicTimer> Schedule(
         string? data,
-        PeriodicEventSpec spec,
+        PeriodicTimerSpec spec,
         string? owner,
         Dictionary<string, string>? extensions)
     {
         Guard.IsGreaterThanOrEqualTo(spec.Period, TimeSpan.FromSeconds(5), nameof(spec.Period));
 
         var utcNow = _clock.UtcNow;
-        _state = new PeriodicEvent
+        _state = new Models.PeriodicTimer
         {
             Metadata = new()
             {
@@ -140,11 +140,11 @@ public class PeriodicScheduler : SchedulerGrain<PeriodicEvent>, IGrainBase, IPer
         var dueTime = TimeSpan.Zero;
         while (schedule < to)
         {
-            var cloudEvent = _state.ToCloudEvent(schedule);
+            var envelop = _state.ToEnvelop(schedule);
             _runtime.TimerRegistry.RegisterTimer(
                 GrainContext,
-                obj => DispatchNew((FabronEventEnvelop)obj),
-                cloudEvent,
+                obj => DispatchNew((FireEnvelop)obj),
+                envelop,
                 dueTime,
                 Timeout.InfiniteTimeSpan);
             dueTime = dueTime.Add(_state.Spec.Period);

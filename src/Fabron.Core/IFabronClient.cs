@@ -4,19 +4,19 @@ namespace Fabron;
 
 public interface IFabronClient
 {
-    Task ScheduleTimedEvent(
+    Task ScheduleGenericTimer(
         string key,
         string? data,
         DateTimeOffset schedule,
         Dictionary<string, string>? extensions = null);
 
-    Task<TimedEvent?> GetTimedEvent(string key);
+    Task<GenericTimer?> GetGenericTimer(string key);
 
-    Task<TickerStatus> GetTimedEventTickerStatus(string key);
+    Task<TickerStatus> GetGenericTimerTickerStatus(string key);
 
-    Task CancelTimedEvent(string key);
+    Task CancelGenericTimer(string key);
 
-    Task ScheduleCronEvent(
+    Task ScheduleCronTimer(
         string key,
         string? data,
         string schedule,
@@ -25,13 +25,13 @@ public interface IFabronClient
         bool suspend = false,
         Dictionary<string, string>? extensions = null);
 
-    Task<CronEvent?> GetCronEvent(string key);
+    Task<CronTimer?> GetCronTimer(string key);
 
-    Task<TickerStatus> GetCronEventTickerStatus(string key);
+    Task<TickerStatus> GetCronTimerTickerStatus(string key);
 
-    Task CancelCronEvent(string key);
+    Task CancelCronTimer(string key);
 
-    Task SchedulePeriodicEvent(
+    Task SchedulePeriodicTimer(
         string key,
         string? data,
         TimeSpan period,
@@ -40,9 +40,9 @@ public interface IFabronClient
         bool suspend = false,
         Dictionary<string, string>? extensions = null);
 
-    Task<PeriodicEvent?> GetPeriodicEvent(string key);
+    Task<Models.PeriodicTimer?> GetPeriodicTimer(string key);
 
-    Task<TickerStatus> GetPeriodicEventTickerStatus(string key);
+    Task<TickerStatus> GetPeriodicTimerTickerStatus(string key);
 
-    Task CancelPeriodicEvent(string key);
+    Task CancelPeriodicTimer(string key);
 }

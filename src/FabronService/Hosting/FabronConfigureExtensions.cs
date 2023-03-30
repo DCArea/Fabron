@@ -1,8 +1,8 @@
 ﻿using Fabron;
-using Fabron.Events;
+using Fabron.Dispatching;
 using Fabron.Providers.PostgreSQL;
 using Fabron.Server;
-using FabronService.EventRouters;
+using FabronService.FireRouters;
 
 namespace FabronService.Hosting;
 
@@ -12,7 +12,7 @@ public static class FabronConfigureExtensions
     {
         builder.Services.AddHttpClient();
         builder.Services.Configure<SchedulerOptions>(options => options.CronFormat = Cronos.CronFormat.IncludeSeconds);
-        builder.Services.AddSingleton<IEventRouter, AnnotationBasedEventRouter>();
+        builder.Services.AddSingleton<IFireRouter, AnnotationBasedFireRouter>();
         builder.Services.AddSingleton<IHttpDestinationHandler, HttpDestinationHandler>();
         var server = builder.Host.UseFabronServer();
         var client = builder.Host.UseFabronClient(cohosted: true);
