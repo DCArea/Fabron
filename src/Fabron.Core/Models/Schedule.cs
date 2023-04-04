@@ -2,23 +2,23 @@
 
 [GenerateSerializer]
 [Immutable]
-public class ScheduleMetadata
-{
-    [Id(0)]
-    public string Key { get; set; } = default!;
+public record ScheduleMetadata
+(
+    [property: Id(0)]
+    string Key,
 
-    [Id(1)]
-    public DateTimeOffset CreationTimestamp { get; set; }
+    [property: Id(1)]
+    DateTimeOffset CreationTimestamp,
 
-    [Id(2)]
-    public DateTimeOffset? DeletionTimestamp { get; set; }
+    [property: Id(2)]
+    DateTimeOffset? DeletionTimestamp,
 
-    [Id(3)]
-    public string? Owner { get; set; }
+    [property: Id(3)]
+    string? Owner,
 
-    [Id(4)]
-    public Dictionary<string, string> Extensions { get; set; } = new();
-}
+    [property: Id(4)]
+    Dictionary<string, string> Extensions
+);
 
 public interface IDistributedTimer
 {
@@ -32,15 +32,14 @@ public interface ISchedulerSpec
 
 [GenerateSerializer]
 [Immutable]
-public class DistributedTimer<TScheduleSpec> : IDistributedTimer
-    where TScheduleSpec : ISchedulerSpec
-{
-    [Id(0)]
-    public ScheduleMetadata Metadata { get; set; } = default!;
+public record DistributedTimer<TScheduleSpec>
+(
+    [property:Id(0)]
+    ScheduleMetadata Metadata,
 
-    [Id(1)]
-    public TScheduleSpec Spec { get; set; } = default!;
+    [property:Id(1)]
+    TScheduleSpec Spec,
 
-    [Id(2)]
-    public string? Data { get; set; }
-}
+    [property:Id(2)]
+    string? Data
+) : IDistributedTimer where TScheduleSpec : ISchedulerSpec;

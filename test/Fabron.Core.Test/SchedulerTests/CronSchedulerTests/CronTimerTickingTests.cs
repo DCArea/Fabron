@@ -33,17 +33,22 @@ public class CronTimerTickingTests
         if (schedule is not null)
         {
             var state = new CronTimer
-            {
-                Metadata = new ScheduleMetadata
-                {
-                    Key = key,
-                },
-                Data = JsonSerializer.Serialize(new { data = new { foo = "bar" } }),
-                Spec = new CronTimerSpec
-                {
-                    Schedule = schedule,
-                }
-            };
+            (
+                Metadata: new ScheduleMetadata(
+                    Key: key,
+                    CreationTimestamp: DateTimeOffset.UtcNow,
+                    DeletionTimestamp: null,
+                    Owner: null,
+                    Extensions: new()
+                    ),
+                Data: JsonSerializer.Serialize(new { data = new { foo = "bar" } }),
+                Spec: new CronTimerSpec
+                (
+                    Schedule: schedule,
+                    NotBefore: null,
+                    ExpirationTime: null
+                )
+            );
             A.CallTo(() => store.GetAsync(key)).Returns(Task.FromResult<StateEntry<CronTimer>?>(new(state, "0")));
         }
 
@@ -98,7 +103,7 @@ public class CronTimerTickingTests
         clock.UtcNow = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero).AddMilliseconds(20);
         await scheduler.Schedule(
             JsonSerializer.Serialize(new { foo = "bar" }),
-            new CronTimerSpec { Schedule = "0 0 0 * * *" },
+            new CronTimerSpec(Schedule: "0 0 0 * * *"),
             null,
             null);
         reminderRegistry.Reminders.Should().HaveCount(1);
@@ -114,7 +119,7 @@ public class CronTimerTickingTests
         clock.UtcNow = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero);
         await scheduler.Schedule(
             JsonSerializer.Serialize(new { foo = "bar" }),
-            new CronTimerSpec { Schedule = "0 0 0 * * *" },
+            new CronTimerSpec(Schedule: "0 0 0 * * *"),
             null,
             null);
 

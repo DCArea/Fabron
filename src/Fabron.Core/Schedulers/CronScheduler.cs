@@ -66,17 +66,16 @@ public class CronScheduler : SchedulerGrain<CronTimer>, IGrainBase, ICronSchedul
     {
         var utcNow = _clock.UtcNow;
         _state = new CronTimer
-        {
-            Metadata = new()
-            {
-                Key = _key,
-                CreationTimestamp = utcNow,
-                Owner = owner,
-                Extensions = extensions ?? new(),
-            },
-            Data = data,
-            Spec = spec
-        };
+        (
+            Metadata: new(
+                Key: _key,
+                CreationTimestamp: utcNow,
+                DeletionTimestamp: null,
+                Owner: owner,
+                Extensions: extensions ?? new()),
+            Data: data,
+            Spec: spec
+        );
         _eTag = await _store.SetAsync(_state, _eTag);
 
         await StartTicker();

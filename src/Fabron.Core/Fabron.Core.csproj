@@ -5,8 +5,7 @@
     <PackageId>Fabron.Core</PackageId>
     <VersionPrefix>0.0.1</VersionPrefix>
     <RepositoryUrl>https://github.com/DCArea/Fabron</RepositoryUrl>
-    <ServerGarbageCollection>true</ServerGarbageCollection>
-    <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
   </PropertyGroup>
 
   <ItemGroup>

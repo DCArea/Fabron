@@ -66,17 +66,16 @@ public class PeriodicScheduler : SchedulerGrain<Models.PeriodicTimer>, IGrainBas
 
         var utcNow = _clock.UtcNow;
         _state = new Models.PeriodicTimer
-        {
-            Metadata = new()
-            {
-                Key = _key,
-                CreationTimestamp = utcNow,
-                Owner = owner,
-                Extensions = extensions ?? new()
-            },
-            Spec = spec,
-            Data = data
-        };
+        (
+            Metadata: new(
+                Key: _key,
+                CreationTimestamp: utcNow,
+                DeletionTimestamp: null,
+                Owner: owner,
+                Extensions: extensions ?? new()),
+            Data: data,
+            Spec: spec
+        );
         _eTag = await _store.SetAsync(_state, _eTag);
 
         await StartTicker();

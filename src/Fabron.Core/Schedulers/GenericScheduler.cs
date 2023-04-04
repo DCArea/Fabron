@@ -67,17 +67,16 @@ public partial class GenericScheduler : SchedulerGrain<GenericTimer>, IGrainBase
         var schedule_ = spec.Schedule;
 
         _state = new GenericTimer
-        {
-            Metadata = new()
-            {
-                Key = _key,
-                CreationTimestamp = utcNow,
-                Owner = owner,
-                Extensions = extensions ?? new()
-            },
-            Data = data,
-            Spec = spec
-        };
+        (
+            Metadata: new(
+                Key: _key,
+                CreationTimestamp: utcNow,
+                DeletionTimestamp: null,
+                Owner: owner,
+                Extensions: extensions ?? new()),
+            Data: data,
+            Spec: spec
+        );
         _eTag = await _store.SetAsync(_state, _eTag);
 
         await StartTicker();
@@ -115,12 +114,5 @@ public partial class GenericScheduler : SchedulerGrain<GenericTimer>, IGrainBase
         await StopTicker();
     }
 
-    internal static partial class Log
-    {
-        [LoggerMessage(
-            Level = LogLevel.Warning,
-            Message = "[{key}]: Schedule {schedule} is in the past, but still ticking now.")]
-        public static partial void TickingForPast(ILogger logger, string key, DateTimeOffset schedule);
-    }
 }
 

@@ -22,9 +22,9 @@ public class FabronClient : IFabronClient
     {
         var grain = _client.GetGrain<IGenericScheduler>(key);
         var spec = new GenericTimerSpec
-        {
-            Schedule = schedule,
-        };
+        (
+            Schedule: schedule
+        );
         return grain.Schedule(data, spec, null, extensions);
     }
 
@@ -53,11 +53,11 @@ public class FabronClient : IFabronClient
     {
         var grain = _client.GetGrain<ICronScheduler>(key);
         var spec = new CronTimerSpec
-        {
-            Schedule = schedule,
-            NotBefore = notBefore,
-            ExpirationTime = expirationTime,
-        };
+        (
+            Schedule: schedule,
+            NotBefore: notBefore,
+            ExpirationTime: expirationTime
+        );
         await grain.Schedule(data, spec, null, extensions);
     }
 
@@ -86,11 +86,11 @@ public class FabronClient : IFabronClient
     {
         var grain = _client.GetGrain<IPeriodicScheduler>(key);
         var spec = new PeriodicTimerSpec
-        {
-            Period = period,
-            NotBefore = notBefore,
-            ExpirationTime = expirationTime,
-        };
+        (
+            Period: period,
+            NotBefore: notBefore,
+            ExpirationTime: expirationTime
+        );
         await grain.Schedule(data, spec, null, extensions);
     }
 

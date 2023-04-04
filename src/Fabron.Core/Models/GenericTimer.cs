@@ -2,14 +2,15 @@
 
 [GenerateSerializer]
 [Immutable]
-public class GenericTimer : DistributedTimer<GenericTimerSpec>
-{ }
+public record GenericTimer(
+    ScheduleMetadata Metadata,
+    GenericTimerSpec Spec,
+    string? Data
+) : DistributedTimer<GenericTimerSpec>(Metadata, Spec, Data);
 
 [GenerateSerializer]
 [Immutable]
-public class GenericTimerSpec : ISchedulerSpec
-{
-    [Id(0)]
-    public DateTimeOffset Schedule { get; init; } = default!;
-}
-
+public record GenericTimerSpec(
+    [property: Id(0)]
+    DateTimeOffset Schedule
+) : ISchedulerSpec;

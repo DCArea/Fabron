@@ -2,20 +2,22 @@
 
 [GenerateSerializer]
 [Immutable]
-public class CronTimer : DistributedTimer<CronTimerSpec>
-{ };
+public record CronTimer(
+    ScheduleMetadata Metadata,
+    CronTimerSpec Spec,
+    string? Data
+    ) : DistributedTimer<CronTimerSpec>(Metadata, Spec, Data);
 
 [GenerateSerializer]
 [Immutable]
-public class CronTimerSpec : ISchedulerSpec
-{
-    [Id(0)]
-    public string Schedule { get; init; } = default!;
+public record CronTimerSpec
+(
+    [property: Id(0)]
+    string Schedule,
 
-    [Id(1)]
-    public DateTimeOffset? NotBefore { get; set; }
+    [property: Id(1)]
+    DateTimeOffset? NotBefore = null,
 
-    [Id(2)]
-    public DateTimeOffset? ExpirationTime { get; set; }
-}
-
+    [property: Id(2)]
+    DateTimeOffset? ExpirationTime = null
+) : ISchedulerSpec;

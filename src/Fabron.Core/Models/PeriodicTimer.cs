@@ -2,20 +2,23 @@
 
 [GenerateSerializer]
 [Immutable]
-public class PeriodicTimer : DistributedTimer<PeriodicTimerSpec>
-{ }
+public record PeriodicTimer(
+    ScheduleMetadata Metadata,
+    PeriodicTimerSpec Spec,
+    string? Data
+) : DistributedTimer<PeriodicTimerSpec>(Metadata, Spec, Data);
 
 [GenerateSerializer]
 [Immutable]
-public class PeriodicTimerSpec : ISchedulerSpec
-{
-    [Id(1)]
-    public TimeSpan Period { get; init; }
+public record PeriodicTimerSpec
+(
+    [property: Id(1)]
+    TimeSpan Period,
 
-    [Id(2)]
-    public DateTimeOffset? NotBefore { get; init; }
+    [property: Id(2)]
+    DateTimeOffset? NotBefore,
 
-    [Id(3)]
-    public DateTimeOffset? ExpirationTime { get; init; }
-}
-
+    [property: Id(3)]
+    DateTimeOffset? ExpirationTime
+)
+: ISchedulerSpec;
