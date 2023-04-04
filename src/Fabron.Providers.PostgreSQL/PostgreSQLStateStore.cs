@@ -38,7 +38,7 @@ WHERE key = @key AND etag = @expected_etag;";
 
     internal async Task<string> SetStateAsync<TState>(string key, TState data, string? expectedETag)
     {
-        Log.SavingState(_logger, key);
+        Log.SavingState(_logger, key, expectedETag);
 
         var value = JsonSerializer.Serialize(data, _jsonSerializerOptions);
         var newETag = Guid.NewGuid().ToString();
@@ -65,7 +65,7 @@ WHERE key = @key AND etag = @expected_etag;";
         var rows = await cmd.ExecuteNonQueryAsync();
         if (rows != 1)
         {
-            ThrowHelper.NoItemWasUpdated();
+            ThrowHelper.ETagMismatch(expectedETag);
             return null;
         }
         return newETag;
@@ -93,7 +93,7 @@ WHERE key = @key AND etag = @expected_etag;";
 
     internal async Task RemoveStateAsync(string key, string? expectedETag)
     {
-        Log.DeletingState(_logger, key);
+        Log.DeletingState(_logger, key, expectedETag);
 
         await using var conn = new NpgsqlConnection(_connectionString);
         await conn.OpenAsync();
@@ -113,32 +113,8 @@ WHERE key = @key AND etag = @expected_etag;";
         var rows = await cmd.ExecuteNonQueryAsync();
         if (rows != 1 && expectedETag is not null)
         {
-            ThrowHelper.NoItemWasUpdated();
+            ThrowHelper.ETagMismatch(expectedETag);
             return;
         }
     }
 }
-
-public static partial class Log
-{
-    [LoggerMessage(
-        Level = LogLevel.Information,
-        Message = "Initialized PostgreSQL state store ({tableName})")]
-    public static partial void StateStoreInitialized(ILogger logger, string tableName);
-
-    [LoggerMessage(
-        Level = LogLevel.Debug,
-        Message = "Saving state({key}) in PostgreSQL")]
-    public static partial void SavingState(ILogger logger, string key);
-
-    [LoggerMessage(
-        Level = LogLevel.Debug,
-        Message = "Getting state({key}) from PostgreSQL")]
-    public static partial void GettingState(ILogger logger, string key);
-
-    [LoggerMessage(
-        Level = LogLevel.Debug,
-        Message = "Deleting state({key}) from PostgreSQL")]
-    public static partial void DeletingState(ILogger logger, string key);
-}
-

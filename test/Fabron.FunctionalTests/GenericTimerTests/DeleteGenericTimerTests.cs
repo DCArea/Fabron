@@ -29,4 +29,27 @@ public class DeleteGenericTimerTests : TestBase
         Assert.Empty(ticker.RecentDispatches);
     }
 
+    [Fact]
+    public async Task ScheduleAfterDeletion()
+    {
+        var key = $"{nameof(DeleteGenericTimerTests)}.{nameof(ScheduleAfterDeletion)}";
+        await Client.ScheduleGenericTimer(
+            key,
+            "",
+            DateTimeOffset.UtcNow.AddMonths(1)
+        );
+
+        await Client.DeleteGenericTimer(key);
+        var timer = await Client.GetGenericTimer(key);
+        Assert.Null(timer);
+
+        await Client.ScheduleGenericTimer(
+            key,
+            "",
+            DateTimeOffset.UtcNow.AddMonths(1)
+        );
+
+        timer = await Client.GetGenericTimer(key);
+        Assert.NotNull(timer);
+    }
 }

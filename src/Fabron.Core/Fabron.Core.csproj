@@ -12,9 +12,9 @@
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Diagnostics" />
     <PackageReference Include="Cronos" />
-    <PackageReference Include="Microsoft.Orleans.Sdk" />
     <PackageReference Include="Microsoft.Orleans.Reminders" />
     <PackageReference Include="InstrumentAggregators" />
+    <PackageReference Include="Microsoft.Orleans.Sdk" />
   </ItemGroup>
 
 </Project>

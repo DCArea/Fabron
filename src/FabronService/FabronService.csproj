@@ -11,7 +11,7 @@
     <PackageReference Include="DCA.DotNet.Extensions.Logging" />-->
     <PackageReference Include="Npgsql" />
     <PackageReference Include="Npgsql.OpenTelemetry" />
-    <PackageReference Include="Microsoft.Orleans.SDK" />
+    <PackageReference Include="Microsoft.Orleans.Sdk" />
     <PackageReference Include="Microsoft.Orleans.Hosting.Kubernetes" />
     <PackageReference Include="Swashbuckle.AspNetCore" />
     <PackageReference Include="OpenTelemetry" />

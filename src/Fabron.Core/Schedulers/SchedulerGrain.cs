@@ -66,6 +66,7 @@ public abstract class SchedulerGrain<TState> : IRemindable
             await _store.RemoveAsync(_state.Metadata.Key, _eTag);
             await StopTicker();
             _state = null;
+            _eTag = null;
             RecentDispatches.Clear();
         }
     }

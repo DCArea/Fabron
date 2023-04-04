@@ -31,7 +31,7 @@
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="7.0.1" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="$(MExVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="$(MExVersion)" />
-    <PackageVersion Include="Microsoft.Orleans.SDK" Version="$(OrleansVersion)" />
+    <PackageVersion Include="Microsoft.Orleans.SDK" Version="7.1.1" />
     <PackageVersion Include="Microsoft.Orleans.Reminders.AdoNet" Version="$(OrleansVersion)" />
     <PackageVersion Include="Microsoft.Orleans.Clustering.AdoNet" Version="$(OrleansVersion)" />
     <PackageVersion Include="Microsoft.Orleans.TestingHost" Version="$(OrleansVersion)" />
