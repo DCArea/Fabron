@@ -50,24 +50,11 @@ public class CronScheduler : SchedulerGrain<CronTimer>, IGrainBase, ICronSchedul
         _eTag = entry?.ETag;
     }
 
-    public async Task Start()
-    {
-        await StartTicker();
-    }
+    public Task Start() => StartTicker();
 
-    public async Task Stop()
-    {
-        await StopTicker();
-    }
+    public Task Stop() => StopTicker();
 
-    public async Task Delete()
-    {
-        if (_state is not null)
-        {
-            await _store.RemoveAsync(_state.Metadata.Key, _eTag);
-            await StopTicker();
-        }
-    }
+    public Task Delete() => DeleteInternal();
 
     public ValueTask<CronTimer?> GetState() => new(_state);
 

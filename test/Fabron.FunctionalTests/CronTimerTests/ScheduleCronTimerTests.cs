@@ -3,7 +3,6 @@ using Xunit.Abstractions;
 
 namespace Fabron.FunctionalTests.CronTimerTests;
 
-public record TimerData(string Foo);
 public class ScheduleCronTimerTests : TestBase
 {
     public ScheduleCronTimerTests(DefaultClusterFixture fixture, ITestOutputHelper output) : base(fixture, output)

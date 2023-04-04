@@ -48,24 +48,11 @@ public class PeriodicScheduler : SchedulerGrain<Models.PeriodicTimer>, IGrainBas
         _eTag = entry?.ETag;
     }
 
-    public async Task Start()
-    {
-        await StartTicker();
-    }
+    public Task Start() => StartTicker();
 
-    public async Task Stop()
-    {
-        await StopTicker();
-    }
+    public Task Stop() => StopTicker();
 
-    public async Task Delete()
-    {
-        if (_state is not null)
-        {
-            await _store.RemoveAsync(_state.Metadata.Key, _eTag);
-            await StopTicker();
-        }
-    }
+    public Task Delete() => DeleteInternal();
 
     public ValueTask<Models.PeriodicTimer?> GetState() => new(_state);
 

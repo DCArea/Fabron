@@ -49,25 +49,11 @@ public partial class GenericScheduler : SchedulerGrain<GenericTimer>, IGrainBase
         _eTag = entry?.ETag;
     }
 
-    public async Task Start()
-    {
-        await StartTicker();
-    }
+    public Task Start() => StartTicker();
 
+    public Task Stop() => StopTicker();
 
-    public async Task Stop()
-    {
-        await StopTicker();
-    }
-
-    public async Task Delete()
-    {
-        if (_state is not null)
-        {
-            await _store.RemoveAsync(_state.Metadata.Key, _eTag);
-            await StopTicker();
-        }
-    }
+    public Task Delete() => DeleteInternal();
 
     public ValueTask<GenericTimer?> GetState() => ValueTask.FromResult(_state);
 

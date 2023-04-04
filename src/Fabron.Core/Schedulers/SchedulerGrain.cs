@@ -59,6 +59,17 @@ public abstract class SchedulerGrain<TState> : IRemindable
         TickerLog.TickerRegistered(_logger, _key, dueTime);
     }
 
+    protected async Task DeleteInternal()
+    {
+        if (_state is not null)
+        {
+            await _store.RemoveAsync(_state.Metadata.Key, _eTag);
+            await StopTicker();
+            _state = null;
+            RecentDispatches.Clear();
+        }
+    }
+
     protected async Task StopTicker()
     {
         var retry = 0;
