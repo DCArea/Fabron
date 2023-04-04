@@ -19,28 +19,9 @@ public class SchedulePeriodicTimerTests : TestBase
             TimeSpan.FromMinutes(1)
         );
 
-        var timer = await Client.GetGenericTimer(key);
-
+        var timer = await Client.GetPeriodicTimer(key);
         Assert.NotNull(timer);
         Assert.Equal("Bar", timer!.Data);
-    }
-
-    [Fact]
-    public async Task DeleteTimer()
-    {
-        var key = $"{nameof(SchedulePeriodicTimerTests)}.{nameof(DeleteTimer)}";
-        await Client.ScheduleGenericTimer(
-            key,
-            "",
-            DateTimeOffset.UtcNow.AddMonths(1)
-        );
-
-        var timer = await Client.GetGenericTimer(key);
-        Assert.NotNull(timer);
-
-        await Client.DeleteGenericTimer(key);
-        timer = await Client.GetGenericTimer(key);
-        Assert.Null(timer);
     }
 
 }
