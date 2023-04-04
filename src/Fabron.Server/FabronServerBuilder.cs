@@ -56,9 +56,9 @@ public class FabronServerBuilder
     {
         HostBuilder.ConfigureServices((context, services) =>
         {
-            services.AddScoped<IGenericTimerStore, InMemoryGenericTimerStore>();
-            services.AddScoped<ICronTimerStore, InMemoryCronTimerStore>();
-            services.AddScoped<IPeriodicTimerStore, InMemoryPeriodicTimerStore>();
+            services.AddSingleton<IGenericTimerStore, InMemoryGenericTimerStore>();
+            services.AddSingleton<ICronTimerStore, InMemoryCronTimerStore>();
+            services.AddSingleton<IPeriodicTimerStore, InMemoryPeriodicTimerStore>();
         });
 
         ConfigureOrleans((context, siloBuilder) =>

@@ -35,7 +35,7 @@ public class FabronClient : IFabronClient
         => _client.GetGrain<IGenericScheduler>(key).Stop();
 
     public Task DeleteGenericTimer(string key)
-        => _client.GetGrain<IGenericScheduler>(key).Stop();
+        => _client.GetGrain<IGenericScheduler>(key).Delete();
 
     public async Task<GenericTimer?> GetGenericTimer(string key)
         => await _client.GetGrain<IGenericScheduler>(key).GetState();

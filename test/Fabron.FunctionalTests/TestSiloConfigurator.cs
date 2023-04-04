@@ -1,4 +1,4 @@
-using Fabron.Dispatching;
+﻿using Fabron.Dispatching;
 using Fabron.Schedulers;
 using Fabron.Stores;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,9 +26,9 @@ namespace Fabron.FunctionalTests
                 .UseInMemoryReminderService();
             siloBuilder.ConfigureServices(services =>
             {
-                services.AddScoped<IGenericTimerStore, InMemoryGenericTimerStore>();
-                services.AddScoped<ICronTimerStore, InMemoryCronTimerStore>();
-                services.AddScoped<IPeriodicTimerStore, InMemoryPeriodicTimerStore>();
+                services.AddSingleton<IGenericTimerStore, InMemoryGenericTimerStore>();
+                services.AddSingleton<ICronTimerStore, InMemoryCronTimerStore>();
+                services.AddSingleton<IPeriodicTimerStore, InMemoryPeriodicTimerStore>();
                 services.AddSingleton<IFireDispatcher, FireDispatcher>();
                 services.AddSingleton<ISystemClock, SystemClock>();
             });
