@@ -10,9 +10,10 @@ using Orleans.Timers;
 
 namespace Fabron.Schedulers;
 
-public abstract class SchedulerGrain<TState> : IRemindable
+internal abstract class SchedulerGrain<TState> : IRemindable
     where TState : class, IDistributedTimer
 {
+    private static readonly TimeSpan MaxSupportedTimeout = TimeSpan.FromDays(49);
     protected readonly ILogger _logger;
     protected readonly ISystemClock _clock;
     private readonly SchedulerOptions _options;
@@ -45,18 +46,33 @@ public abstract class SchedulerGrain<TState> : IRemindable
     protected TState? _state = default!;
     protected string? _eTag = default!;
     private IGrainReminder? _tickReminder;
-    protected Queue<DateTimeOffset> RecentDispatches { get; } = new(20);
+    //protected Queue<DateTimeOffset> RecentDispatches { get; } = new(20);
 
     internal abstract Task Tick(DateTimeOffset expectedTickTime);
 
-    protected async Task TickAfter(TimeSpan dueTime)
+    protected async Task TickAfter(DateTimeOffset now, DateTimeOffset tickTime, bool isIntermediary = false)
     {
+        // should not happened
+        TimeSpan dueTime = tickTime - now;
         if (dueTime < TimeSpan.Zero)
         {
             dueTime = TimeSpan.Zero;
         }
+
+        if (dueTime > MaxSupportedTimeout)
+        {
+            dueTime = MaxSupportedTimeout;
+        }
+
         _tickReminder = await _reminderRegistry.RegisterOrUpdateReminder(GrainContext.GrainId, Names.TickerReminder, dueTime, _options.TickerInterval);
         TickerLog.TickerRegistered(_logger, _key, dueTime);
+
+        if (!isIntermediary && _state is not null)
+        {
+            _state.Status.StartedAt = now;
+            _state.Status.NextTick = tickTime;
+            _eTag = await _store.SetAsync(_state, _eTag);
+        }
     }
 
     protected async Task DeleteInternal()
@@ -67,7 +83,6 @@ public abstract class SchedulerGrain<TState> : IRemindable
             await StopTicker();
             _state = null;
             _eTag = null;
-            RecentDispatches.Clear();
         }
     }
 
@@ -86,6 +101,7 @@ public abstract class SchedulerGrain<TState> : IRemindable
             {
                 await _reminderRegistry.UnregisterReminder(GrainContext.GrainId, _tickReminder);
                 _tickReminder = null;
+
                 TickerLog.TickerDisposed(_logger, _key);
                 _runtime.DeactivateOnIdle(GrainContext);
                 break;
@@ -106,25 +122,21 @@ public abstract class SchedulerGrain<TState> : IRemindable
                 return;
             }
         }
-    }
 
-    public async Task<TickerStatus> GetTickerStatus()
-    {
-        var reminderTable = _runtime.ServiceProvider.GetRequiredService<IReminderTable>();
-        var entry = await reminderTable.ReadRow(GrainContext.GrainId, Names.TickerReminder);
-        return new TickerStatus
+        if (_state is not null)
         {
-            NextTick = entry?.StartAt,
-            RecentDispatches = RecentDispatches.ToList()
-        };
+            _state.Status.StartedAt = null;
+            _state.Status.NextTick = null;
+        }
     }
 
     protected void RecordTick(DateTimeOffset tickTime)
     {
-        RecentDispatches.Enqueue(tickTime);
-        if (RecentDispatches.Count > 20)
+        var recentTicks = _state!.Status.RecentTicks;
+        recentTicks.Enqueue(tickTime);
+        if (recentTicks.Count > 20)
         {
-            RecentDispatches.Dequeue();
+            recentTicks.Dequeue();
         }
     }
 
@@ -155,6 +167,16 @@ public abstract class SchedulerGrain<TState> : IRemindable
         _tickReminder ??= await _reminderRegistry.GetReminder(GrainContext.GrainId, Names.TickerReminder);
 
         using var activity = Telemetry.OnTicking();
+        if (_state is not null)
+        {
+            var utcNow = _clock.UtcNow;
+            var nextTick = _state.Status.NextTick;
+            if (nextTick.HasValue && utcNow < nextTick.Value) // re-ticking
+            {
+                await TickAfter(utcNow, nextTick.Value, true);
+                return;
+            }
+        }
         await Tick(status.FirstTickTime);
     }
 }

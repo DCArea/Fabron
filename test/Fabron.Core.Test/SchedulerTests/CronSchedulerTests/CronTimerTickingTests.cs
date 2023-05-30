@@ -17,14 +17,14 @@ namespace Fabron.Core.Test.SchedulerTests.CronSchedulerTests;
 
 public class CronTimerTickingTests
 {
-    private Fakes PrepareGrain(string? schedule = null, [CallerMemberName] string key = "Default")
+    private CronFakes PrepareGrain(string? schedule = null, [CallerMemberName] string key = "Default")
     {
         var clock = new FakeSystemClock();
         var reminderRegistry = new FakeReminderRegistry();
         var timerRegistry = new FakeTimerRegistry();
         var context = A.Fake<IGrainContext>();
         var runtime = A.Fake<IGrainRuntime>();
-        var store = A.Fake<ICronTimerStore>();
+        var store = new InMemoryCronTimerStore();
         A.CallTo(() => context.GrainId)
             .Returns(GrainId.Create(nameof(CronScheduler), key));
         A.CallTo(() => context.ActivationServices.GetService(typeof(IReminderRegistry))).Returns(reminderRegistry);
@@ -49,7 +49,8 @@ public class CronTimerTickingTests
                     ExpirationTime: null
                 )
             );
-            A.CallTo(() => store.GetAsync(key)).Returns(Task.FromResult<StateEntry<CronTimer>?>(new(state, "0")));
+
+            store.SetAsync(state, Guid.NewGuid().ToString()).GetAwaiter().GetResult();
         }
 
         var grain = new CronScheduler(
@@ -95,6 +96,26 @@ public class CronTimerTickingTests
         timerRegistry.Timers[0].DueTime.Should().Be(TimeSpan.Zero);
     }
 
+
+    [Fact]
+    public async Task Schedule_June1st()
+    {
+        // "0 0 0 1 6 *"
+        var (scheduler, timerRegistry, reminderRegistry, clock, store) = PrepareGrain();
+        clock.UtcNow = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero);
+        await (scheduler as IGrainBase).OnActivateAsync(default);
+        await scheduler.Schedule(
+            JsonSerializer.Serialize(new { data = new { foo = "bar" } }),
+            new CronTimerSpec("0 0 0 1 6 *"),
+            null,
+            new());
+
+        var reminder = reminderRegistry.Reminders.Single().Value;
+        reminder.DueTime.Should().Be(TimeSpan.FromDays(49));
+        var entry = await store.GetAsync(scheduler.GetPrimaryKeyString());
+        entry!.State.Status.NextTick.Should().Be(new DateTimeOffset(2020, 6, 1, 0, 0, 0, default));
+    }
+
     [Fact]
     public async Task ShouldRegisterNextTickOnSchedule()
     {
@@ -133,7 +154,7 @@ public class CronTimerTickingTests
 
 }
 
-internal record Fakes(
+internal record CronFakes(
     CronScheduler scheduler,
     FakeTimerRegistry timerRegistry,
     FakeReminderRegistry reminderRegistry,

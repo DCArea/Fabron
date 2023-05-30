@@ -6,7 +6,7 @@ public record PeriodicTimer(
     ScheduleMetadata Metadata,
     PeriodicTimerSpec Spec,
     string? Data
-) : DistributedTimer<PeriodicTimerSpec>(Metadata, Spec, Data);
+) : DistributedTimer<PeriodicTimerSpec>(Metadata, Spec, Data, new());
 
 [GenerateSerializer]
 [Immutable]

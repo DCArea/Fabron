@@ -1,36 +1,65 @@
 # Fabron
 
-This is a simple background job scheduler built on top of Project Orleans.
+This is a distributed timer built on top of Project Orleans.
 
-It would be:
-1) naturally scalable - supported by Orleans' distributed runtime
-2) simple enough, the code should be easy to understand
-3) performance - high throughput & high efficiency
-4) reliable
+### How to use it
 
-#### What is it for
-It can be used to schedule and execute various sorts of background jobs, for example:
-1. Sending a daily newsletter to customers
-2. Generate a finance report on every Sunday
-3. Give users gift cards on their birthdays
-4. Or any other tasks that you need to run it on background
+There are 3 types of timers:
+* GenericTimer: fire once at the certain time.
+* PeriodicTimer: fire repeatly with a time span. 
+* CronTimer: fire by following a cron schedule
 
-#### Current Status
-It's still a side project and I have few ambitions on it, although it already has some small functions like 1) scheduling transient/batch/cron jobs 2) a simple built-in job command & handler to request web APIs.
 
-##### Work Items
-- [ ]  Job Reporter (The job states are managed by Orleans' storage which are not friendly for querying and analyzing)
-- [x]  Monitor/Dashboard (It's a necessity for a job scheduler)
-- [ ]  More built-in job commands (Like sending email/SMS messages, triggering Azure Functions, etc.)
-- [ ]  Make it more reliable (Retry on fails, Callback for job result, etc.)
-- [ ]  Make it more generic/usable (Publish core stuff as NuGet packages, pack it as docker image or helm chart, make it more configurable, etc.)
-- [x]  CI/CD
-- [ ]  Documentation
+#### Define a fire router
 
-Feel free to fork/clone/copy all the code, but do not use it in production directly, it's not tested
+```csharp
+public class AnnotationBasedFireRouter : IFireRouter
+{
+    private readonly IHttpDestinationHandler _http;
 
-#### How to use it
-TBD
+    public AnnotationBasedFireRouter(IHttpDestinationHandler http) => _http = http;
 
-#### Design Details
+    public bool Matches(FireEnvelop envelop)
+    {
+        var extensions = envelop.Extensions;
+        return extensions.ContainsKey("routing.fabron.io/destination");
+    }
+
+    public Task DispatchAsync(FireEnvelop envelop)
+    {
+        var destination = envelop.Extensions["routing.fabron.io/destination"];
+        Guard.IsNotEmpty(destination, nameof(destination));
+        return destination.StartsWith("http")
+            ? _http.SendAsync(new Uri(destination), envelop)
+            : ThrowHelper.ThrowArgumentOutOfRangeException<Task>(nameof(destination));
+    }
+}
+```
+
+#### Configure the server
+
+```csharp
+
+var server = builder.Host.UseFabronServer()
+    .AddFireRouter<DefaultFireRouter>();
+var client = builder.Host.UseFabronClient(cohosted: true);
+
+server
+    .ConfigureOrleans((ctx, siloBuilder) =>
+    {
+        // configure internal orleans server
+    })
+```
+
+#### Schedule a timer
+
+```csharp
+await client.ScheduleCronTimer(
+    "A_Timer_Key",
+    new { SomeData = "To be delivered at firing" },
+    "0 0 7 * * *", // 7AM every day
+    extensions: new(){ { "callback_url": "http://call_this_url_at_firing" } });
+```
+
+### Design Details
 TBD

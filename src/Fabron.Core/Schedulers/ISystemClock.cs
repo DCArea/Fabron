@@ -1,9 +1,9 @@
-namespace Fabron.Schedulers;
+﻿namespace Fabron.Schedulers;
 
 /// <summary>
 /// Abstracts the system clock to facilitate testing.
 /// </summary>
-public interface ISystemClock
+internal interface ISystemClock
 {
     /// <summary>
     /// Retrieves the current system time in UTC.
@@ -11,7 +11,7 @@ public interface ISystemClock
     DateTimeOffset UtcNow { get; }
 }
 
-public class SystemClock : ISystemClock
+internal class SystemClock : ISystemClock
 {
     /// <summary>
     /// Retrieves the current system time in UTC.

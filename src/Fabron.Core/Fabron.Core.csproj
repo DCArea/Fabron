@@ -16,4 +16,10 @@
     <PackageReference Include="Microsoft.Orleans.Sdk" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Fabron.Core.Tests" />
+    <InternalsVisibleTo Include="Fabron.FunctionalTests" />
+  </ItemGroup>
+
+
 </Project>

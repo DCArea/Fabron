@@ -9,13 +9,10 @@ using Orleans.Runtime;
 
 namespace Fabron.Schedulers;
 
-public interface IPeriodicScheduler : IGrainWithStringKey
+internal interface IPeriodicScheduler : IGrainWithStringKey
 {
     [ReadOnly]
     ValueTask<Models.PeriodicTimer?> GetState();
-
-    [ReadOnly]
-    Task<TickerStatus> GetTickerStatus();
 
     Task<Models.PeriodicTimer> Schedule(
         string? data,
@@ -29,7 +26,7 @@ public interface IPeriodicScheduler : IGrainWithStringKey
     Task Delete();
 }
 
-public class PeriodicScheduler : SchedulerGrain<Models.PeriodicTimer>, IGrainBase, IPeriodicScheduler
+internal class PeriodicScheduler : SchedulerGrain<Models.PeriodicTimer>, IGrainBase, IPeriodicScheduler
 {
     public PeriodicScheduler(
         IGrainContext context,
@@ -42,7 +39,7 @@ public class PeriodicScheduler : SchedulerGrain<Models.PeriodicTimer>, IGrainBas
 
     async Task IGrainBase.OnActivateAsync(CancellationToken cancellationToken)
     {
-        _key = GrainContext.GrainReference.GetPrimaryKeyString();
+        _key = this.GetPrimaryKeyString();
         var entry = await _store.GetAsync(_key);
         _state = entry?.State;
         _eTag = entry?.ETag;
@@ -114,7 +111,7 @@ public class PeriodicScheduler : SchedulerGrain<Models.PeriodicTimer>, IGrainBas
         if (_state.Spec.NotBefore.HasValue && now < _state.Spec.NotBefore.Value)
         {
             TickerLog.UnexpectedTick(_logger, _key, expectedTickTime, "NotStarted");
-            await TickAfter(_state.Spec.NotBefore.Value.Subtract(now));
+            await TickAfter(now, _state.Spec.NotBefore.Value);
             return;
         }
 
@@ -130,7 +127,7 @@ public class PeriodicScheduler : SchedulerGrain<Models.PeriodicTimer>, IGrainBas
             await StopTicker();
             return;
         }
-        await TickAfter(nextTick.Subtract(now));
+        await TickAfter(now, nextTick);
     }
 
     private DateTimeOffset Dispatch(DateTimeOffset now, DateTimeOffset to)

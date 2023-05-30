@@ -6,7 +6,7 @@ public record GenericTimer(
     ScheduleMetadata Metadata,
     GenericTimerSpec Spec,
     string? Data
-) : DistributedTimer<GenericTimerSpec>(Metadata, Spec, Data);
+) : DistributedTimer<GenericTimerSpec>(Metadata, Spec, Data, new());
 
 [GenerateSerializer]
 [Immutable]

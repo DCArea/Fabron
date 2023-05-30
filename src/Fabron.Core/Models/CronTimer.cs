@@ -6,7 +6,7 @@ public record CronTimer(
     ScheduleMetadata Metadata,
     CronTimerSpec Spec,
     string? Data
-    ) : DistributedTimer<CronTimerSpec>(Metadata, Spec, Data);
+    ) : DistributedTimer<CronTimerSpec>(Metadata, Spec, Data, new());
 
 [GenerateSerializer]
 [Immutable]

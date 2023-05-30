@@ -10,7 +10,6 @@ public static partial class Routes
         group.MapPut("{key}", PeriodicTimerApis.Schedule);
         group.MapGet("{key}", PeriodicTimerApis.Get);
         group.MapDelete("{key}", PeriodicTimerApis.Delete);
-        group.MapGet("{key}/ticker/status", PeriodicTimerApis.GetTickerStatus);
         return route;
     }
 }

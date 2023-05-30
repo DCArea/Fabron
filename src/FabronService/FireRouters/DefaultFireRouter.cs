@@ -3,11 +3,11 @@ using Fabron.Dispatching;
 
 namespace FabronService.FireRouters;
 
-public class AnnotationBasedFireRouter : IFireRouter
+public class DefaultFireRouter : IFireRouter
 {
     private readonly IHttpDestinationHandler _http;
 
-    public AnnotationBasedFireRouter(IHttpDestinationHandler http) => _http = http;
+    public DefaultFireRouter(IHttpDestinationHandler http) => _http = http;
 
     public bool Matches(FireEnvelop envelop)
     {

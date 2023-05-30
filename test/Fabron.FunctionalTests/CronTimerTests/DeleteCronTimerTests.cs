@@ -25,8 +25,5 @@ public class DeleteCronTimerTests : TestBase
 
         timer = await Client.GetCronTimer(key);
         Assert.Null(timer);
-        var ticker = await Client.GetCronTimerTickerStatus(key);
-        Assert.Null(ticker.NextTick);
-        Assert.Empty(ticker.RecentDispatches);
     }
 }

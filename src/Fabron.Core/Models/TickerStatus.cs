@@ -1,12 +1,15 @@
-namespace Fabron.Models;
+﻿namespace Fabron.Models;
 
 [GenerateSerializer]
 [Immutable]
 public class TickerStatus
 {
     [Id(0)]
-    public DateTime? NextTick { get; set; }
+    public DateTimeOffset? StartedAt { get; set; }
 
     [Id(1)]
-    public List<DateTimeOffset> RecentDispatches { get; set; } = new();
+    public DateTimeOffset? NextTick { get; set; }
+
+    [Id(1)]
+    public Queue<DateTimeOffset> RecentTicks { get; set; } = new();
 }

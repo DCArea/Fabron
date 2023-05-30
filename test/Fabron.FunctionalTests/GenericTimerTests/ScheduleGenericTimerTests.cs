@@ -25,4 +25,19 @@ public class ScheduleGenericTimerTests : TestBase
         Assert.Equal("Bar", timer!.Data);
     }
 
+    [Fact]
+    public async Task Schedule50Days()
+    {
+        var key = $"{nameof(ScheduleGenericTimerTests)}.{nameof(ScheduleAndGet)}";
+        await Client.ScheduleGenericTimer(
+            key,
+            "Bar",
+            DateTimeOffset.UtcNow.AddDays(50)
+        );
+
+        var timer = await Client.GetGenericTimer(key);
+
+        Assert.NotNull(timer);
+        Assert.Equal("Bar", timer!.Data);
+    }
 }

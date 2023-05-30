@@ -10,11 +10,8 @@ using Orleans.Runtime;
 
 namespace Fabron.Schedulers;
 
-public interface IGenericScheduler : IGrainWithStringKey
+internal interface IGenericScheduler : IGrainWithStringKey
 {
-    [ReadOnly]
-    Task<TickerStatus> GetTickerStatus();
-
     [ReadOnly]
     ValueTask<GenericTimer?> GetState();
 
@@ -30,7 +27,7 @@ public interface IGenericScheduler : IGrainWithStringKey
     Task Delete();
 }
 
-public partial class GenericScheduler : SchedulerGrain<GenericTimer>, IGrainBase, IGenericScheduler
+internal partial class GenericScheduler : SchedulerGrain<GenericTimer>, IGrainBase, IGenericScheduler
 {
     public GenericScheduler(
         IGrainContext context,
@@ -43,7 +40,7 @@ public partial class GenericScheduler : SchedulerGrain<GenericTimer>, IGrainBase
 
     async Task IGrainBase.OnActivateAsync(CancellationToken cancellationToken)
     {
-        _key = GrainContext.GrainReference.GetPrimaryKeyString();
+        _key = this.GetPrimaryKeyString();
         var entry = await _store.GetAsync(_key);
         _state = entry?.State;
         _eTag = entry?.ETag;
@@ -96,7 +93,7 @@ public partial class GenericScheduler : SchedulerGrain<GenericTimer>, IGrainBase
         }
         else
         {
-            return TickAfter(schedule_ - utcNow);
+            return TickAfter(utcNow, schedule_);
         }
     }
 

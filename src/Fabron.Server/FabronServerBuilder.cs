@@ -70,13 +70,19 @@ public class FabronServerBuilder
         return this;
     }
 
-    public FabronServerBuilder AddSimpleFireRouter(Action<SimpleFireRouterOptions> configure)
+    public FabronServerBuilder AddFireRouter<TFireRouter>() where TFireRouter : class, IFireRouter
     {
         HostBuilder.ConfigureServices((context, services) =>
         {
-            services.AddSingleton<IFireRouter, SimpleFireRouter>();
-            services.Configure(configure);
+            services.AddSingleton<IFireRouter, TFireRouter>();
         });
+        return this;
+    }
+
+    public FabronServerBuilder AddSimpleFireRouter(Action<SimpleFireRouterOptions> configure)
+    {
+        AddFireRouter<SimpleFireRouter>();
+        HostBuilder.ConfigureServices((context, services) => services.Configure(configure));
         return this;
     }
 }

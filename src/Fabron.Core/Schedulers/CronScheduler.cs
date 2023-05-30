@@ -9,13 +9,10 @@ using Orleans.Runtime;
 
 namespace Fabron.Schedulers;
 
-public interface ICronScheduler : IGrainWithStringKey
+internal interface ICronScheduler : IGrainWithStringKey
 {
     [ReadOnly]
     ValueTask<CronTimer?> GetState();
-
-    [ReadOnly]
-    Task<TickerStatus> GetTickerStatus();
 
     Task<CronTimer> Schedule(
         string? data,
@@ -29,7 +26,7 @@ public interface ICronScheduler : IGrainWithStringKey
     Task Delete();
 }
 
-public class CronScheduler : SchedulerGrain<CronTimer>, IGrainBase, ICronScheduler
+internal class CronScheduler : SchedulerGrain<CronTimer>, IGrainBase, ICronScheduler
 {
     private readonly SchedulerOptions _options;
 
@@ -120,7 +117,7 @@ public class CronScheduler : SchedulerGrain<CronTimer>, IGrainBase, ICronSchedul
         if (_state.Spec.NotBefore.HasValue && now < _state.Spec.NotBefore.Value)
         {
             TickerLog.UnexpectedTick(_logger, _key, expectedTickTime, "NotStarted");
-            await TickAfter(_state.Spec.NotBefore.Value.Subtract(now));
+            await TickAfter(now, _state.Spec.NotBefore.Value);
             return;
         }
 
@@ -155,7 +152,7 @@ public class CronScheduler : SchedulerGrain<CronTimer>, IGrainBase, ICronSchedul
         }
         else
         {
-            await TickAfter(nextTick.Value.Subtract(now));
+            await TickAfter(now, nextTick.Value);
         }
     }
 

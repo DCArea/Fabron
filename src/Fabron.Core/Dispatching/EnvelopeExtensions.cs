@@ -2,7 +2,7 @@
 
 namespace Fabron.Dispatching;
 
-public static class EnvelopeExtensions
+internal static class EnvelopeExtensions
 {
     public static FireEnvelop ToEnvelop(this Models.PeriodicTimer timer, DateTimeOffset schedule)
     {

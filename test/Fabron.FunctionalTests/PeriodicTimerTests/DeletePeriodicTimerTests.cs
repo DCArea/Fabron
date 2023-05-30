@@ -24,8 +24,5 @@ public class DeletePeriodicTimerTests : TestBase
         await Client.DeletePeriodicTimer(key);
         timer = await Client.GetPeriodicTimer(key);
         Assert.Null(timer);
-        var ticker = await Client.GetPeriodicTimerTickerStatus(key);
-        Assert.Null(ticker.NextTick);
-        Assert.Empty(ticker.RecentDispatches);
     }
 }

@@ -12,9 +12,9 @@ public static class FabronConfigureExtensions
     {
         builder.Services.AddHttpClient();
         builder.Services.Configure<SchedulerOptions>(options => options.CronFormat = Cronos.CronFormat.IncludeSeconds);
-        builder.Services.AddSingleton<IFireRouter, AnnotationBasedFireRouter>();
         builder.Services.AddSingleton<IHttpDestinationHandler, HttpDestinationHandler>();
-        var server = builder.Host.UseFabronServer();
+        var server = builder.Host.UseFabronServer()
+            .AddFireRouter<DefaultFireRouter>();
         var client = builder.Host.UseFabronClient(cohosted: true);
 
         if (builder.Environment.IsDevelopment())

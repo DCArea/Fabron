@@ -24,9 +24,6 @@ public class DeleteGenericTimerTests : TestBase
         await Client.DeleteGenericTimer(key);
         timer = await Client.GetGenericTimer(key);
         Assert.Null(timer);
-        var ticker = await Client.GetGenericTimerTickerStatus(key);
-        Assert.Null(ticker.NextTick);
-        Assert.Empty(ticker.RecentDispatches);
     }
 
     [Fact]

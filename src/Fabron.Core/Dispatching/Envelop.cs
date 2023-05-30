@@ -4,6 +4,13 @@ using System.Text.Json.Serialization;
 
 namespace Fabron.Dispatching;
 
+/// <summary>
+/// Fire envelop
+/// </summary>
+/// <param name="Source">Fire source</param>
+/// <param name="Time">Fire time</param>
+/// <param name="Data">Timer data</param>
+/// <param name="Extensions">Timer extensions</param>
 public record FireEnvelop(
     [property: JsonPropertyName("source")]
     string Source,

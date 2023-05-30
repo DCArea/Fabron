@@ -21,6 +21,6 @@ public class TestBase : IClassFixture<DefaultClusterFixture>
 
     public IFabronClient Client => _fixture.Client.ServiceProvider.GetRequiredService<IFabronClient>();
 
-    public Mock<ISystemClock> SystemClockMock => Mock.Get(_fixture.Client.ServiceProvider.GetRequiredService<ISystemClock>());
+    internal Mock<ISystemClock> SystemClockMock => Mock.Get(_fixture.Client.ServiceProvider.GetRequiredService<ISystemClock>());
 
 }

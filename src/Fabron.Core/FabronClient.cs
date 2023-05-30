@@ -40,9 +40,6 @@ public class FabronClient : IFabronClient
     public async Task<GenericTimer?> GetGenericTimer(string key)
         => await _client.GetGrain<IGenericScheduler>(key).GetState();
 
-    public Task<TickerStatus> GetGenericTimerTickerStatus(string key)
-        => _client.GetGrain<IGenericScheduler>(key).GetTickerStatus();
-
     public async Task ScheduleCronTimer(
         string key,
         string? data,
@@ -63,9 +60,6 @@ public class FabronClient : IFabronClient
 
     public async Task<CronTimer?> GetCronTimer(string key)
         => await _client.GetGrain<ICronScheduler>(key).GetState();
-
-    public Task<TickerStatus> GetCronTimerTickerStatus(string key)
-        => _client.GetGrain<ICronScheduler>(key).GetTickerStatus();
 
     public Task StartCronTimer(string key)
         => _client.GetGrain<ICronScheduler>(key).Start();
@@ -96,9 +90,6 @@ public class FabronClient : IFabronClient
 
     public async Task<Models.PeriodicTimer?> GetPeriodicTimer(string key)
         => await _client.GetGrain<IPeriodicScheduler>(key).GetState();
-
-    public Task<TickerStatus> GetPeriodicTimerTickerStatus(string key)
-        => _client.GetGrain<IPeriodicScheduler>(key).GetTickerStatus();
 
     public Task StartPeriodicTimer(string key)
         => _client.GetGrain<IPeriodicScheduler>(key).Start();
