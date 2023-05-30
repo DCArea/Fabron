@@ -13,8 +13,13 @@ public static partial class TickerLog
 
     [LoggerMessage(
         Level = LogLevel.Information,
-        Message = "[{key}]: Ticker registered at {tickTime}({dueTime})")]
+        Message = "[{key}]: Ticker registered at {tickTime:o}({dueTime})")]
     public static partial void TickerRegistered(ILogger logger, string key, DateTimeOffset tickTime, TimeSpan dueTime);
+
+    [LoggerMessage(
+        Level = LogLevel.Information,
+        Message = "[{key}]: This is an intermediary ticker, target tick time: {nextTick:o}, now: {now:o})")]
+    public static partial void IntermediaryTickerFired(ILogger logger, string key, DateTimeOffset nextTick, DateTimeOffset now);
 
     [LoggerMessage(
         Level = LogLevel.Information,

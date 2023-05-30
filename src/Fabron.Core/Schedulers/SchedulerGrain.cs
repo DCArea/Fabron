@@ -172,6 +172,7 @@ internal abstract class SchedulerGrain<TState> : IRemindable
             var nextTick = _state.Status.NextTick;
             if (nextTick.HasValue && utcNow < nextTick.Value) // re-ticking
             {
+                TickerLog.IntermediaryTickerFired(_logger, _key, nextTick.Value, utcNow);
                 await TickAfter(utcNow, nextTick.Value, true);
                 return;
             }
