@@ -146,7 +146,6 @@ internal class PeriodicScheduler : SchedulerGrain<Models.PeriodicTimer>, IGrainB
                 Timeout.InfiniteTimeSpan);
             TickerLog.TimerSet(_logger, _key, dueTime, nextTick);
             dueTime = dueTime.Add(_state.Spec.Period);
-
             nextTick = now.Add(dueTime);
         }
         return nextTick;
