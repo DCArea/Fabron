@@ -13,8 +13,8 @@ public static partial class TickerLog
 
     [LoggerMessage(
         Level = LogLevel.Information,
-        Message = "[{key}]: Ticker registered with due time: {dueTime}")]
-    public static partial void TickerRegistered(ILogger logger, string key, TimeSpan dueTime);
+        Message = "[{key}]: Ticker registered at {tickTime}({dueTime})")]
+    public static partial void TickerRegistered(ILogger logger, string key, DateTimeOffset tickTime, TimeSpan dueTime);
 
     [LoggerMessage(
         Level = LogLevel.Information,
@@ -50,4 +50,10 @@ public static partial class TickerLog
         Level = LogLevel.Warning,
         Message = "[{key}]: Unregister reminder failed, retry")]
     public static partial void RetryUnregisterReminder(ILogger logger, string key);
+
+    [LoggerMessage(
+        Level = LogLevel.Debug,
+        Message = "[{key}]: Timer set {dueTime}, {runTime:o}")]
+    public static partial void TimerSet(ILogger logger, string key, TimeSpan dueTime, DateTimeOffset runTime);
+
 }

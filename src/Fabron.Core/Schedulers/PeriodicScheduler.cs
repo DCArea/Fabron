@@ -133,11 +133,11 @@ internal class PeriodicScheduler : SchedulerGrain<Models.PeriodicTimer>, IGrainB
     private DateTimeOffset Dispatch(DateTimeOffset now, DateTimeOffset to)
     {
         Guard.IsNotNull(_state, nameof(_state));
-        var schedule = now;
+        var nextTick = now;
         var dueTime = TimeSpan.Zero;
-        while (schedule < to)
+        while (nextTick < to)
         {
-            var envelop = _state.ToEnvelop(schedule);
+            var envelop = _state.ToEnvelop(nextTick);
             _runtime.TimerRegistry.RegisterTimer(
                 GrainContext,
                 obj => DispatchNew((FireEnvelop)obj),
@@ -145,8 +145,10 @@ internal class PeriodicScheduler : SchedulerGrain<Models.PeriodicTimer>, IGrainB
                 dueTime,
                 Timeout.InfiniteTimeSpan);
             dueTime = dueTime.Add(_state.Spec.Period);
-            schedule = now.Add(dueTime);
+            TickerLog.TimerSet(_logger, _key, dueTime, nextTick);
+
+            nextTick = now.Add(dueTime);
         }
-        return schedule;
+        return nextTick;
     }
 }

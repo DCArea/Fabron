@@ -168,5 +168,7 @@ internal class CronScheduler : SchedulerGrain<CronTimer>, IGrainBase, ICronSched
             envelop,
             dueTime,
             Timeout.InfiniteTimeSpan);
+
+            TickerLog.TimerSet(_logger, _key, dueTime, schedule);
     }
 }

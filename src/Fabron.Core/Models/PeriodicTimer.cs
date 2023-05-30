@@ -16,9 +16,9 @@ public record PeriodicTimerSpec
     TimeSpan Period,
 
     [property: Id(2)]
-    DateTimeOffset? NotBefore,
+    DateTimeOffset? NotBefore = null,
 
     [property: Id(3)]
-    DateTimeOffset? ExpirationTime
+    DateTimeOffset? ExpirationTime = null
 )
 : ISchedulerSpec;

@@ -116,6 +116,24 @@ public class CronTimerTickingTests
         entry!.State.Status.NextTick.Should().Be(new DateTimeOffset(2020, 6, 1, 0, 0, 0, default));
     }
 
+    //[Fact]
+    //public async Task Schedule_4AM_ShangHai()
+    //{
+    //    var (scheduler, timerRegistry, reminderRegistry, clock, store) = PrepareGrain();
+    //    clock.UtcNow = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.FromHours(8)).ToUniversalTime();
+    //    await (scheduler as IGrainBase).OnActivateAsync(default);
+    //    await scheduler.Schedule(
+    //        JsonSerializer.Serialize(new { data = new { foo = "bar" } }),
+    //        new CronTimerSpec("0 0 4 * * *"),
+    //        null,
+    //        new());
+
+    //    var reminder = reminderRegistry.Reminders.Single().Value;
+    //    reminder.DueTime.Should().Be(TimeSpan.FromHours(4));
+    //    var entry = await store.GetAsync(scheduler.GetPrimaryKeyString());
+    //    entry!.State.Status.NextTick.Should().Be(new DateTimeOffset(2020, 1, 1, 4, 0, 0, TimeSpan.FromHours(8)).ToUniversalTime());
+    //}
+
     [Fact]
     public async Task ShouldRegisterNextTickOnSchedule()
     {

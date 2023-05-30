@@ -46,14 +46,14 @@ internal abstract class SchedulerGrain<TState> : IRemindable
     protected TState? _state = default!;
     protected string? _eTag = default!;
     private IGrainReminder? _tickReminder;
-    //protected Queue<DateTimeOffset> RecentDispatches { get; } = new(20);
+    protected Queue<DateTimeOffset> RecentDispatches { get; } = new(20);
 
     internal abstract Task Tick(DateTimeOffset expectedTickTime);
 
     protected async Task TickAfter(DateTimeOffset now, DateTimeOffset tickTime, bool isIntermediary = false)
     {
+        var dueTime = tickTime - now;
         // should not happened
-        TimeSpan dueTime = tickTime - now;
         if (dueTime < TimeSpan.Zero)
         {
             dueTime = TimeSpan.Zero;
@@ -65,7 +65,7 @@ internal abstract class SchedulerGrain<TState> : IRemindable
         }
 
         _tickReminder = await _reminderRegistry.RegisterOrUpdateReminder(GrainContext.GrainId, Names.TickerReminder, dueTime, _options.TickerInterval);
-        TickerLog.TickerRegistered(_logger, _key, dueTime);
+        TickerLog.TickerRegistered(_logger, _key, tickTime, dueTime);
 
         if (!isIntermediary && _state is not null)
         {
@@ -132,11 +132,10 @@ internal abstract class SchedulerGrain<TState> : IRemindable
 
     protected void RecordTick(DateTimeOffset tickTime)
     {
-        var recentTicks = _state!.Status.RecentTicks;
-        recentTicks.Enqueue(tickTime);
-        if (recentTicks.Count > 20)
+        RecentDispatches.Enqueue(tickTime);
+        if (RecentDispatches.Count > 20)
         {
-            recentTicks.Dequeue();
+            RecentDispatches.Dequeue();
         }
     }
 
