@@ -19,5 +19,5 @@ public record CronTimerSpec
     DateTimeOffset? NotBefore = null,
 
     [property: Id(2)]
-    DateTimeOffset? ExpirationTime = null
+    DateTimeOffset? NotAfter = null
 ) : ISchedulerSpec;

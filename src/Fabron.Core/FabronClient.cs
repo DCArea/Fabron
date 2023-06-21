@@ -1,7 +1,5 @@
-﻿using System.Text.Json;
-using Fabron.Models;
+﻿using Fabron.Models;
 using Fabron.Schedulers;
-using Microsoft.Extensions.Options;
 
 namespace Fabron;
 
@@ -45,7 +43,7 @@ public class FabronClient : IFabronClient
         string? data,
         string schedule,
         DateTimeOffset? notBefore = null,
-        DateTimeOffset? expirationTime = null,
+        DateTimeOffset? notAfter = null,
         Dictionary<string, string>? extensions = null)
     {
         var grain = _client.GetGrain<ICronScheduler>(key);
@@ -53,7 +51,7 @@ public class FabronClient : IFabronClient
         (
             Schedule: schedule,
             NotBefore: notBefore,
-            ExpirationTime: expirationTime
+            NotAfter: notAfter
         );
         await grain.Schedule(data, spec, null, extensions);
     }
@@ -75,7 +73,7 @@ public class FabronClient : IFabronClient
         string? data,
         TimeSpan period,
         DateTimeOffset? notBefore = null,
-        DateTimeOffset? expirationTime = null,
+        DateTimeOffset? notAfter = null,
         Dictionary<string, string>? extensions = null)
     {
         var grain = _client.GetGrain<IPeriodicScheduler>(key);
@@ -83,7 +81,7 @@ public class FabronClient : IFabronClient
         (
             Period: period,
             NotBefore: notBefore,
-            ExpirationTime: expirationTime
+            NotAfter: notAfter
         );
         await grain.Schedule(data, spec, null, extensions);
     }

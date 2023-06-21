@@ -108,7 +108,7 @@ internal class CronScheduler : SchedulerGrain<CronTimer>, IGrainBase, ICronSched
             await StopTicker();
             return;
         }
-        if (now > _state.Spec.ExpirationTime)
+        if (now > _state.Spec.NotAfter)
         {
             TickerLog.UnexpectedTick(_logger, _key, expectedTickTime, "Expired");
             await StopTicker();
@@ -127,9 +127,9 @@ internal class CronScheduler : SchedulerGrain<CronTimer>, IGrainBase, ICronSched
 
         var from = shouldDispatchForCurrentTick ? expectedTickTime : now;
         var to = from.AddMinutes(2);
-        if (to > _state.Spec.ExpirationTime)
+        if (to > _state.Spec.NotAfter)
         {
-            to = _state.Spec.ExpirationTime.Value;
+            to = _state.Spec.NotAfter.Value;
         }
 
         var schedules = cron.GetOccurrences(from, to, _options.TimeZone, fromInclusive: false, toInclusive: false);
@@ -144,7 +144,7 @@ internal class CronScheduler : SchedulerGrain<CronTimer>, IGrainBase, ICronSched
 
         from = to;
         var nextTick = cron.GetNextOccurrence(from, _options.TimeZone, inclusive: true);
-        if (!nextTick.HasValue || (_state.Spec.ExpirationTime.HasValue && nextTick.Value > _state.Spec.ExpirationTime.Value))
+        if (!nextTick.HasValue || (_state.Spec.NotAfter.HasValue && nextTick.Value > _state.Spec.NotAfter.Value))
         {
             // no more next tick
             await StopTicker();
@@ -169,6 +169,6 @@ internal class CronScheduler : SchedulerGrain<CronTimer>, IGrainBase, ICronSched
             dueTime,
             Timeout.InfiniteTimeSpan);
 
-            TickerLog.TimerSet(_logger, _key, dueTime, schedule);
+        TickerLog.TimerSet(_logger, _key, dueTime, schedule);
     }
 }

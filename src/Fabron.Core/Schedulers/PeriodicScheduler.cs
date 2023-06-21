@@ -101,7 +101,7 @@ internal class PeriodicScheduler : SchedulerGrain<Models.PeriodicTimer>, IGrainB
         }
 
         var now = _clock.UtcNow;
-        if (now > _state.Spec.ExpirationTime)
+        if (now > _state.Spec.NotAfter)
         {
             TickerLog.UnexpectedTick(_logger, _key, expectedTickTime, "Expired");
             await StopTicker();
@@ -116,12 +116,12 @@ internal class PeriodicScheduler : SchedulerGrain<Models.PeriodicTimer>, IGrainB
         }
 
         var to = now.AddMinutes(1);
-        if (_state.Spec.ExpirationTime.HasValue && to > _state.Spec.ExpirationTime)
+        if (_state.Spec.NotAfter.HasValue && to > _state.Spec.NotAfter)
         {
-            to = _state.Spec.ExpirationTime.Value;
+            to = _state.Spec.NotAfter.Value;
         }
         var nextTick = Dispatch(now, to);
-        if (_state.Spec.ExpirationTime.HasValue && nextTick > _state.Spec.ExpirationTime.Value)
+        if (_state.Spec.NotAfter.HasValue && nextTick > _state.Spec.NotAfter.Value)
         {
             // no more next tick
             await StopTicker();
