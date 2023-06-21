@@ -24,11 +24,11 @@ public class PostgreSQLPeriodicTimerStore : IPeriodicTimerStore
             _options.JsonSerializerOptions);
     }
 
-    public Task<string> SetAsync(Models.PeriodicTimer state, string? expectedETag)
+    public Task<string> SetAsync(PeriodicTimer state, string? expectedETag)
         => _store.SetStateAsync(state.Metadata.Key, state, expectedETag);
 
-    public Task<StateEntry<Models.PeriodicTimer>?> GetAsync(string key)
-        => _store.GetStateAsync<Models.PeriodicTimer>(key);
+    public Task<StateEntry<PeriodicTimer>?> GetAsync(string key)
+        => _store.GetStateAsync<PeriodicTimer>(key);
 
     public Task RemoveAsync(string key, string? expectedETag)
         => _store.RemoveStateAsync(key, expectedETag);

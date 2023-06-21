@@ -115,7 +115,7 @@ public interface IFabronClient
     /// </summary>
     /// <param name="key">Timer key</param>
     /// <returns>The periodic timer</returns>
-    Task<Models.PeriodicTimer?> GetPeriodicTimer(string key);
+    Task<PeriodicTimer?> GetPeriodicTimer(string key);
 
     /// <summary>
     /// Start a periodic timer

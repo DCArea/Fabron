@@ -18,6 +18,10 @@
     <NoWarn>AD0001,CA1816,SYSLIB1006</NoWarn>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Using Include="Fabron.Models.PeriodicTimer" Alias="PeriodicTimer" />
+  </ItemGroup>
+
   <PropertyGroup>
     <GitHeadSha>Not found</GitHeadSha>
     <DotGitDir>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory).git'))</DotGitDir>

@@ -19,5 +19,5 @@ public interface IGenericTimerStore : IStateStore<GenericTimer>
 { }
 public interface ICronTimerStore : IStateStore<CronTimer>
 { }
-public interface IPeriodicTimerStore : IStateStore<Models.PeriodicTimer>
+public interface IPeriodicTimerStore : IStateStore<PeriodicTimer>
 { }

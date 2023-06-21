@@ -86,7 +86,7 @@ public class FabronClient : IFabronClient
         await grain.Schedule(data, spec, null, extensions);
     }
 
-    public async Task<Models.PeriodicTimer?> GetPeriodicTimer(string key)
+    public async Task<PeriodicTimer?> GetPeriodicTimer(string key)
         => await _client.GetGrain<IPeriodicScheduler>(key).GetState();
 
     public Task StartPeriodicTimer(string key)

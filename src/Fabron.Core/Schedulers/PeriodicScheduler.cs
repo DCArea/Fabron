@@ -12,9 +12,9 @@ namespace Fabron.Schedulers;
 internal interface IPeriodicScheduler : IGrainWithStringKey
 {
     [ReadOnly]
-    ValueTask<Models.PeriodicTimer?> GetState();
+    ValueTask<PeriodicTimer?> GetState();
 
-    Task<Models.PeriodicTimer> Schedule(
+    Task<PeriodicTimer> Schedule(
         string? data,
         PeriodicTimerSpec spec,
         string? owner,
@@ -26,7 +26,7 @@ internal interface IPeriodicScheduler : IGrainWithStringKey
     Task Delete();
 }
 
-internal class PeriodicScheduler : SchedulerGrain<Models.PeriodicTimer>, IGrainBase, IPeriodicScheduler
+internal class PeriodicScheduler : SchedulerGrain<PeriodicTimer>, IGrainBase, IPeriodicScheduler
 {
     public PeriodicScheduler(
         IGrainContext context,
@@ -51,9 +51,9 @@ internal class PeriodicScheduler : SchedulerGrain<Models.PeriodicTimer>, IGrainB
 
     public Task Delete() => DeleteInternal();
 
-    public ValueTask<Models.PeriodicTimer?> GetState() => new(_state);
+    public ValueTask<PeriodicTimer?> GetState() => new(_state);
 
-    public async Task<Models.PeriodicTimer> Schedule(
+    public async Task<PeriodicTimer> Schedule(
         string? data,
         PeriodicTimerSpec spec,
         string? owner,
@@ -62,7 +62,7 @@ internal class PeriodicScheduler : SchedulerGrain<Models.PeriodicTimer>, IGrainB
         Guard.IsGreaterThanOrEqualTo(spec.Period, TimeSpan.FromSeconds(5), nameof(spec.Period));
 
         var utcNow = _clock.UtcNow;
-        _state = new Models.PeriodicTimer
+        _state = new PeriodicTimer
         (
             Metadata: new(
                 Key: _key,

@@ -31,7 +31,7 @@ public class PeriodicTimerTickingTests
 
         if (schedule is not null)
         {
-            var state = new Models.PeriodicTimer
+            var state = new PeriodicTimer
             (
                 Metadata: new ScheduleMetadata(
                     Key: key,
@@ -43,9 +43,9 @@ public class PeriodicTimerTickingTests
                 Data: JsonSerializer.Serialize(new { data = new { foo = "bar" } }),
                 Spec: new PeriodicTimerSpec
                 (
-                   schedule.Value,
-                   null,
-                   null
+                    schedule.Value,
+                    null,
+                    null
                 )
             );
             store.SetAsync(state, Guid.NewGuid().ToString()).GetAwaiter().GetResult();

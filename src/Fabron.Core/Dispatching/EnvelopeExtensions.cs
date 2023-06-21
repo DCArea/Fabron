@@ -4,7 +4,7 @@ namespace Fabron.Dispatching;
 
 internal static class EnvelopeExtensions
 {
-    public static FireEnvelop ToEnvelop(this Models.PeriodicTimer timer, DateTimeOffset schedule)
+    public static FireEnvelop ToEnvelop(this PeriodicTimer timer, DateTimeOffset schedule)
     {
         var source = $"periodic.fabron.io/{timer.Metadata.Key}";
         var id = $"{source}/{schedule.ToUnixTimeSeconds()}";

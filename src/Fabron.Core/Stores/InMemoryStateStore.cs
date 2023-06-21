@@ -8,7 +8,7 @@ public class InMemoryGenericTimerStore : InMemoryStateStore<GenericTimer>, IGene
 public class InMemoryCronTimerStore : InMemoryStateStore<CronTimer>, ICronTimerStore
 { }
 
-public class InMemoryPeriodicTimerStore : InMemoryStateStore<Models.PeriodicTimer>, IPeriodicTimerStore
+public class InMemoryPeriodicTimerStore : InMemoryStateStore<PeriodicTimer>, IPeriodicTimerStore
 { }
 
 public abstract class InMemoryStateStore<TState> : IStateStore<TState>
