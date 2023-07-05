@@ -20,6 +20,7 @@ internal interface IPeriodicScheduler : IGrainWithStringKey
         string? owner,
         Dictionary<string, string>? extensions
     );
+    Task SetExt(Dictionary<string, string?> input);
 
     Task Start();
     Task Stop();
@@ -78,6 +79,8 @@ internal class PeriodicScheduler : SchedulerGrain<PeriodicTimer>, IGrainBase, IP
         await StartTicker();
         return _state;
     }
+
+    public Task SetExt(Dictionary<string, string?> extensions) => SetExtInternal(extensions);
 
     private Task StartTicker()
     {

@@ -14,6 +14,7 @@ namespace Fabron.Providers.PostgreSQL
         {
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
             IgnoreReadOnlyProperties = true,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         };
     }
 }

@@ -48,6 +48,25 @@ internal abstract class SchedulerGrain<TState> : IRemindable
     private IGrainReminder? _tickReminder;
     protected Queue<DateTimeOffset> RecentDispatches { get; } = new(20);
 
+    protected async Task SetExtInternal(Dictionary<string, string?> input)
+    {
+        if (_state is null) return;
+        var existed = _state.Metadata.Extensions;
+        foreach (var (k, v) in input)
+        {
+            if (v is null)
+            {
+                existed.Remove(k);
+            }
+            else
+            {
+                existed[k] = v;
+            }
+        }
+        _eTag = await _store.SetAsync(_state, _eTag);
+    }
+
+
     internal abstract Task Tick(DateTimeOffset expectedTickTime);
 
     protected async Task TickAfter(DateTimeOffset now, DateTimeOffset tickTime, bool isIntermediary = false)

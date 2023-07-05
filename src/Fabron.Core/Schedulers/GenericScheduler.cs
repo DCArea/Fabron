@@ -21,6 +21,7 @@ internal interface IGenericScheduler : IGrainWithStringKey
         string? owner,
         Dictionary<string, string>? extensions
     );
+    Task SetExt(Dictionary<string, string?> input);
 
     Task Start();
     Task Stop();
@@ -80,6 +81,8 @@ internal partial class GenericScheduler : SchedulerGrain<GenericTimer>, IGrainBa
         Telemetry.TimerScheduled.Add(1);
         return _state;
     }
+
+    public Task SetExt(Dictionary<string, string?> extensions) => SetExtInternal(extensions);
 
     private Task StartTicker()
     {

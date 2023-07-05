@@ -26,6 +26,11 @@ public class FabronClient : IFabronClient
         return grain.Schedule(data, spec, null, extensions);
     }
 
+    public Task SetExtForGenericTimer(
+        string key,
+        Dictionary<string, string?> extensions)
+        => _client.GetGrain<IGenericScheduler>(key).SetExt(extensions);
+
     public Task StartGenericTimer(string key)
         => _client.GetGrain<IGenericScheduler>(key).Start();
 
@@ -56,6 +61,11 @@ public class FabronClient : IFabronClient
         await grain.Schedule(data, spec, null, extensions);
     }
 
+    public Task SetExtForCronTimer(
+        string key,
+        Dictionary<string, string?> extensions)
+        => _client.GetGrain<ICronScheduler>(key).SetExt(extensions);
+
     public async Task<CronTimer?> GetCronTimer(string key)
         => await _client.GetGrain<ICronScheduler>(key).GetState();
 
@@ -85,6 +95,11 @@ public class FabronClient : IFabronClient
         );
         await grain.Schedule(data, spec, null, extensions);
     }
+
+    public Task SetExtForPeriodicTimer(
+        string key,
+        Dictionary<string, string?> extensions)
+        => _client.GetGrain<IPeriodicScheduler>(key).SetExt(extensions);
 
     public async Task<PeriodicTimer?> GetPeriodicTimer(string key)
         => await _client.GetGrain<IPeriodicScheduler>(key).GetState();

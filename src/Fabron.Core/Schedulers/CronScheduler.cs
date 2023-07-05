@@ -20,6 +20,7 @@ internal interface ICronScheduler : IGrainWithStringKey
         string? owner,
         Dictionary<string, string>? extensions
     );
+    Task SetExt(Dictionary<string, string?> extensions);
 
     Task Start();
     Task Stop();
@@ -78,6 +79,8 @@ internal class CronScheduler : SchedulerGrain<CronTimer>, IGrainBase, ICronSched
         await StartTicker();
         return _state;
     }
+
+    public Task SetExt(Dictionary<string, string?> extensions) => SetExtInternal(extensions);
 
     private Task StartTicker()
     {

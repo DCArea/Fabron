@@ -19,6 +19,16 @@ public interface IFabronClient
         Dictionary<string, string>? extensions = null);
 
     /// <summary>
+    /// Set extensions for a generic timer
+    /// </summary>
+    /// <param name="key">Timer key</param>
+    /// <param name="extensions">Extension fields</param>
+    /// <returns></returns>
+    Task SetExtForGenericTimer(
+        string key,
+        Dictionary<string, string?> extensions);
+
+    /// <summary>
     /// Get a generic timer
     /// </summary>
     /// <param name="key">Timer key</param>
@@ -65,6 +75,16 @@ public interface IFabronClient
         Dictionary<string, string>? extensions = null);
 
     /// <summary>
+    /// Set extensions for a cron timer
+    /// </summary>
+    /// <param name="key">Timer key</param>
+    /// <param name="extensions">Extension fields</param>
+    /// <returns></returns>
+    Task SetExtForCronTimer(
+        string key,
+        Dictionary<string, string?> extensions);
+
+    /// <summary>
     /// Get a cron timer
     /// </summary>
     /// <param name="key">Timer key</param>
@@ -109,6 +129,17 @@ public interface IFabronClient
         DateTimeOffset? notBefore = null,
         DateTimeOffset? expirationTime = null,
         Dictionary<string, string>? extensions = null);
+
+    /// <summary>
+    /// Set extensions for a periodic timer
+    /// </summary>
+    /// <param name="key">Timer key</param>
+    /// <param name="extensions">Extension fields</param>
+    /// <returns></returns>
+    Task SetExtForPeriodicTimer(
+        string key,
+        Dictionary<string, string?> extensions);
+
 
     /// <summary>
     /// Get a periodic timer
