@@ -165,13 +165,6 @@ internal class CronScheduler : SchedulerGrain<CronTimer>, IGrainBase, ICronSched
         var now = _clock.UtcNow;
         var dueTime = schedule > now ? schedule.Subtract(now) : TimeSpan.Zero;
         var envelop = _state.ToEnvelop(schedule);
-        _runtime.TimerRegistry.RegisterTimer(
-            GrainContext,
-            obj => DispatchNew((FireEnvelop)obj),
-            envelop,
-            dueTime,
-            Timeout.InfiniteTimeSpan);
-
-        TickerLog.TimerSet(_logger, _key, dueTime, schedule);
+        FireAfter(envelop, dueTime);
     }
 }

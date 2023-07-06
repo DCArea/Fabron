@@ -9,7 +9,4 @@ public class TickerStatus
 
     [Id(1)]
     public DateTimeOffset? NextTick { get; set; }
-
-    [Id(1)]
-    public Queue<DateTimeOffset> RecentTicks { get; set; } = new();
 }

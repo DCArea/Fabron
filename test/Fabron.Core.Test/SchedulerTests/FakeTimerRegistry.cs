@@ -1,4 +1,4 @@
-using Orleans.Runtime;
+﻿using Orleans.Runtime;
 using Orleans.Timers;
 
 namespace Fabron.Core.Test.SchedulerTests
@@ -20,6 +20,7 @@ namespace Fabron.Core.Test.SchedulerTests
         TimeSpan DueTime,
         TimeSpan Period) : IDisposable
     {
-        public void Dispose() => throw new NotImplementedException();
+        public Task Trigger() => AsyncCallback(State);
+        public void Dispose() { }
     }
 }

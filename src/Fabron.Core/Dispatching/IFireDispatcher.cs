@@ -2,7 +2,7 @@
 
 internal interface IFireDispatcher
 {
-    List<IFireRouter> Routers { get; }
+    //List<IFireRouter> Routers { get; }
 
     Task DispatchAsync(FireEnvelop envelop);
 }

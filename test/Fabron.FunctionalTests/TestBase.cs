@@ -1,7 +1,9 @@
 ﻿using Fabron.Schedulers;
+using Fabron.Stores;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Orleans.TestingHost;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -20,6 +22,10 @@ public class TestBase : IClassFixture<DefaultClusterFixture>
     }
 
     public IFabronClient Client => _fixture.Client.ServiceProvider.GetRequiredService<IFabronClient>();
+    public IEnumerable<InMemoryPeriodicTimerStore> PeriodicTimerStore => _fixture.HostedCluster.Silos
+        .Cast<InProcessSiloHandle>()
+        .Select(s => s.SiloHost.Services.GetRequiredService<IPeriodicTimerStore>())
+        .Cast<InMemoryPeriodicTimerStore>();
 
     internal Mock<ISystemClock> SystemClockMock => Mock.Get(_fixture.Client.ServiceProvider.GetRequiredService<ISystemClock>());
 

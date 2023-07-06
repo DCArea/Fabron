@@ -46,7 +46,6 @@ internal abstract class SchedulerGrain<TState> : IRemindable
     protected TState? _state = default!;
     protected string? _eTag = default!;
     private IGrainReminder? _tickReminder;
-    protected Queue<DateTimeOffset> RecentDispatches { get; } = new(20);
 
     protected async Task SetExtInternal(Dictionary<string, string?> input)
     {
@@ -99,9 +98,9 @@ internal abstract class SchedulerGrain<TState> : IRemindable
         if (_state is not null)
         {
             await _store.RemoveAsync(_state.Metadata.Key, _eTag);
-            await StopTicker();
             _state = null;
             _eTag = null;
+            await StopTicker();
         }
     }
 
@@ -114,6 +113,13 @@ internal abstract class SchedulerGrain<TState> : IRemindable
             if (_tickReminder is null)
             {
                 break;
+            }
+
+            if (_state is not null)
+            {
+                _state.Status.StartedAt = null;
+                _state.Status.NextTick = null;
+                _eTag = await _store.SetAsync(_state, _eTag);
             }
 
             try
@@ -142,28 +148,30 @@ internal abstract class SchedulerGrain<TState> : IRemindable
             }
         }
 
-        if (_state is not null)
-        {
-            _state.Status.StartedAt = null;
-            _state.Status.NextTick = null;
-        }
     }
 
-    protected void RecordTick(DateTimeOffset tickTime)
+    protected void FireAfter(FireEnvelop envelop, TimeSpan dueTime)
     {
-        RecentDispatches.Enqueue(tickTime);
-        if (RecentDispatches.Count > 20)
-        {
-            RecentDispatches.Dequeue();
-        }
+        _runtime.TimerRegistry.RegisterTimer(
+            GrainContext,
+            obj => DispatchNew((FireEnvelop)obj),
+            envelop,
+            dueTime,
+            Timeout.InfiniteTimeSpan);
+        TickerLog.TimerSet(_logger, _key, dueTime, envelop.Time);
     }
 
     protected async Task DispatchNew(FireEnvelop envelop)
     {
         Guard.IsNotNull(_state, nameof(_state));
+        if (_state.Status.StartedAt == null)
+        {
+            // ticker stopped, ignore
+            // TODO: avoid dead fire running if timer is re-scheduled
+            return;
+        }
 
         var utcNow = _clock.UtcNow;
-        RecordTick(utcNow);
         Telemetry.OnFabronTimerDispatching(_logger, _key, envelop, utcNow);
 
         var sw = ValueStopwatch.StartNew();

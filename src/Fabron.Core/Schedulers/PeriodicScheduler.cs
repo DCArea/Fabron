@@ -141,13 +141,7 @@ internal class PeriodicScheduler : SchedulerGrain<PeriodicTimer>, IGrainBase, IP
         while (nextTick < to)
         {
             var envelop = _state.ToEnvelop(nextTick);
-            _runtime.TimerRegistry.RegisterTimer(
-                GrainContext,
-                obj => DispatchNew((FireEnvelop)obj),
-                envelop,
-                dueTime,
-                Timeout.InfiniteTimeSpan);
-            TickerLog.TimerSet(_logger, _key, dueTime, nextTick);
+            FireAfter(envelop, dueTime);
             dueTime = dueTime.Add(_state.Spec.Period);
             nextTick = now.Add(dueTime);
         }

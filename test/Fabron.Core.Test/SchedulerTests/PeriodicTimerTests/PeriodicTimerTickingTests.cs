@@ -21,6 +21,7 @@ public class PeriodicTimerTickingTests
         var clock = new FakeSystemClock();
         var reminderRegistry = new FakeReminderRegistry();
         var timerRegistry = new FakeTimerRegistry();
+        var dispatcher = new FakeFireDispatcher();
         var context = A.Fake<IGrainContext>();
         var runtime = A.Fake<IGrainRuntime>();
         var store = new InMemoryPeriodicTimerStore();
@@ -58,14 +59,14 @@ public class PeriodicTimerTickingTests
             Options.Create(new SchedulerOptions { }),
             clock,
             store,
-            A.Fake<IFireDispatcher>());
-        return new(grain, timerRegistry, reminderRegistry, clock, store);
+            dispatcher);
+        return new(grain, timerRegistry, reminderRegistry, clock, store, dispatcher);
     }
 
     [Fact]
     public async Task Schedule_10s()
     {
-        var (scheduler, timerRegistry, reminderRegistry, clock, store) = PrepareGrain();
+        var (scheduler, timerRegistry, reminderRegistry, clock, store, _) = PrepareGrain();
         await (scheduler as IGrainBase).OnActivateAsync(default);
 
         await scheduler.Schedule(
@@ -94,7 +95,7 @@ public class PeriodicTimerTickingTests
     [Fact]
     public async Task Schedule_1m()
     {
-        var (scheduler, timerRegistry, reminderRegistry, clock, store) = PrepareGrain();
+        var (scheduler, timerRegistry, reminderRegistry, clock, store, _) = PrepareGrain();
         await (scheduler as IGrainBase).OnActivateAsync(default);
 
         await scheduler.Schedule(
@@ -122,7 +123,7 @@ public class PeriodicTimerTickingTests
     [Fact]
     public async Task ShouldScheduleAtNotBeforeTime()
     {
-        var (scheduler, _, reminderRegistry, clock, _) = PrepareGrain();
+        var (scheduler, _, reminderRegistry, clock, _, _) = PrepareGrain();
         await (scheduler as IGrainBase).OnActivateAsync(default);
         clock.UtcNow = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero);
         var notBefore = clock.UtcNow.AddDays(30);
@@ -139,7 +140,7 @@ public class PeriodicTimerTickingTests
     [Fact]
     public async Task ShouldNotScheduleLaterThanNotAfterTime()
     {
-        var (scheduler, _, reminderRegistry, clock, _) = PrepareGrain();
+        var (scheduler, _, reminderRegistry, clock, _, _) = PrepareGrain();
         await (scheduler as IGrainBase).OnActivateAsync(default);
         clock.UtcNow = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero);
         var notAfter = clock.UtcNow.AddDays(30).AddSeconds(15);
@@ -157,6 +158,30 @@ public class PeriodicTimerTickingTests
     }
 
 
+    [Fact]
+    public async Task ShouldIgnoreFurthurDispatchesIfStopped()
+    {
+        var (scheduler, timerRegistry, _, clock, _, dispatcher) = PrepareGrain();
+        await (scheduler as IGrainBase).OnActivateAsync(default);
+        clock.UtcNow = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero);
+        await scheduler.Schedule(
+            JsonSerializer.Serialize(new { foo = "bar" }),
+            new PeriodicTimerSpec(TimeSpan.FromSeconds(10)),
+            null,
+            null);
+
+        timerRegistry.Timers.Count.Should().Be(6);
+        await timerRegistry.Timers[0].Trigger();
+        await timerRegistry.Timers[1].Trigger();
+
+        await scheduler.Stop();
+        await timerRegistry.Timers[2].Trigger();
+        await timerRegistry.Timers[3].Trigger();
+        await timerRegistry.Timers[4].Trigger();
+        await timerRegistry.Timers[5].Trigger();
+
+        dispatcher.Envelops.Count.Should().Be(2);
+    }
 
 }
 
@@ -165,4 +190,5 @@ internal record PeriodicFakes(
     FakeTimerRegistry timerRegistry,
     FakeReminderRegistry reminderRegistry,
     FakeSystemClock clock,
-    IPeriodicTimerStore store);
+    IPeriodicTimerStore store,
+    FakeFireDispatcher dispatcher);
