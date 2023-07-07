@@ -5,6 +5,21 @@ namespace Fabron;
 public interface IFabronClient
 {
     /// <summary>
+    /// Get the generic timer manager
+    /// </summary>
+    IGenericTimerManager Generic { get; }
+
+    /// <summary>
+    /// Get the periodic timer manager
+    /// </summary>
+    IPeriodicTimerManager Periodic { get; }
+
+    /// <summary>
+    /// Get the cron timer manager
+    /// </summary>
+    ICronTimerManager Cron { get; }
+
+    /// <summary>
     /// Schedule a generic timer
     /// </summary>
     /// <param name="key">Timer key</param>
@@ -139,7 +154,6 @@ public interface IFabronClient
     Task SetExtForPeriodicTimer(
         string key,
         Dictionary<string, string?> extensions);
-
 
     /// <summary>
     /// Get a periodic timer

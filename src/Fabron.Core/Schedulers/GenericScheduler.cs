@@ -5,28 +5,12 @@ using Fabron.Models;
 using Fabron.Stores;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Orleans.Concurrency;
 using Orleans.Runtime;
 
 namespace Fabron.Schedulers;
 
-internal interface IGenericScheduler : IGrainWithStringKey
-{
-    [ReadOnly]
-    ValueTask<GenericTimer?> GetState();
-
-    Task<GenericTimer> Schedule(
-        string? data,
-        GenericTimerSpec spec,
-        string? owner,
-        Dictionary<string, string>? extensions
-    );
-    Task SetExt(Dictionary<string, string?> input);
-
-    Task Start();
-    Task Stop();
-    Task Delete();
-}
+internal interface IGenericScheduler : IGrainWithStringKey, ISchedulerGrain<GenericTimer, GenericTimerSpec>
+{ }
 
 internal partial class GenericScheduler : SchedulerGrain<GenericTimer>, IGrainBase, IGenericScheduler
 {

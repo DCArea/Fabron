@@ -1,4 +1,6 @@
-﻿using Xunit;
+﻿using Fabron.Schedulers;
+using FluentAssertions;
+using Xunit;
 using Xunit.Abstractions;
 
 namespace Fabron.FunctionalTests.GenericTimerTests;
@@ -13,16 +15,21 @@ public class ScheduleGenericTimerTests : TestBase
     public async Task ScheduleAndGet()
     {
         var key = $"{nameof(ScheduleGenericTimerTests)}.{nameof(ScheduleAndGet)}";
+        var schedule = DateTimeOffset.UtcNow.AddMonths(1);
         await Client.ScheduleGenericTimer(
             key,
             "Bar",
-            DateTimeOffset.UtcNow.AddMonths(1)
+            schedule
         );
 
         var timer = await Client.GetGenericTimer(key);
 
         Assert.NotNull(timer);
         Assert.Equal("Bar", timer!.Data);
+
+        var row = await GetReminderRow<IGenericScheduler>(key);
+        row.Should().NotBeNull();
+        row!.StartAt.Should().BeCloseTo(schedule.DateTime, TimeSpan.FromSeconds(10));
     }
 
     [Fact]

@@ -1,116 +1,93 @@
 ﻿using Fabron.Models;
-using Fabron.Schedulers;
 
 namespace Fabron;
 
 public class FabronClient : IFabronClient
 {
-    private readonly IClusterClient _client;
-
     public FabronClient(IClusterClient client)
     {
-        _client = client;
+        Generic = new GenericTimerManager(client);
+        Periodic = new PeriodicTimerManager(client);
+        Cron = new CronTimerManager(client);
     }
+    public IGenericTimerManager Generic { get; }
+    public IPeriodicTimerManager Periodic { get; }
+    public ICronTimerManager Cron { get; }
 
     public Task ScheduleGenericTimer(
         string key,
         string? data,
         DateTimeOffset schedule,
         Dictionary<string, string>? extensions = null)
-    {
-        var grain = _client.GetGrain<IGenericScheduler>(key);
-        var spec = new GenericTimerSpec
-        (
-            Schedule: schedule
-        );
-        return grain.Schedule(data, spec, null, extensions);
-    }
+        => Generic.Schedule(key, data, schedule, extensions);
 
     public Task SetExtForGenericTimer(
         string key,
         Dictionary<string, string?> extensions)
-        => _client.GetGrain<IGenericScheduler>(key).SetExt(extensions);
+        => Generic.SetExt(key, extensions);
 
     public Task StartGenericTimer(string key)
-        => _client.GetGrain<IGenericScheduler>(key).Start();
+        => Generic.Start(key);
 
     public Task StopGenericTimer(string key)
-        => _client.GetGrain<IGenericScheduler>(key).Stop();
+        => Generic.Stop(key);
 
     public Task DeleteGenericTimer(string key)
-        => _client.GetGrain<IGenericScheduler>(key).Delete();
+        => Generic.Delete(key);
 
-    public async Task<GenericTimer?> GetGenericTimer(string key)
-        => await _client.GetGrain<IGenericScheduler>(key).GetState();
+    public Task<GenericTimer?> GetGenericTimer(string key)
+        => Generic.Get(key).AsTask();
 
-    public async Task ScheduleCronTimer(
+    public Task ScheduleCronTimer(
         string key,
         string? data,
         string schedule,
         DateTimeOffset? notBefore = null,
         DateTimeOffset? notAfter = null,
         Dictionary<string, string>? extensions = null)
-    {
-        var grain = _client.GetGrain<ICronScheduler>(key);
-        var spec = new CronTimerSpec
-        (
-            Schedule: schedule,
-            NotBefore: notBefore,
-            NotAfter: notAfter
-        );
-        await grain.Schedule(data, spec, null, extensions);
-    }
+        => Cron.Schedule(key, data, schedule, notBefore, notAfter, extensions);
 
     public Task SetExtForCronTimer(
         string key,
         Dictionary<string, string?> extensions)
-        => _client.GetGrain<ICronScheduler>(key).SetExt(extensions);
+        => Cron.SetExt(key, extensions);
 
-    public async Task<CronTimer?> GetCronTimer(string key)
-        => await _client.GetGrain<ICronScheduler>(key).GetState();
+    public Task<CronTimer?> GetCronTimer(string key)
+        => Cron.Get(key).AsTask();
 
     public Task StartCronTimer(string key)
-        => _client.GetGrain<ICronScheduler>(key).Start();
+        => Cron.Start(key);
 
     public Task StopCronTimer(string key)
-        => _client.GetGrain<ICronScheduler>(key).Stop();
+        => Cron.Stop(key);
 
     public Task DeleteCronTimer(string key)
-        => _client.GetGrain<ICronScheduler>(key).Delete();
+        => Cron.Delete(key);
 
-    public async Task SchedulePeriodicTimer(
+    public Task SchedulePeriodicTimer(
         string key,
         string? data,
         TimeSpan period,
         DateTimeOffset? notBefore = null,
         DateTimeOffset? notAfter = null,
         Dictionary<string, string>? extensions = null)
-    {
-        var grain = _client.GetGrain<IPeriodicScheduler>(key);
-        var spec = new PeriodicTimerSpec
-        (
-            Period: period,
-            NotBefore: notBefore,
-            NotAfter: notAfter
-        );
-        await grain.Schedule(data, spec, null, extensions);
-    }
+        => Periodic.Schedule(key, data, period, notBefore, notAfter, extensions);
 
     public Task SetExtForPeriodicTimer(
         string key,
         Dictionary<string, string?> extensions)
-        => _client.GetGrain<IPeriodicScheduler>(key).SetExt(extensions);
+        => Periodic.SetExt(key, extensions);
 
-    public async Task<PeriodicTimer?> GetPeriodicTimer(string key)
-        => await _client.GetGrain<IPeriodicScheduler>(key).GetState();
+    public Task<PeriodicTimer?> GetPeriodicTimer(string key)
+        => Periodic.Get(key).AsTask();
 
     public Task StartPeriodicTimer(string key)
-        => _client.GetGrain<IPeriodicScheduler>(key).Start();
+        => Periodic.Start(key);
 
     public Task StopPeriodicTimer(string key)
-        => _client.GetGrain<IPeriodicScheduler>(key).Stop();
+        => Periodic.Stop(key);
 
     public Task DeletePeriodicTimer(string key)
-        => _client.GetGrain<IPeriodicScheduler>(key).Delete();
+        => Periodic.Delete(key);
 
 }

@@ -4,28 +4,12 @@ using Fabron.Models;
 using Fabron.Stores;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Orleans.Concurrency;
 using Orleans.Runtime;
 
 namespace Fabron.Schedulers;
 
-internal interface ICronScheduler : IGrainWithStringKey
-{
-    [ReadOnly]
-    ValueTask<CronTimer?> GetState();
-
-    Task<CronTimer> Schedule(
-        string? data,
-        CronTimerSpec spec,
-        string? owner,
-        Dictionary<string, string>? extensions
-    );
-    Task SetExt(Dictionary<string, string?> extensions);
-
-    Task Start();
-    Task Stop();
-    Task Delete();
-}
+internal interface ICronScheduler : IGrainWithStringKey, ISchedulerGrain<CronTimer, CronTimerSpec>
+{ }
 
 internal class CronScheduler : SchedulerGrain<CronTimer>, IGrainBase, ICronScheduler
 {

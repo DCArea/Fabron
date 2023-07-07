@@ -1,4 +1,7 @@
-﻿using FluentAssertions;
+﻿using Fabron.Schedulers;
+using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
+using Orleans.Timers;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -28,5 +31,16 @@ public class PeriodicStopTests : TestBase
         entry.Should().NotBeNull();
         entry!.State.Status.StartedAt.Should().BeNull();
         entry.State.Status.NextTick.Should().BeNull();
+
+        var reminder = await GetReminderRow<IPeriodicScheduler>(key);
+        reminder.Should().BeNull();
+
+        await Client.Periodic.Start(key);
+        entry = PeriodicTimerStore.Select(s => s.GetAsync(key).Result).First(e => e is not null);
+        entry.Should().NotBeNull();
+        entry!.State.Status.StartedAt.Should().NotBeNull();
+        entry.State.Status.NextTick.Should().NotBeNull();
+        var row = await GetReminderRow<IPeriodicScheduler>(key);
+        row.Should().NotBeNull();
     }
 }

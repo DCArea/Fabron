@@ -4,28 +4,12 @@ using Fabron.Models;
 using Fabron.Stores;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Orleans.Concurrency;
 using Orleans.Runtime;
 
 namespace Fabron.Schedulers;
 
-internal interface IPeriodicScheduler : IGrainWithStringKey
-{
-    [ReadOnly]
-    ValueTask<PeriodicTimer?> GetState();
-
-    Task<PeriodicTimer> Schedule(
-        string? data,
-        PeriodicTimerSpec spec,
-        string? owner,
-        Dictionary<string, string>? extensions
-    );
-    Task SetExt(Dictionary<string, string?> input);
-
-    Task Start();
-    Task Stop();
-    Task Delete();
-}
+internal interface IPeriodicScheduler : IGrainWithStringKey, ISchedulerGrain<PeriodicTimer, PeriodicTimerSpec>
+{ }
 
 internal class PeriodicScheduler : SchedulerGrain<PeriodicTimer>, IGrainBase, IPeriodicScheduler
 {
