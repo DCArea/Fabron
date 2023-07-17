@@ -1,5 +1,4 @@
 ﻿using Fulu.Extensions.Telemetry;
-using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Instrumentation.AspNetCore;
 
 namespace OpenTelemetry.Trace;
@@ -10,7 +9,7 @@ public static class TracerProviderBuilderExtensions
         this TracerProviderBuilder builder,
         Action<AspNetCoreInstrumentationOptions>? userOptions = null)
     {
-        Action<AspNetCoreInstrumentationOptions> finalOptions = options =>
+        void finalOptions(AspNetCoreInstrumentationOptions options)
         {
             var requestEnrich = options.EnrichWithHttpRequest;
             options.EnrichWithHttpRequest = (activity, request) =>
@@ -26,11 +25,11 @@ public static class TracerProviderBuilderExtensions
             };
 
             userOptions?.Invoke(options);
-        };
+        }
 
         builder.ConfigureServices(services =>
         {
-            services.Configure(finalOptions);
+            services.Configure<AspNetCoreInstrumentationOptions>(finalOptions);
         });
 
         return builder.AddAspNetCoreInstrumentation();
