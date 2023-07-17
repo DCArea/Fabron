@@ -58,8 +58,7 @@ internal class PeriodicScheduler : SchedulerGrain<PeriodicTimer>, IGrainBase, IP
             Data: data,
             Spec: spec
         );
-        _eTag = await _store.SetAsync(_state, _eTag);
-
+        //_eTag = await _store.SetAsync(_state, _eTag);
         await StartTicker();
         return _state;
     }

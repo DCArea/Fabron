@@ -59,8 +59,6 @@ internal partial class GenericScheduler : SchedulerGrain<GenericTimer>, IGrainBa
             Data: data,
             Spec: spec
         );
-        _eTag = await _store.SetAsync(_state, _eTag);
-
         await StartTicker();
         Telemetry.TimerScheduled.Add(1);
         return _state;
@@ -76,12 +74,9 @@ internal partial class GenericScheduler : SchedulerGrain<GenericTimer>, IGrainBa
         if (schedule_ <= utcNow)
         {
             Log.TickingForPast(_logger, _key, schedule_);
-            return Tick(utcNow);
         }
-        else
-        {
-            return TickAfter(utcNow, schedule_);
-        }
+
+        return TickAfter(utcNow, schedule_);
     }
 
     internal override async Task Tick(DateTimeOffset expectedTickTime)

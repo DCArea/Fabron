@@ -110,8 +110,6 @@ internal class CronScheduler : SchedulerGrain<CronTimer>, IGrainBase, ICronSched
 
         var cron = Cronos.CronExpression.Parse(_state.Spec.Schedule, _options.CronFormat);
 
-
-
         var from = shouldDispatchForCurrentTick ? expectedTickTime : now;
         var to = from.AddMinutes(2);
         if (to > _state.Spec.NotAfter)
