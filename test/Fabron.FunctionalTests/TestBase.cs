@@ -1,4 +1,6 @@
-﻿using Fabron.Schedulers;
+﻿using System.Collections.Concurrent;
+using Fabron.Dispatching;
+using Fabron.Schedulers;
 using Fabron.Stores;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -45,5 +47,14 @@ public class TestBase : IClassFixture<DefaultClusterFixture>
         .Cast<InMemoryPeriodicTimerStore>();
 
     internal Mock<ISystemClock> SystemClockMock => Mock.Get(_fixture.Client.ServiceProvider.GetRequiredService<ISystemClock>());
+
+    public IEnumerable<FireEnvelop> Fires =>
+        FireDispatcher.SelectMany(i => i.Fires);
+
+    public IEnumerable<TestFireDispatcher> FireDispatcher
+        => _fixture.HostedCluster.Silos
+        .Cast<InProcessSiloHandle>()
+        .Select(s => s.SiloHost.Services.GetRequiredService<IFireDispatcher>())
+        .Cast<TestFireDispatcher>();
 
 }

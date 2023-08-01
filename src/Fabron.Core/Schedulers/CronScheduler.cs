@@ -78,6 +78,13 @@ internal class CronScheduler : SchedulerGrain<CronTimer>, IGrainBase, ICronSched
         };
     }
 
+    public Task Tick()
+    {
+        Guard.IsNotNull(_state, nameof(_state));
+        var envelop = _state.ToEnvelop(DateTimeOffset.UtcNow);
+        return DispatchNew(envelop);
+    }
+
     internal override async Task Tick(DateTimeOffset expectedTickTime)
     {
         var now = _clock.UtcNow;

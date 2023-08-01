@@ -79,6 +79,13 @@ internal partial class GenericScheduler : SchedulerGrain<GenericTimer>, IGrainBa
         return TickAfter(utcNow, schedule_);
     }
 
+    public Task Tick()
+    {
+        Guard.IsNotNull(_state, nameof(_state));
+        var envelop = _state.ToEnvelop(DateTimeOffset.UtcNow);
+        return DispatchNew(envelop);
+    }
+
     internal override async Task Tick(DateTimeOffset expectedTickTime)
     {
         if (_state is null || _state.Metadata.DeletionTimestamp is not null)

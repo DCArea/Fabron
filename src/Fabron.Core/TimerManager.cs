@@ -22,6 +22,9 @@ internal class TimerManager<TScheduler, TTimer, TTimerSpec> : ITimerManager<TTim
     public Task Stop(string key)
         => GetScheduler(key).Stop();
 
+    public Task Tick(string key)
+        => GetScheduler(key).Tick();
+
     public Task SetExt(
         string key,
         Dictionary<string, string?> extensions)

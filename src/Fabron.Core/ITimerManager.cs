@@ -27,6 +27,13 @@ public interface ITimerManager
     public Task Stop(string key);
 
     /// <summary>
+    /// Trigger a tick of a timer manually
+    /// </summary>
+    /// <param name="key">Timer key</param>
+    /// <returns>A task that represents the asynchronous operation</returns>
+    public Task Tick(string key);
+
+    /// <summary>
     /// Set extensions for a timer
     /// </summary>
     /// <param name="key">Timer key</param>

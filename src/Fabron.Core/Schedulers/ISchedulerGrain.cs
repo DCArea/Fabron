@@ -17,6 +17,8 @@ internal interface ISchedulerGrain<TTimer, TTimerSpec> : IGrainWithStringKey
         Dictionary<string, string>? extensions
     );
 
+    Task Tick();
+
     Task SetExt(Dictionary<string, string?> input);
 
     Task Start();
