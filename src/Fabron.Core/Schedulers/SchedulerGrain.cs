@@ -161,13 +161,14 @@ internal abstract class SchedulerGrain<TState> : IRemindable
         TickerLog.TimerSet(_logger, _key, dueTime, envelop.Time);
     }
 
-    protected async Task DispatchNew(FireEnvelop envelop)
+    protected async Task DispatchNew(FireEnvelop envelop, bool forceDispatch = false)
     {
         Guard.IsNotNull(_state, nameof(_state));
-        if (_state.Status.StartedAt == null)
+        if (!forceDispatch && _state.Status.StartedAt == null)
         {
             // ticker stopped, ignore
             // TODO: avoid dead fire running if timer is re-scheduled
+            TickerLog.FireCancelled(_logger, _key, envelop.Time.ToUnixTimeSeconds());
             return;
         }
 

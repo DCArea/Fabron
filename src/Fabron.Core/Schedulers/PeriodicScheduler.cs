@@ -81,7 +81,7 @@ internal class PeriodicScheduler : SchedulerGrain<PeriodicTimer>, IGrainBase, IP
     {
         Guard.IsNotNull(_state, nameof(_state));
         var envelop = _state.ToEnvelop(DateTimeOffset.UtcNow);
-        return DispatchNew(envelop);
+        return DispatchNew(envelop, true);
     }
 
     internal override async Task Tick(DateTimeOffset expectedTickTime)

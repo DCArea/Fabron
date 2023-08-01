@@ -61,4 +61,9 @@ public static partial class TickerLog
         Message = "[{key}]: Timer set {dueTime}, {runTime:o}")]
     public static partial void TimerSet(ILogger logger, string key, TimeSpan dueTime, DateTimeOffset runTime);
 
+    [LoggerMessage(
+        Level = LogLevel.Information,
+        Message = "[{key}]: Fire({ts}) dispatch cancelled")]
+    public static partial void FireCancelled(ILogger logger, string key, long ts);
+
 }

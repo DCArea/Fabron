@@ -83,7 +83,7 @@ internal partial class GenericScheduler : SchedulerGrain<GenericTimer>, IGrainBa
     {
         Guard.IsNotNull(_state, nameof(_state));
         var envelop = _state.ToEnvelop(DateTimeOffset.UtcNow);
-        return DispatchNew(envelop);
+        return DispatchNew(envelop, true);
     }
 
     internal override async Task Tick(DateTimeOffset expectedTickTime)
