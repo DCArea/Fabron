@@ -206,6 +206,6 @@ internal abstract class SchedulerGrain<TState> : IRemindable
                 return;
             }
         }
-        await Tick(status.FirstTickTime);
+        await Tick(_state?.Status.NextTick ?? default);
     }
 }

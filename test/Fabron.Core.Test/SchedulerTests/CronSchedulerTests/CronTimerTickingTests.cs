@@ -29,12 +29,23 @@ public class CronTimerTickingTests : CronTimerTestBase
     [Fact]
     public async Task ShouldDispatchForCurrentTick()
     {
-        var (scheduler, timerRegistry, reminderRegistry, clock, _, _) = PrepareGrain("0 0 0 * * *");
+        var (scheduler, timerRegistry, reminderRegistry, clock, _, _) = PrepareGrain();
         await (scheduler as IGrainBase).OnActivateAsync(default);
-        var tickTime = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero).AddMilliseconds(20);
-        await reminderRegistry.RegisterOrUpdateReminder(scheduler.GetGrainId(), Names.TickerReminder, TimeSpan.FromMilliseconds(10), Timeout.InfiniteTimeSpan);
+        await scheduler.Schedule(
+            JsonSerializer.Serialize(new { foo = "bar" }),
+            new CronTimerSpec(Schedule: "0 0 2 * * *"),
+            null,
+            null);
+
+        var tickTime = new DateTimeOffset(2020, 1, 1, 2, 0, 0, TimeSpan.Zero).AddMilliseconds(20);
         clock.UtcNow = tickTime.AddMilliseconds(100);
-        await FakeReminderRegistry.Fire(scheduler, Names.TickerReminder, new TickStatus(tickTime.UtcDateTime, Timeout.InfiniteTimeSpan, clock.UtcNow.UtcDateTime));
+        await FakeReminderRegistry.Fire(
+            scheduler,
+            Names.TickerReminder,
+            new TickStatus(
+                tickTime.UtcDateTime,
+                Timeout.InfiniteTimeSpan,
+                tickTime.UtcDateTime));
         timerRegistry.Timers.Should().HaveCount(1);
         timerRegistry.Timers[0].DueTime.Should().Be(TimeSpan.Zero);
     }
@@ -167,5 +178,28 @@ public class CronTimerTickingTests : CronTimerTestBase
         await timerRegistry.Timers[0].Trigger();
 
         dispatcher.Envelops.Count.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task ShouldNotDispatchDuplicatedTicks()
+    {
+        var (scheduler, timerRegistry, reminderRegistry, clock, _, dispatcher) = PrepareGrain();
+        await (scheduler as IGrainBase).OnActivateAsync(default);
+        clock.UtcNow = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero);
+        await scheduler.Schedule(
+            JsonSerializer.Serialize(new { foo = "bar" }),
+            new CronTimerSpec(Schedule: "0 */3 * * * *"),
+            null,
+            null);
+
+        clock.UtcNow = DateTimeOffset.Parse("2020-01-01T00:03:00.0081234+00:00");
+        await ((IRemindable)scheduler).ReceiveReminder(
+            Names.TickerReminder,
+            new TickStatus(
+                DateTime.Parse("2020-01-01T00:02:59.9998105+00:00"),
+                TimeSpan.FromMinutes(2),
+                DateTime.Parse("2020-01-01T00:02:59.9998105+00:00")
+            ));
+        timerRegistry.Timers.Count.Should().Be(1);
     }
 }
