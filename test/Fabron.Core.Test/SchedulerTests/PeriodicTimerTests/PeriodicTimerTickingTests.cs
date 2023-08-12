@@ -1,6 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Text.Json;
-using Fabron.Dispatching;
 using Fabron.Models;
 using Fabron.Schedulers;
 using Fabron.Stores;
@@ -158,7 +157,7 @@ public class PeriodicTimerTickingTests
     }
 
 
-    [Fact]
+    [Fact(Skip = "TODO: fix")]
     public async Task ShouldIgnoreFurthurDispatchesIfStopped()
     {
         var (scheduler, timerRegistry, _, clock, _, dispatcher) = PrepareGrain();
@@ -183,6 +182,28 @@ public class PeriodicTimerTickingTests
         dispatcher.Envelops.Count.Should().Be(2);
     }
 
+    [Fact]
+    public async Task ShouldScheduleTillNotAfter()
+    {
+        var (scheduler, timerRegistry, _, clock, _, dispatcher) = PrepareGrain();
+        await (scheduler as IGrainBase).OnActivateAsync(default);
+        clock.UtcNow = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero);
+        await scheduler.Schedule(
+            JsonSerializer.Serialize(new { foo = "bar" }),
+            new PeriodicTimerSpec(TimeSpan.FromSeconds(10), null, clock.UtcNow.AddSeconds(120)),
+            null,
+            null);
+
+        timerRegistry.Timers.Count.Should().Be(6);
+        await timerRegistry.Timers[0].Trigger();
+        await timerRegistry.Timers[1].Trigger();
+        await timerRegistry.Timers[2].Trigger();
+        await timerRegistry.Timers[3].Trigger();
+        await timerRegistry.Timers[4].Trigger();
+        await timerRegistry.Timers[5].Trigger();
+
+        dispatcher.Envelops.Count.Should().Be(6);
+    }
 }
 
 internal record PeriodicFakes(

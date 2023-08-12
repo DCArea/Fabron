@@ -1,26 +1,17 @@
-﻿using System.Runtime.CompilerServices;
-using System.Text.Json;
-using Cronos;
-using Fabron.Dispatching;
+﻿using System.Text.Json;
 using Fabron.Models;
-using Fabron.Schedulers;
-using Fabron.Stores;
-using FakeItEasy;
 using FluentAssertions;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Orleans.Runtime;
-using Orleans.Timers;
 using Xunit;
 
 namespace Fabron.Core.Test.SchedulerTests.CronSchedulerTests;
 
-public class CronTimerTickingTests: CronTimerTestBase
+public class CronTimerTickingTests : CronTimerTestBase
 {
     [Fact]
     public async Task ShouldSetTimersAndNextTick()
     {
-        var (scheduler, timerRegistry, reminderRegistry, clock, _) = PrepareGrain("*/20 * * * * *");
+        var (scheduler, timerRegistry, reminderRegistry, clock, _, _) = PrepareGrain("*/20 * * * * *");
         await (scheduler as IGrainBase).OnActivateAsync(default);
         var tickTime = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero);
         clock.UtcNow = tickTime.AddMilliseconds(100);
@@ -38,7 +29,7 @@ public class CronTimerTickingTests: CronTimerTestBase
     [Fact]
     public async Task ShouldDispatchForCurrentTick()
     {
-        var (scheduler, timerRegistry, reminderRegistry, clock, _) = PrepareGrain("0 0 0 * * *");
+        var (scheduler, timerRegistry, reminderRegistry, clock, _, _) = PrepareGrain("0 0 0 * * *");
         await (scheduler as IGrainBase).OnActivateAsync(default);
         var tickTime = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero).AddMilliseconds(20);
         await reminderRegistry.RegisterOrUpdateReminder(scheduler.GetGrainId(), Names.TickerReminder, TimeSpan.FromMilliseconds(10), Timeout.InfiniteTimeSpan);
@@ -53,7 +44,7 @@ public class CronTimerTickingTests: CronTimerTestBase
     public async Task Schedule_June1st()
     {
         // "0 0 0 1 6 *"
-        var (scheduler, timerRegistry, reminderRegistry, clock, store) = PrepareGrain();
+        var (scheduler, timerRegistry, reminderRegistry, clock, store, _) = PrepareGrain();
         clock.UtcNow = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero);
         await (scheduler as IGrainBase).OnActivateAsync(default);
         await scheduler.Schedule(
@@ -89,7 +80,7 @@ public class CronTimerTickingTests: CronTimerTestBase
     [Fact]
     public async Task ShouldRegisterNextTickOnSchedule()
     {
-        var (scheduler, _, reminderRegistry, clock, _) = PrepareGrain();
+        var (scheduler, _, reminderRegistry, clock, _, _) = PrepareGrain();
         await (scheduler as IGrainBase).OnActivateAsync(default);
         clock.UtcNow = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero).AddMilliseconds(20);
         await scheduler.Schedule(
@@ -105,7 +96,7 @@ public class CronTimerTickingTests: CronTimerTestBase
     [Fact]
     public async Task ShouldIgnoreMissedTick()
     {
-        var (scheduler, _, reminderRegistry, clock, _) = PrepareGrain();
+        var (scheduler, _, reminderRegistry, clock, _, _) = PrepareGrain();
         await (scheduler as IGrainBase).OnActivateAsync(default);
         clock.UtcNow = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero);
         await scheduler.Schedule(
@@ -125,7 +116,7 @@ public class CronTimerTickingTests: CronTimerTestBase
     [Fact]
     public async Task ShouldScheduleAtNotBeforeTime()
     {
-        var (scheduler, _, reminderRegistry, clock, _) = PrepareGrain();
+        var (scheduler, _, reminderRegistry, clock, _, _) = PrepareGrain();
         await (scheduler as IGrainBase).OnActivateAsync(default);
         clock.UtcNow = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero);
         var notBefore = clock.UtcNow.AddDays(30);
@@ -142,7 +133,7 @@ public class CronTimerTickingTests: CronTimerTestBase
     [Fact]
     public async Task ShouldNotScheduleLaterThanNotAfterTime()
     {
-        var (scheduler, _, reminderRegistry, clock, _) = PrepareGrain();
+        var (scheduler, _, reminderRegistry, clock, _, _) = PrepareGrain();
         await (scheduler as IGrainBase).OnActivateAsync(default);
         clock.UtcNow = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero);
         var notAfter = clock.UtcNow.AddDays(30).AddSeconds(15);
@@ -159,5 +150,22 @@ public class CronTimerTickingTests: CronTimerTestBase
         reminderRegistry.Reminders.Should().HaveCount(0);
     }
 
-}
+    [Fact]
+    public async Task ShouldScheduleTillNotAfter()
+    {
+        var (scheduler, timerRegistry, reminderRegistry, clock, _, dispatcher) = PrepareGrain();
+        await (scheduler as IGrainBase).OnActivateAsync(default);
+        clock.UtcNow = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero);
+        await scheduler.Schedule(
+            JsonSerializer.Serialize(new { foo = "bar" }),
+            new CronTimerSpec(Schedule: "0 1 0 * * *", null, clock.UtcNow.AddMinutes(2)),
+            null,
+            null);
 
+        timerRegistry.Timers.Count.Should().Be(1);
+        clock.UtcNow = clock.UtcNow.AddMinutes(2).AddMilliseconds(100);
+        await timerRegistry.Timers[0].Trigger();
+
+        dispatcher.Envelops.Count.Should().Be(1);
+    }
+}

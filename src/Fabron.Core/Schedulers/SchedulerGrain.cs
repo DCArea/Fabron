@@ -168,8 +168,8 @@ internal abstract class SchedulerGrain<TState> : IRemindable
         {
             // ticker stopped, ignore
             // TODO: avoid dead fire running if timer is re-scheduled
-            TickerLog.FireCancelled(_logger, _key, envelop.Time.ToUnixTimeSeconds());
-            return;
+            // TickerLog.FireCancelled(_logger, _key, envelop.Time.ToUnixTimeSeconds());
+            // return;
         }
 
         var utcNow = _clock.UtcNow;

@@ -20,6 +20,7 @@ public class CronTimerTestBase
         var clock = new FakeSystemClock();
         var reminderRegistry = new FakeReminderRegistry();
         var timerRegistry = new FakeTimerRegistry();
+        var dispatcher = new FakeFireDispatcher();
         var context = A.Fake<IGrainContext>();
         var runtime = A.Fake<IGrainRuntime>();
         var store = new InMemoryCronTimerStore();
@@ -58,9 +59,9 @@ public class CronTimerTestBase
             Options.Create(new SchedulerOptions { CronFormat = CronFormat.IncludeSeconds }),
             clock,
             store,
-            A.Fake<IFireDispatcher>());
+            dispatcher);
 
-        return new(grain, timerRegistry, reminderRegistry, clock, store);
+        return new(grain, timerRegistry, reminderRegistry, clock, store, dispatcher);
     }
 }
 
@@ -69,5 +70,6 @@ internal record CronFakes(
     FakeTimerRegistry timerRegistry,
     FakeReminderRegistry reminderRegistry,
     FakeSystemClock clock,
-    ICronTimerStore store);
+    ICronTimerStore store,
+    FakeFireDispatcher dispatcher);
 
