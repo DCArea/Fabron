@@ -128,7 +128,8 @@ internal abstract class SchedulerGrain<TState> : IRemindable
                 _tickReminder = null;
 
                 TickerLog.TickerDisposed(_logger, _key);
-                _runtime.DeactivateOnIdle(GrainContext);
+                // should not deactive since there may be ongoing timers to fire
+                // _runtime.DeactivateOnIdle(GrainContext);
                 break;
             }
             catch (ReminderException)
