@@ -12,7 +12,7 @@ namespace Fabron.Schedulers;
 internal interface IGenericScheduler : IGrainWithStringKey, ISchedulerGrain<GenericTimer, GenericTimerSpec>
 { }
 
-internal partial class GenericScheduler : SchedulerGrain<GenericTimer>, IGrainBase, IGenericScheduler
+internal sealed class GenericScheduler : SchedulerGrain<GenericTimer>, IGrainBase, IGenericScheduler
 {
     public GenericScheduler(
         IGrainContext context,

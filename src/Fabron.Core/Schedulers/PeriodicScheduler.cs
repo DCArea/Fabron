@@ -11,7 +11,7 @@ namespace Fabron.Schedulers;
 internal interface IPeriodicScheduler : IGrainWithStringKey, ISchedulerGrain<PeriodicTimer, PeriodicTimerSpec>
 { }
 
-internal class PeriodicScheduler : SchedulerGrain<PeriodicTimer>, IGrainBase, IPeriodicScheduler
+internal sealed class PeriodicScheduler : SchedulerGrain<PeriodicTimer>, IGrainBase, IPeriodicScheduler
 {
     public PeriodicScheduler(
         IGrainContext context,

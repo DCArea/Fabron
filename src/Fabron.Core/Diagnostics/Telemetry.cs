@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Fabron.Diagnostics;
 
-internal class Telemetry
+internal sealed class Telemetry
 {
     public const string TelemetryName = "Fabron";
     private static readonly Meter s_meter = new(TelemetryName);

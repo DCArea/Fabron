@@ -11,7 +11,7 @@ namespace Fabron.Dispatching;
 /// <param name="Time">Fire time</param>
 /// <param name="Data">Timer data</param>
 /// <param name="Extensions">Timer extensions</param>
-public record FireEnvelop(
+public sealed record FireEnvelop(
     [property: JsonPropertyName("source")]
     string Source,
     [property: JsonPropertyName("time")]

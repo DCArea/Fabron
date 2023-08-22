@@ -11,7 +11,7 @@ namespace Fabron.Schedulers;
 internal interface ICronScheduler : IGrainWithStringKey, ISchedulerGrain<CronTimer, CronTimerSpec>
 { }
 
-internal class CronScheduler : SchedulerGrain<CronTimer>, IGrainBase, ICronScheduler
+internal sealed class CronScheduler : SchedulerGrain<CronTimer>, IGrainBase, ICronScheduler
 {
     private readonly SchedulerOptions _options;
 
