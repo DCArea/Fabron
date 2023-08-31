@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 
 namespace Fabron.Providers.PostgreSQL;
 
-public class PostgreSQLCronTimerStore : ICronTimerStore
+public sealed class PostgreSQLCronTimerStore : ICronTimerStore
 {
     private readonly PostgreSQLOptions _options;
     private readonly ILogger _logger;

@@ -3,8 +3,6 @@
   <PropertyGroup>
     <RootNamespace>Fabron</RootNamespace>
     <PackageId>Fabron.Core</PackageId>
-    <VersionPrefix>0.0.1</VersionPrefix>
-    <RepositoryUrl>https://github.com/DCArea/Fabron</RepositoryUrl>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
   </PropertyGroup>
 
@@ -19,6 +17,7 @@
   <ItemGroup>
     <InternalsVisibleTo Include="Fabron.Core.Tests" />
     <InternalsVisibleTo Include="Fabron.FunctionalTests" />
+    <InternalsVisibleTo Include="Fabron.Providers.PostgreSQL" />
   </ItemGroup>
 
 

@@ -5,6 +5,7 @@ using Fabron.Models;
 using Fabron.Stores;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Orleans.Placement;
 using Orleans.Runtime;
 
 namespace Fabron.Schedulers;
@@ -12,6 +13,7 @@ namespace Fabron.Schedulers;
 internal interface IGenericScheduler : IGrainWithStringKey, ISchedulerGrain<GenericTimer, GenericTimerSpec>
 { }
 
+[PreferLocalPlacement]
 internal sealed class GenericScheduler : SchedulerGrain<GenericTimer>, IGrainBase, IGenericScheduler
 {
     public GenericScheduler(
@@ -23,12 +25,10 @@ internal sealed class GenericScheduler : SchedulerGrain<GenericTimer>, IGrainBas
         IGenericTimerStore store,
         IFireDispatcher dispatcher) : base(context, runtime, logger, clock, options.Value, store, dispatcher) { }
 
-    async Task IGrainBase.OnActivateAsync(CancellationToken cancellationToken)
+    Task IGrainBase.OnActivateAsync(CancellationToken cancellationToken)
     {
         _key = this.GetPrimaryKeyString();
-        var entry = await _store.GetAsync(_key);
-        _state = entry?.State;
-        _eTag = entry?.ETag;
+        return LoadStateAsync();
     }
 
     public Task Start() => StartTicker();

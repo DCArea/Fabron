@@ -24,12 +24,10 @@ internal sealed class CronScheduler : SchedulerGrain<CronTimer>, IGrainBase, ICr
         ICronTimerStore store,
         IFireDispatcher dispatcher) : base(context, runtime, logger, clock, options.Value, store, dispatcher) => _options = options.Value;
 
-    async Task IGrainBase.OnActivateAsync(CancellationToken cancellationToken)
+    Task IGrainBase.OnActivateAsync(CancellationToken cancellationToken)
     {
         _key = this.GetPrimaryKeyString();
-        var entry = await _store.GetAsync(_key);
-        _state = entry?.State;
-        _eTag = entry?.ETag;
+        return LoadStateAsync();
     }
 
     public Task Start() => StartTicker();
@@ -58,8 +56,7 @@ internal sealed class CronScheduler : SchedulerGrain<CronTimer>, IGrainBase, ICr
             Data: data,
             Spec: spec
         );
-        _eTag = await _store.SetAsync(_state, _eTag);
-
+        await SaveStateAsync();
         await StartTicker();
         return _state;
     }

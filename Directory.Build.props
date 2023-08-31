@@ -8,6 +8,7 @@
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <VersionPrefix>0.1.0</VersionPrefix>
+    <RepositoryUrl>https://github.com/DCArea/Fabron</RepositoryUrl>
   </PropertyGroup>
 
   <PropertyGroup>

@@ -1,13 +1,14 @@
 ﻿using System.Text.Json;
-using Fabron.Providers.PostgreSQL;
+using Fabron.Diagnostics;
 using Fabron.Stores;
 using Microsoft.Extensions.Logging;
 using Npgsql;
 using NpgsqlTypes;
+using PGThrowHelper = Fabron.Providers.PostgreSQL.ThrowHelper;
 
 namespace Fabron.Store;
 
-internal class PostgreSQLStateStore
+internal sealed class PostgreSQLStateStore
 {
     private readonly ILogger _logger;
     private readonly string _connectionString;
@@ -39,12 +40,13 @@ WHERE key = @key AND etag = @expected_etag;";
     internal async Task<string> SetStateAsync<TState>(string key, TState data, string? expectedETag)
     {
         Log.SavingState(_logger, key, expectedETag);
+        using var _ = Telemetry.ActivitySource.StartActivity("Set State");
 
         var value = JsonSerializer.Serialize(data, _jsonSerializerOptions);
         var newETag = Guid.NewGuid().ToString();
 
         await using var conn = new NpgsqlConnection(_connectionString);
-        await conn.OpenAsync();
+        await conn.OpenAsync().ConfigureAwait(false);
         NpgsqlCommand cmd;
         if (expectedETag is null)
         {
@@ -62,11 +64,10 @@ WHERE key = @key AND etag = @expected_etag;";
             cmd.Parameters.AddWithValue("@expected_etag", expectedETag);
         }
 
-        var rows = await cmd.ExecuteNonQueryAsync();
+        var rows = await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
         if (rows != 1)
         {
-            ThrowHelper.ETagMismatch(expectedETag);
-            return null;
+            return PGThrowHelper.NoItemWasUpdated<string>(expectedETag);
         }
         return newETag;
     }
@@ -76,13 +77,13 @@ WHERE key = @key AND etag = @expected_etag;";
         Log.GettingState(_logger, key);
 
         await using var conn = new NpgsqlConnection(_connectionString);
-        await conn.OpenAsync();
+        await conn.OpenAsync().ConfigureAwait(false);
 
         var cmd = new NpgsqlCommand(_sql_select, conn);
         cmd.Parameters.AddWithValue("@key", key);
-        await using var reader = await cmd.ExecuteReaderAsync();
+        await using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
 
-        if (await reader.ReadAsync())
+        if (await reader.ReadAsync().ConfigureAwait(false))
         {
             var data = JsonSerializer.Deserialize<TState>(reader.GetString(0), _jsonSerializerOptions)!;
             var etag = reader.GetString(1);
@@ -96,7 +97,7 @@ WHERE key = @key AND etag = @expected_etag;";
         Log.DeletingState(_logger, key, expectedETag);
 
         await using var conn = new NpgsqlConnection(_connectionString);
-        await conn.OpenAsync();
+        await conn.OpenAsync().ConfigureAwait(false);
         NpgsqlCommand cmd;
         if (expectedETag is null)
         {
@@ -110,10 +111,10 @@ WHERE key = @key AND etag = @expected_etag;";
             cmd.Parameters.AddWithValue("@expected_etag", expectedETag);
         }
 
-        var rows = await cmd.ExecuteNonQueryAsync();
+        var rows = await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
         if (rows != 1 && expectedETag is not null)
         {
-            ThrowHelper.ETagMismatch(expectedETag);
+            PGThrowHelper.NoItemWasUpdated<string>(expectedETag);
             return;
         }
     }

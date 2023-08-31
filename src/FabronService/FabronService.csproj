@@ -7,8 +7,6 @@
 
   <ItemGroup>
     <PackageReference Include="AspNetCore.Authentication.ApiKey" />
-    <!--<PackageReference Include="DCA.DotNet.Extensions.OpenTelemetry.AspNetCore" />
-    <PackageReference Include="DCA.DotNet.Extensions.Logging" />-->
     <PackageReference Include="Npgsql" />
     <PackageReference Include="Npgsql.OpenTelemetry" />
     <PackageReference Include="Microsoft.Orleans.Sdk" />

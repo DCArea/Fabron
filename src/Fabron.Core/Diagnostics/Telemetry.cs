@@ -11,7 +11,7 @@ internal sealed class Telemetry
 {
     public const string TelemetryName = "Fabron";
     private static readonly Meter s_meter = new(TelemetryName);
-    private static readonly ActivitySource s_source = new(TelemetryName);
+    public static readonly ActivitySource ActivitySource = new(TelemetryName);
 
     public static CounterAggregator TimerScheduled = new(s_meter, "fabron-timer-scheduled");
 
@@ -57,6 +57,6 @@ internal sealed class Telemetry
     {
         Activity.Current?.Dispose();
         Activity.Current = null;
-        return s_source.StartActivity("Ticking");
+        return ActivitySource.StartActivity("Ticking");
     }
 }

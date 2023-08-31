@@ -3,7 +3,7 @@ using Fabron.Schedulers;
 
 namespace Fabron;
 
-internal class CronTimerManager : TimerManager<ICronScheduler, CronTimer, CronTimerSpec>, ICronTimerManager
+internal sealed class CronTimerManager : TimerManager<ICronScheduler, CronTimer, CronTimerSpec>, ICronTimerManager
 {
     public CronTimerManager(IClusterClient client) : base(client)
     { }

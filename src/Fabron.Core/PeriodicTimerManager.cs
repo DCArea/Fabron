@@ -3,7 +3,7 @@ using Fabron.Schedulers;
 
 namespace Fabron;
 
-internal class PeriodicTimerManager : TimerManager<IPeriodicScheduler, PeriodicTimer, PeriodicTimerSpec>, IPeriodicTimerManager
+internal sealed class PeriodicTimerManager : TimerManager<IPeriodicScheduler, PeriodicTimer, PeriodicTimerSpec>, IPeriodicTimerManager
 {
     public PeriodicTimerManager(IClusterClient client) : base(client)
     { }

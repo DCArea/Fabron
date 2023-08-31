@@ -2,7 +2,7 @@
 
 namespace Fabron;
 
-public class FabronClient : IFabronClient
+public sealed class FabronClient : IFabronClient
 {
     public FabronClient(IClusterClient client)
     {

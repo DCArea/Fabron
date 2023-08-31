@@ -17,7 +17,7 @@ internal abstract class SchedulerGrain<TState> : IRemindable
     protected readonly ILogger _logger;
     protected readonly ISystemClock _clock;
     private readonly SchedulerOptions _options;
-    protected readonly IStateStore<TState> _store;
+    private readonly IStateStore<TState> _store;
     private readonly IFireDispatcher _dispatcher;
     private readonly IReminderRegistry _reminderRegistry;
 
@@ -47,6 +47,30 @@ internal abstract class SchedulerGrain<TState> : IRemindable
     protected string? _eTag = default!;
     private IGrainReminder? _tickReminder;
 
+    protected async Task LoadStateAsync()
+    {
+        //using var _ = Telemetry.ActivitySource.StartActivity("Load State");
+        var entry = await _store.GetAsync(_key);
+        _state = entry?.State;
+        _eTag = entry?.ETag;
+    }
+
+    protected async Task SaveStateAsync()
+    {
+        Guard.IsNotNull(_state);
+        //using var _ = Telemetry.ActivitySource.StartActivity("Save State");
+        _eTag = await _store.SetAsync(_state, _eTag);
+    }
+
+    protected async Task ClearStateAsync()
+    {
+        Guard.IsNotNull(_state);
+        //using var _ = Telemetry.ActivitySource.StartActivity("Clear State");
+        await _store.RemoveAsync(_state.Metadata.Key, _eTag);
+        _state = null;
+        _eTag = null;
+    }
+
     protected async Task SetExtInternal(Dictionary<string, string?> input)
     {
         if (_state is null) return;
@@ -62,7 +86,7 @@ internal abstract class SchedulerGrain<TState> : IRemindable
                 existed[k] = v;
             }
         }
-        _eTag = await _store.SetAsync(_state, _eTag);
+        await SaveStateAsync();
     }
 
 
@@ -89,7 +113,7 @@ internal abstract class SchedulerGrain<TState> : IRemindable
         {
             _state.Status.StartedAt = now;
             _state.Status.NextTick = tickTime;
-            _eTag = await _store.SetAsync(_state, _eTag);
+            await SaveStateAsync();
         }
     }
 
@@ -97,9 +121,7 @@ internal abstract class SchedulerGrain<TState> : IRemindable
     {
         if (_state is not null)
         {
-            await _store.RemoveAsync(_state.Metadata.Key, _eTag);
-            _state = null;
-            _eTag = null;
+            await ClearStateAsync();
             await StopTicker();
         }
     }
@@ -119,7 +141,7 @@ internal abstract class SchedulerGrain<TState> : IRemindable
             {
                 _state.Status.StartedAt = null;
                 _state.Status.NextTick = null;
-                _eTag = await _store.SetAsync(_state, _eTag);
+                await SaveStateAsync();
             }
 
             try

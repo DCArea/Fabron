@@ -1,4 +1,4 @@
-using Fabron.Models;
+﻿using Fabron.Models;
 using Fabron.Store;
 using Fabron.Stores;
 using Microsoft.Extensions.Logging;
@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 
 namespace Fabron.Providers.PostgreSQL;
 
-public class PostgreSQLPeriodicTimerStore : IPeriodicTimerStore
+public sealed class PostgreSQLPeriodicTimerStore : IPeriodicTimerStore
 {
     private readonly PostgreSQLOptions _options;
     private readonly ILogger _logger;
