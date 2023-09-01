@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Diagnostics;
+using Cronos;
 using Fabron.Dispatching;
 using Fabron.Models;
 using Fabron.Stores;
@@ -68,11 +69,19 @@ internal sealed class CronScheduler : SchedulerGrain<CronTimer>, IGrainBase, ICr
         Guard.IsNotNull(_state);
         var utcNow = _clock.UtcNow;
         var notBefore = _state.Spec.NotBefore;
-        return notBefore switch
+        if (_state.Spec.NotAfter is { } notAfter && utcNow > notAfter)
         {
-            not null when notBefore.Value > utcNow => Tick(notBefore.Value),
-            _ => Tick(default)
-        };
+            return Task.CompletedTask;
+        }
+
+        var cron = CronExpression.Parse(_state.Spec.Schedule, _options.CronFormat);
+        var nextTick = cron.GetNextOccurrence(notBefore ?? utcNow, _options.TimeZone, inclusive: true);
+        if (nextTick == null)
+        {
+            // could this happen?
+            return Task.CompletedTask;
+        }
+        return TickAfter(utcNow, nextTick.Value);
     }
 
     public Task Tick()
@@ -87,12 +96,11 @@ internal sealed class CronScheduler : SchedulerGrain<CronTimer>, IGrainBase, ICr
         var now = _clock.UtcNow;
         TickerLog.Ticking(_logger, _key, now, expectedTickTime);
 
-        var shouldDispatchForCurrentTick = expectedTickTime != default;
-        if (shouldDispatchForCurrentTick && now.Subtract(expectedTickTime) > TimeSpan.FromMinutes(5))
+        if (now.Subtract(expectedTickTime) > TimeSpan.FromMinutes(2))
         {
             TickerLog.UnexpectedTick(_logger, _key, expectedTickTime, "Missed");
-            shouldDispatchForCurrentTick = false;
         }
+
         if (_state is null || _state.Metadata.DeletionTimestamp is not null)
         {
             TickerLog.UnexpectedTick(_logger, _key, expectedTickTime, "NotRegistered");
@@ -105,34 +113,30 @@ internal sealed class CronScheduler : SchedulerGrain<CronTimer>, IGrainBase, ICr
             await StopTicker();
             return;
         }
-        if (_state.Spec.NotBefore.HasValue && now < _state.Spec.NotBefore.Value)
+
+        if (_state.Spec.NotBefore is { } notBefore && now < notBefore)
         {
             TickerLog.UnexpectedTick(_logger, _key, expectedTickTime, "NotStarted");
-            await TickAfter(now, _state.Spec.NotBefore.Value);
+            await StartTicker();
             return;
         }
 
-        var cron = Cronos.CronExpression.Parse(_state.Spec.Schedule, _options.CronFormat);
-
-        var from = shouldDispatchForCurrentTick ? expectedTickTime : now;
+        var from = expectedTickTime;
         var to = from.AddMinutes(2);
         if (to > _state.Spec.NotAfter)
         {
             to = _state.Spec.NotAfter.Value;
         }
 
-        var schedules = cron.GetOccurrences(from, to, _options.TimeZone, fromInclusive: false, toInclusive: false);
-        if (shouldDispatchForCurrentTick)
-        {
-            Dispatch(expectedTickTime);
-        }
+        var cron = CronExpression.Parse(_state.Spec.Schedule, _options.CronFormat);
+        var schedules = cron.GetOccurrences(from, to, _options.TimeZone, fromInclusive: true, toInclusive: false);
         foreach (var schedule in schedules)
         {
             Dispatch(schedule);
         }
 
-        from = to;
-        var nextTick = cron.GetNextOccurrence(from, _options.TimeZone, inclusive: true);
+        var next = to;
+        var nextTick = cron.GetNextOccurrence(next, _options.TimeZone, inclusive: true);
         if (!nextTick.HasValue || (_state.Spec.NotAfter.HasValue && nextTick.Value > _state.Spec.NotAfter.Value))
         {
             // no more next tick

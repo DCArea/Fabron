@@ -105,23 +105,25 @@ public class CronTimerTickingTests : CronTimerTestBase
 
 
     [Fact]
-    public async Task ShouldIgnoreMissedTick()
+    public async Task ShouldNotIgnoreMissedTick()
     {
-        var (scheduler, _, reminderRegistry, clock, _, _) = PrepareGrain();
+        var (scheduler, timerRegistry, reminderRegistry, clock, _, _) = PrepareGrain();
         await (scheduler as IGrainBase).OnActivateAsync(default);
         clock.UtcNow = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero);
         await scheduler.Schedule(
             JsonSerializer.Serialize(new { foo = "bar" }),
-            new CronTimerSpec(Schedule: "0 0 0 * * *"),
+            new CronTimerSpec(Schedule: "0 0 0 2 * *"),
             null,
             null);
 
-        clock.UtcNow = new DateTimeOffset(2021, 1, 1, 0, 0, 0, TimeSpan.Zero);
+        var tickTime = new DateTimeOffset(2020, 1, 2, 0, 0, 0, TimeSpan.Zero);
+        clock.UtcNow = tickTime.AddMinutes(5);
 
-        await ((IRemindable)scheduler).ReceiveReminder(Names.TickerReminder, new TickStatus(new DateTimeOffset(2020, 1, 1, 1, 0, 0, TimeSpan.Zero).DateTime, TimeSpan.FromMinutes(2), clock.UtcNow.AddMilliseconds(100).DateTime));
+        await ((IRemindable)scheduler).ReceiveReminder(Names.TickerReminder, new TickStatus(tickTime.UtcDateTime, TimeSpan.FromMinutes(2), tickTime.UtcDateTime));
 
+        timerRegistry.Timers.Should().HaveCount(1);
         reminderRegistry.Reminders.Should().HaveCount(1);
-        reminderRegistry.Reminders.Single().Value.DueTime.Should().Be(new DateTimeOffset(2021, 1, 2, 0, 0, 0, TimeSpan.Zero) - clock.UtcNow);
+        reminderRegistry.Reminders.Single().Value.DueTime.Should().Be(new DateTimeOffset(2020, 2, 2, 0, 0, 0, TimeSpan.Zero) - clock.UtcNow);
     }
 
     [Fact]
@@ -150,34 +152,16 @@ public class CronTimerTickingTests : CronTimerTestBase
         var notAfter = clock.UtcNow.AddDays(30).AddSeconds(15);
         await scheduler.Schedule(
             JsonSerializer.Serialize(new { foo = "bar" }),
-            new CronTimerSpec(Schedule: "*/10 * * * * *", null, notAfter),
+            new CronTimerSpec(Schedule: "*/10 * * * * *", clock.UtcNow.AddDays(30), notAfter),
             null,
             null);
 
-        clock.UtcNow = clock.UtcNow.AddDays(30);
+
+        clock.UtcNow = clock.UtcNow.AddDays(30).AddMilliseconds(100);
 
         await ((IRemindable)scheduler).ReceiveReminder(Names.TickerReminder, new TickStatus(new DateTimeOffset(2020, 1, 1, 1, 0, 0, TimeSpan.Zero).DateTime, TimeSpan.FromMinutes(2), clock.UtcNow.AddMilliseconds(100).DateTime));
 
         reminderRegistry.Reminders.Should().HaveCount(0);
-    }
-
-    [Fact]
-    public async Task ShouldScheduleTillNotAfter()
-    {
-        var (scheduler, timerRegistry, reminderRegistry, clock, _, dispatcher) = PrepareGrain();
-        await (scheduler as IGrainBase).OnActivateAsync(default);
-        clock.UtcNow = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero);
-        await scheduler.Schedule(
-            JsonSerializer.Serialize(new { foo = "bar" }),
-            new CronTimerSpec(Schedule: "0 1 0 * * *", null, clock.UtcNow.AddMinutes(2)),
-            null,
-            null);
-
-        timerRegistry.Timers.Count.Should().Be(1);
-        clock.UtcNow = clock.UtcNow.AddMinutes(2).AddMilliseconds(100);
-        await timerRegistry.Timers[0].Trigger();
-
-        dispatcher.Envelops.Count.Should().Be(1);
     }
 
     [Fact]
@@ -200,6 +184,28 @@ public class CronTimerTickingTests : CronTimerTestBase
                 TimeSpan.FromMinutes(2),
                 DateTime.Parse("2020-01-01T00:02:59.9998105+00:00")
             ));
+        timerRegistry.Timers.Count.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task ShouldScheduleAtFirstTickWhenNotBeforeSet()
+    {
+        var (scheduler, timerRegistry, reminderRegistry, clock, _, dispatcher) = PrepareGrain();
+        await (scheduler as IGrainBase).OnActivateAsync(default);
+        clock.UtcNow = DateTimeOffset.Parse("2020-01-01T00:00:00.000+00:00");
+        var notBefore = clock.UtcNow.AddDays(29).AddHours(10);
+        clock.UtcNow = clock.UtcNow.AddMilliseconds(100);
+        await scheduler.Schedule(
+            JsonSerializer.Serialize(new { foo = "bar" }),
+            new CronTimerSpec(Schedule: "0 0 0 * * *", notBefore),
+            null,
+            null);
+
+        var tickReminder = reminderRegistry.Reminders.Single().Value;
+        tickReminder.DueTime.Should().Be(DateTimeOffset.Parse("2020-01-31T00:00:00.000+00:00") - clock.UtcNow);
+
+        clock.UtcNow = DateTimeOffset.Parse("2020-01-31T00:00:00.000+00:00").AddMilliseconds(100);
+        await tickReminder.FireFor(scheduler, DateTimeOffset.Parse("2020-01-31T00:00:00.000+00:00"));
         timerRegistry.Timers.Count.Should().Be(1);
     }
 }

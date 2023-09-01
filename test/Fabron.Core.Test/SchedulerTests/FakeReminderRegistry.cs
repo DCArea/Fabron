@@ -48,5 +48,10 @@ namespace Fabron.Core.Test.SchedulerTests
         public TimeSpan Period { get; }
 
         public string ReminderName { get; }
+
+        public async Task FireFor(IRemindable grain, DateTimeOffset time)
+        {
+            await grain.ReceiveReminder(ReminderName, new TickStatus(time.UtcDateTime, Period, time.UtcDateTime));
+        }
     }
 }
