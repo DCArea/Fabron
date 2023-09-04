@@ -32,6 +32,11 @@ public static partial class TickerLog
     public static partial void UnexpectedTick(ILogger logger, string key, DateTimeOffset tickTime, string reason);
 
     [LoggerMessage(
+        Level = LogLevel.Warning,
+        Message = "[{key}]: Late fire, expected {schedule}, delayed {delay}")]
+    public static partial void FireDelayed(ILogger logger, string key, DateTimeOffset schedule, TimeSpan delay);
+
+    [LoggerMessage(
         Level = LogLevel.Debug,
         Message = "[{key}]: Dispatching at {now:o}, expeced: {expected:o}")]
     public static partial void Dispatching(ILogger logger, string key, DateTimeOffset now, DateTimeOffset expected);

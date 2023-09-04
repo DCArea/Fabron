@@ -208,4 +208,22 @@ public class CronTimerTickingTests : CronTimerTestBase
         await tickReminder.FireFor(scheduler, DateTimeOffset.Parse("2020-01-31T00:00:00.000+00:00"));
         timerRegistry.Timers.Count.Should().Be(1);
     }
+
+    [Fact]
+    public async Task ShouldStartNowIfNotBeforeSetEarlierThanNow()
+    {
+        var (scheduler, timerRegistry, reminderRegistry, clock, _, dispatcher) = PrepareGrain();
+        await (scheduler as IGrainBase).OnActivateAsync(default);
+        clock.UtcNow = DateTimeOffset.Parse("2020-01-10T12:00:00.000+00:00");
+        var notBefore = clock.UtcNow.AddDays(-3);
+        clock.UtcNow = clock.UtcNow.AddMilliseconds(100);
+        await scheduler.Schedule(
+            JsonSerializer.Serialize(new { foo = "bar" }),
+            new CronTimerSpec(Schedule: "0 0 0 * * *", notBefore),
+            null,
+            null);
+
+        var tickReminder = reminderRegistry.Reminders.Single().Value;
+        tickReminder.DueTime.Should().Be(DateTimeOffset.Parse("2020-01-11T00:00:00.000+00:00") - clock.UtcNow);
+    }
 }

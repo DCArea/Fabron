@@ -68,14 +68,15 @@ internal sealed class CronScheduler : SchedulerGrain<CronTimer>, IGrainBase, ICr
     {
         Guard.IsNotNull(_state);
         var utcNow = _clock.UtcNow;
-        var notBefore = _state.Spec.NotBefore;
         if (_state.Spec.NotAfter is { } notAfter && utcNow > notAfter)
         {
             return Task.CompletedTask;
         }
-
+        var from = _state.Spec.NotBefore is { } nb && nb > utcNow
+            ? nb
+            : utcNow;
         var cron = CronExpression.Parse(_state.Spec.Schedule, _options.CronFormat);
-        var nextTick = cron.GetNextOccurrence(notBefore ?? utcNow, _options.TimeZone, inclusive: true);
+        var nextTick = cron.GetNextOccurrence(from, _options.TimeZone, inclusive: true);
         if (nextTick == null)
         {
             // could this happen?
@@ -153,7 +154,20 @@ internal sealed class CronScheduler : SchedulerGrain<CronTimer>, IGrainBase, ICr
     {
         Guard.IsNotNull(_state, nameof(_state));
         var now = _clock.UtcNow;
-        var dueTime = schedule > now ? schedule.Subtract(now) : TimeSpan.Zero;
+        TimeSpan dueTime;
+        if (schedule > now)
+        {
+            dueTime = schedule.Subtract(now);
+        }
+        else
+        {
+            dueTime = TimeSpan.Zero;
+            var delayTime = now.Subtract(schedule);
+            if (delayTime.TotalMinutes > 2)
+            {
+                TickerLog.FireDelayed(_logger, _key, schedule, delayTime);
+            }
+        }
         var envelop = _state.ToEnvelop(schedule);
         FireAfter(envelop, dueTime);
     }
