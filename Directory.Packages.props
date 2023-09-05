@@ -12,7 +12,7 @@
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="1.1.1" />
     <PackageVersion Include="DCA.DotNet.Extensions.OpenTelemetry.AspNetCore" Version="0.1.0-alpha1.0" />
     <PackageVersion Include="DCA.DotNet.Extensions.Logging" Version="$(DCAExtensionsVersion)" />
-    <PackageVersion Include="InstrumentAggregators" Version="0.1.0-rc1.0" />
+    <PackageVersion Include="InstrumentAggregators" Version="0.1.0-rc1.1" />
     <PackageVersion Include="AspNetCore.Authentication.ApiKey" Version="7.0.0" />
     <PackageVersion Include="Cronos" Version="0.7.1" />
     <PackageVersion Include="Npgsql" Version="7.0.4" />

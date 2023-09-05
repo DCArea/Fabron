@@ -1,34 +1,45 @@
 ﻿using System.Diagnostics;
 using System.Diagnostics.Metrics;
-using CloudEventDotNet.Diagnostics.Aggregators;
 using Fabron.Dispatching;
 using Fabron.Schedulers;
+using InstrumentAggregators;
 using Microsoft.Extensions.Logging;
 
 namespace Fabron.Diagnostics;
 
+#pragma warning disable IDE0052 // Remove unread private members
 internal sealed class Telemetry
 {
     public const string TelemetryName = "Fabron";
     private static readonly Meter s_meter = new(TelemetryName);
     public static readonly ActivitySource ActivitySource = new(TelemetryName);
 
-    public static CounterAggregator TimerScheduled = new(s_meter, "fabron-timer-scheduled");
+    public static readonly CounterAggregator TimerScheduled = new();
+    private static readonly ObservableCounter<long> timerScheduledCounter = s_meter.CreateObservableCounter("fabron-timer-scheduled", TimerScheduled.Collect);
 
     public static HistogramAggregator TimerDispatchTardiness = new(
         new(),
-        new(Buckets: new[] { 0L, 1L, 5L, 50L, 1_000L, 5_000L, 60_000L }),
-        s_meter,
-        "fabron-timer-dispatch-tardiness");
+        new(Buckets: new[] { 0L, 1L, 5L, 50L, 1_000L, 5_000L, 60_000L }));
+    private static readonly ObservableCounter<long> timerDispatchTardinessCount
+        = s_meter.CreateObservableCounter("fabron-timer-dispatch-tardiness-count", TimerDispatchTardiness.CollectCount);
+    private static readonly ObservableCounter<long> timerDispatchTardinessSum
+        = s_meter.CreateObservableCounter("fabron-timer-dispatch-tardiness-sum", TimerDispatchTardiness.CollectSum);
+    private static readonly ObservableCounter<long> timerDispatchTardinessBuckets
+        = s_meter.CreateObservableCounter("fabron-timer-dispatch-tardiness-buckets", TimerDispatchTardiness.CollectBuckets);
 
-    public static CounterAggregator FabronTimerDispatchedFailed = new(s_meter, "fabron-timer-dispatch-failed");
+
+    public static CounterAggregator FabronTimerDispatchedFailed = new();
+    private static readonly ObservableCounter<long> timerDispatchFailedCounter = s_meter.CreateObservableCounter("fabron-timer-dispatch-failed", FabronTimerDispatchedFailed.Collect);
 
     public static HistogramAggregator FabronTimerDispatchDuration = new(
         new(),
-        new(Buckets: new[] { 0L, 1L, 5L, 50L, 1_000L, 5_000L, 10_000L }),
-        s_meter,
-        "fabron-timer-dispatch-duration");
-
+        new(Buckets: new[] { 0L, 1L, 5L, 50L, 1_000L, 5_000L, 10_000L }));
+    private static readonly ObservableCounter<long> timerDispatchDurationCount
+        = s_meter.CreateObservableCounter("fabron-timer-dispatch-duration-count", FabronTimerDispatchDuration.CollectCount);
+    private static readonly ObservableCounter<long> timerDispatchDurationSum
+        = s_meter.CreateObservableCounter("fabron-timer-dispatch-duration-sum", FabronTimerDispatchDuration.CollectSum);
+    private static readonly ObservableCounter<long> timerDispatchDurationBuckets
+        = s_meter.CreateObservableCounter("fabron-timer-dispatch-duration-buckets", FabronTimerDispatchDuration.CollectBuckets);
 
     public static void OnFabronTimerDispatching(
         ILogger logger,
