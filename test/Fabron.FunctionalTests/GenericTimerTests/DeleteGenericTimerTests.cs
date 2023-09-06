@@ -3,11 +3,8 @@ using Xunit.Abstractions;
 
 namespace Fabron.FunctionalTests.GenericTimerTests;
 
-public class DeleteGenericTimerTests : TestBase
+public class DeleteGenericTimerTests(DefaultClusterFixture fixture, ITestOutputHelper output) : TestBase(fixture, output)
 {
-    public DeleteGenericTimerTests(DefaultClusterFixture fixture, ITestOutputHelper output) : base(fixture, output)
-    { }
-
     [Fact]
     public async Task DeleteTimer()
     {

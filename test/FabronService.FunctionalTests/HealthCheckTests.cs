@@ -2,16 +2,12 @@
 
 namespace FabronService.FunctionalTests
 {
-    public class HealthCheckTests : IClassFixture<WAF>
+    public class HealthCheckTests(WAF waf) : IClassFixture<WAF>
     {
-        private readonly WAF _waf;
-
-        public HealthCheckTests(WAF waf) => _waf = waf;
-
         [Fact]
         public async Task HealthCheck()
         {
-            var client = _waf.CreateClient();
+            var client = waf.CreateClient();
             var response = await client.GetAsync("/health");
             response.EnsureSuccessStatusCode();
             var content = await response.Content.ReadAsStringAsync();

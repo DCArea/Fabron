@@ -14,17 +14,15 @@ internal interface IGenericScheduler : IGrainWithStringKey, ISchedulerGrain<Gene
 { }
 
 [PreferLocalPlacement]
-internal sealed class GenericScheduler : SchedulerGrain<GenericTimer>, IGrainBase, IGenericScheduler
+internal sealed class GenericScheduler(
+    IGrainContext context,
+    IGrainRuntime runtime,
+    ILogger<GenericScheduler> logger,
+    IOptions<SchedulerOptions> options,
+    ISystemClock clock,
+    IGenericTimerStore store,
+    IFireDispatcher dispatcher) : SchedulerGrain<GenericTimer>(context, runtime, logger, clock, options.Value, store, dispatcher), IGrainBase, IGenericScheduler
 {
-    public GenericScheduler(
-        IGrainContext context,
-        IGrainRuntime runtime,
-        ILogger<GenericScheduler> logger,
-        IOptions<SchedulerOptions> options,
-        ISystemClock clock,
-        IGenericTimerStore store,
-        IFireDispatcher dispatcher) : base(context, runtime, logger, clock, options.Value, store, dispatcher) { }
-
     Task IGrainBase.OnActivateAsync(CancellationToken cancellationToken)
     {
         _key = this.GetPrimaryKeyString();

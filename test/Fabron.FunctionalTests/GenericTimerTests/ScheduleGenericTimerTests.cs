@@ -6,11 +6,8 @@ using Xunit.Abstractions;
 namespace Fabron.FunctionalTests.GenericTimerTests;
 
 public record TimerData(string Foo);
-public class ScheduleGenericTimerTests : TestBase
+public class ScheduleGenericTimerTests(DefaultClusterFixture fixture, ITestOutputHelper output) : TestBase(fixture, output)
 {
-    public ScheduleGenericTimerTests(DefaultClusterFixture fixture, ITestOutputHelper output) : base(fixture, output)
-    { }
-
     [Fact]
     public async Task ScheduleAndGet()
     {

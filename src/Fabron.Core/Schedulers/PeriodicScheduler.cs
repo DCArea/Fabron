@@ -11,17 +11,15 @@ namespace Fabron.Schedulers;
 internal interface IPeriodicScheduler : IGrainWithStringKey, ISchedulerGrain<PeriodicTimer, PeriodicTimerSpec>
 { }
 
-internal sealed class PeriodicScheduler : SchedulerGrain<PeriodicTimer>, IGrainBase, IPeriodicScheduler
+internal sealed class PeriodicScheduler(
+    IGrainContext context,
+    IGrainRuntime runtime,
+    ILogger<PeriodicScheduler> logger,
+    IOptions<SchedulerOptions> options,
+    ISystemClock clock,
+    IPeriodicTimerStore store,
+    IFireDispatcher dispatcher) : SchedulerGrain<PeriodicTimer>(context, runtime, logger, clock, options.Value, store, dispatcher), IGrainBase, IPeriodicScheduler
 {
-    public PeriodicScheduler(
-        IGrainContext context,
-        IGrainRuntime runtime,
-        ILogger<PeriodicScheduler> logger,
-        IOptions<SchedulerOptions> options,
-        ISystemClock clock,
-        IPeriodicTimerStore store,
-        IFireDispatcher dispatcher) : base(context, runtime, logger, clock, options.Value, store, dispatcher) { }
-
     Task IGrainBase.OnActivateAsync(CancellationToken cancellationToken)
     {
         _key = this.GetPrimaryKeyString();

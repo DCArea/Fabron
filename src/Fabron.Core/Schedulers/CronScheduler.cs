@@ -12,18 +12,16 @@ namespace Fabron.Schedulers;
 internal interface ICronScheduler : IGrainWithStringKey, ISchedulerGrain<CronTimer, CronTimerSpec>
 { }
 
-internal sealed class CronScheduler : SchedulerGrain<CronTimer>, IGrainBase, ICronScheduler
+internal sealed class CronScheduler(
+    IGrainContext context,
+    IGrainRuntime runtime,
+    ILogger<CronScheduler> logger,
+    IOptions<SchedulerOptions> options,
+    ISystemClock clock,
+    ICronTimerStore store,
+    IFireDispatcher dispatcher) : SchedulerGrain<CronTimer>(context, runtime, logger, clock, options.Value, store, dispatcher), IGrainBase, ICronScheduler
 {
-    private readonly SchedulerOptions _options;
-
-    public CronScheduler(
-        IGrainContext context,
-        IGrainRuntime runtime,
-        ILogger<CronScheduler> logger,
-        IOptions<SchedulerOptions> options,
-        ISystemClock clock,
-        ICronTimerStore store,
-        IFireDispatcher dispatcher) : base(context, runtime, logger, clock, options.Value, store, dispatcher) => _options = options.Value;
+    private readonly SchedulerOptions _options = options.Value;
 
     Task IGrainBase.OnActivateAsync(CancellationToken cancellationToken)
     {

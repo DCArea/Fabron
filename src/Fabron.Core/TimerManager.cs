@@ -3,18 +3,12 @@ using Fabron.Schedulers;
 
 namespace Fabron;
 
-internal class TimerManager<TScheduler, TTimer, TTimerSpec> : ITimerManager<TTimer>
+internal class TimerManager<TScheduler, TTimer, TTimerSpec>(IClusterClient client) : ITimerManager<TTimer>
     where TScheduler : ISchedulerGrain<TTimer, TTimerSpec>
     where TTimer : DistributedTimer<TTimerSpec>
     where TTimerSpec : ISchedulerSpec
 {
-    public TimerManager(IClusterClient client)
-    {
-        _client = client;
-    }
-    private readonly IClusterClient _client;
-
-    protected TScheduler GetScheduler(string key) => _client.GetGrain<TScheduler>(key);
+    protected TScheduler GetScheduler(string key) => client.GetGrain<TScheduler>(key);
 
     public Task Start(string key)
         => GetScheduler(key).Start();

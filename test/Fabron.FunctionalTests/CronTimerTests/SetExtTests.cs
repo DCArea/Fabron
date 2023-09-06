@@ -3,11 +3,8 @@ using Xunit.Abstractions;
 
 namespace Fabron.FunctionalTests.CronTimerTests;
 
-public class SetExtTest : TestBase
+public class SetExtTest(DefaultClusterFixture fixture, ITestOutputHelper output) : TestBase(fixture, output)
 {
-    public SetExtTest(DefaultClusterFixture fixture, ITestOutputHelper output) : base(fixture, output)
-    { }
-
     [Fact]
     public async Task SetExt()
     {

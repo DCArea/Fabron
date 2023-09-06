@@ -10,20 +10,15 @@ public interface IHttpDestinationHandler
     Task SendAsync(Uri destination, FireEnvelop envelop);
 }
 
-public class HttpDestinationHandler : IHttpDestinationHandler
+public class HttpDestinationHandler(IHttpClientFactory factory, ILogger<HttpDestinationHandler> logger) : IHttpDestinationHandler
 {
-    private readonly ILogger _logger;
-    private readonly IHttpClientFactory _factory;
+    private readonly ILogger _logger = logger;
+    private readonly IHttpClientFactory _factory = factory;
     private readonly MediaTypeHeaderValue _contentType = new("application/json");
     private readonly JsonSerializerOptions _jsonSerializerOptions = new(JsonSerializerDefaults.Web)
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
-    public HttpDestinationHandler(IHttpClientFactory factory, ILogger<HttpDestinationHandler> logger)
-    {
-        _factory = factory;
-        _logger = logger;
-    }
 
     public async Task SendAsync(Uri destination, FireEnvelop envelop)
     {

@@ -3,11 +3,8 @@ using Xunit.Abstractions;
 
 namespace Fabron.FunctionalTests.PeriodicTimerTests;
 
-public class DeletePeriodicTimerTests : TestBase
+public class DeletePeriodicTimerTests(DefaultClusterFixture fixture, ITestOutputHelper output) : TestBase(fixture, output)
 {
-    public DeletePeriodicTimerTests(DefaultClusterFixture fixture, ITestOutputHelper output) : base(fixture, output)
-    { }
-
     [Fact]
     public async Task DeleteTimer()
     {

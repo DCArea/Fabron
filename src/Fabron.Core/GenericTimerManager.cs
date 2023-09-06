@@ -3,11 +3,8 @@ using Fabron.Schedulers;
 
 namespace Fabron;
 
-internal sealed class GenericTimerManager : TimerManager<IGenericScheduler, GenericTimer, GenericTimerSpec>, IGenericTimerManager
+internal sealed class GenericTimerManager(IClusterClient client) : TimerManager<IGenericScheduler, GenericTimer, GenericTimerSpec>(client), IGenericTimerManager
 {
-    public GenericTimerManager(IClusterClient client) : base(client)
-    { }
-
     public Task Schedule(
         string key,
         string? data,

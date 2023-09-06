@@ -34,20 +34,13 @@ namespace Fabron.Core.Test.SchedulerTests
 
     }
 
-    public class FakeGrainReminder : IGrainReminder
+    public class FakeGrainReminder(string reminderName, TimeSpan dueTime, TimeSpan period) : IGrainReminder
     {
-        public FakeGrainReminder(string reminderName, TimeSpan dueTime, TimeSpan period)
-        {
-            ReminderName = reminderName;
-            DueTime = dueTime;
-            Period = period;
-        }
+        public TimeSpan DueTime { get; } = dueTime;
 
-        public TimeSpan DueTime { get; }
+        public TimeSpan Period { get; } = period;
 
-        public TimeSpan Period { get; }
-
-        public string ReminderName { get; }
+        public string ReminderName { get; } = reminderName;
 
         public async Task FireFor(IRemindable grain, DateTimeOffset time)
         {

@@ -1,4 +1,4 @@
-
+﻿
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 
@@ -7,14 +7,9 @@ using Microsoft.Extensions.Options;
 
 namespace FabronService.FunctionalTests
 {
-    public class TestAuthHandler : AuthenticationHandler<AuthenticationSchemeOptions>
+    public class TestAuthHandler(IOptionsMonitor<AuthenticationSchemeOptions> options,
+        ILoggerFactory logger, UrlEncoder encoder, ISystemClock clock) : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder, clock)
     {
-        public TestAuthHandler(IOptionsMonitor<AuthenticationSchemeOptions> options,
-            ILoggerFactory logger, UrlEncoder encoder, ISystemClock clock)
-            : base(options, logger, encoder, clock)
-        {
-        }
-
         protected override Task<AuthenticateResult> HandleAuthenticateAsync()
         {
             var claims = new[] { new Claim(ClaimTypes.Name, "Test user") };

@@ -3,12 +3,8 @@ using Fabron.Dispatching;
 
 namespace FabronService.FireRouters;
 
-public class DefaultFireRouter : IFireRouter
+public class DefaultFireRouter(IHttpDestinationHandler http) : IFireRouter
 {
-    private readonly IHttpDestinationHandler _http;
-
-    public DefaultFireRouter(IHttpDestinationHandler http) => _http = http;
-
     public bool Matches(FireEnvelop envelop)
     {
         var extensions = envelop.Extensions;
@@ -20,7 +16,7 @@ public class DefaultFireRouter : IFireRouter
         var destination = envelop.Extensions["routing.fabron.io/destination"];
         Guard.IsNotEmpty(destination, nameof(destination));
         return destination.StartsWith("http")
-            ? _http.SendAsync(new Uri(destination), envelop)
+            ? http.SendAsync(new Uri(destination), envelop)
             : ThrowHelper.ThrowArgumentOutOfRangeException<Task>(nameof(destination));
     }
 }

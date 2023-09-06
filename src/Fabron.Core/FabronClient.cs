@@ -2,17 +2,11 @@
 
 namespace Fabron;
 
-public sealed class FabronClient : IFabronClient
+public sealed class FabronClient(IClusterClient client) : IFabronClient
 {
-    public FabronClient(IClusterClient client)
-    {
-        Generic = new GenericTimerManager(client);
-        Periodic = new PeriodicTimerManager(client);
-        Cron = new CronTimerManager(client);
-    }
-    public IGenericTimerManager Generic { get; }
-    public IPeriodicTimerManager Periodic { get; }
-    public ICronTimerManager Cron { get; }
+    public IGenericTimerManager Generic { get; } = new GenericTimerManager(client);
+    public IPeriodicTimerManager Periodic { get; } = new PeriodicTimerManager(client);
+    public ICronTimerManager Cron { get; } = new CronTimerManager(client);
 
     public Task ScheduleGenericTimer(
         string key,

@@ -1,11 +1,7 @@
-using FakeItEasy;
-
+﻿using FakeItEasy;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
-
-using Moq;
-
 using Orleans.TestingHost;
 
 namespace FabronService.FunctionalTests
@@ -29,9 +25,6 @@ namespace FabronService.FunctionalTests
         public static TService GetSiloService<TService>(this WebApplicationFactory<Program> waf)
             where TService : notnull
             => ((InProcessSiloHandle)waf.GetSiloCluster().Primary).SiloHost.Services.GetRequiredService<TService>();
-
-        public static Mock<HttpMessageHandler> GetHttpMessageHandlerMock(this WebApplicationFactory<Program> waf)
-            => waf.GetSiloService<Mock<HttpMessageHandler>>();
 
         public static WebApplicationFactory<Program> WithServices(this WebApplicationFactory<Program> waf, Action<IServiceCollection> configureServices) => waf.WithWebHostBuilder(builder =>
         {

@@ -3,11 +3,8 @@ using Xunit.Abstractions;
 
 namespace Fabron.FunctionalTests.CronTimerTests;
 
-public class ScheduleCronTimerTests : TestBase
+public class ScheduleCronTimerTests(DefaultClusterFixture fixture, ITestOutputHelper output) : TestBase(fixture, output)
 {
-    public ScheduleCronTimerTests(DefaultClusterFixture fixture, ITestOutputHelper output) : base(fixture, output)
-    { }
-
     [Fact]
     public async Task ScheduleAndGet()
     {

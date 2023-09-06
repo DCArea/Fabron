@@ -2,11 +2,9 @@
 
 namespace Fabron.Dispatching;
 
-public class SimpleFireRouter : IFireRouter
+public class SimpleFireRouter(IOptions<SimpleFireRouterOptions> options) : IFireRouter
 {
-    private readonly SimpleFireRouterOptions _options;
-
-    public SimpleFireRouter(IOptions<SimpleFireRouterOptions> options) => _options = options.Value;
+    private readonly SimpleFireRouterOptions _options = options.Value;
 
     public Task DispatchAsync(FireEnvelop envelop)
     {

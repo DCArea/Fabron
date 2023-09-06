@@ -10,7 +10,9 @@ namespace Fabron.FunctionalTests;
 
 public class TestSiloConfigurator : ISiloConfigurator
 {
-    public virtual void ConfigureServices(IServiceCollection services) => services.AddHttpClient();
+    public virtual void ConfigureServices(IServiceCollection services)
+    { }
+        //=> services.AddHttpClient();
 
     public virtual void ConfigureSilo(ISiloBuilder siloBuilder)
     {

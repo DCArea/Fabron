@@ -133,9 +133,10 @@ public class CronTimerTickingTests : CronTimerTestBase
         await (scheduler as IGrainBase).OnActivateAsync(default);
         clock.UtcNow = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero);
         var notBefore = clock.UtcNow.AddDays(30);
+        clock.UtcNow = clock.UtcNow.AddMilliseconds(100);
         await scheduler.Schedule(
             JsonSerializer.Serialize(new { foo = "bar" }),
-            new CronTimerSpec(Schedule: "0 0 0 * * *", notBefore),
+            new CronTimerSpec(Schedule: "0 0/3 * * * *", notBefore),
             null,
             null);
 
@@ -225,5 +226,30 @@ public class CronTimerTickingTests : CronTimerTestBase
 
         var tickReminder = reminderRegistry.Reminders.Single().Value;
         tickReminder.DueTime.Should().Be(DateTimeOffset.Parse("2020-01-11T00:00:00.000+00:00") - clock.UtcNow);
+    }
+
+    [Fact]
+    public async Task ShouldNotSkipFireAtNotBeforeTime()
+    {
+        var (scheduler, timerRegistry, reminderRegistry, clock, _, dispatcher) = PrepareGrain();
+        await (scheduler as IGrainBase).OnActivateAsync(default);
+        clock.UtcNow = DateTimeOffset.Parse("2020-01-10T12:00:00.000+00:00");
+        var notBefore = clock.UtcNow.AddDays(3);
+        clock.UtcNow = clock.UtcNow.AddMilliseconds(100);
+        await scheduler.Schedule(
+            JsonSerializer.Serialize(new { foo = "bar" }),
+            new CronTimerSpec(Schedule: "0 0/3 * * * *", notBefore),
+            null,
+            null);
+
+        var tickReminder = reminderRegistry.Reminders.Single().Value;
+        tickReminder.DueTime.Should().Be(notBefore - clock.UtcNow);
+
+
+        clock.UtcNow = notBefore.AddMilliseconds(100);
+        await tickReminder.FireFor(scheduler, notBefore.AddMilliseconds(10));
+
+        var fire = timerRegistry.Timers.Single();
+        fire.DueTime.Should().Be(TimeSpan.Zero);
     }
 }

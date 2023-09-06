@@ -4,11 +4,8 @@ using Xunit.Abstractions;
 
 namespace Fabron.FunctionalTests.GenericTimerTests;
 
-public class TickGenericTimerTests : TestBase
+public class TickGenericTimerTests(DefaultClusterFixture fixture, ITestOutputHelper output) : TestBase(fixture, output)
 {
-    public TickGenericTimerTests(DefaultClusterFixture fixture, ITestOutputHelper output) : base(fixture, output)
-    { }
-
     [Fact]
     public async Task TickTimer()
     {

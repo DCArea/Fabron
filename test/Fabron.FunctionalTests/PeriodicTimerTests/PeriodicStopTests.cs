@@ -7,11 +7,8 @@ using Xunit.Abstractions;
 
 namespace Fabron.FunctionalTests.PeriodicTimerTests;
 
-public class PeriodicStopTests : TestBase
+public class PeriodicStopTests(DefaultClusterFixture fixture, ITestOutputHelper output) : TestBase(fixture, output)
 {
-    public PeriodicStopTests(DefaultClusterFixture fixture, ITestOutputHelper output) : base(fixture, output)
-    { }
-
     [Fact]
     public async Task StopTimer()
     {

@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using Fabron;
 using FakeItEasy;
 using Microsoft.AspNetCore.Mvc;
@@ -10,11 +10,8 @@ using Xunit.Abstractions;
 
 namespace FabronService.FunctionalTests
 {
-    public class WAF : WebApplicationFactory<Program>
+    public class WAF(IMessageSink sink) : WebApplicationFactory<Program>
     {
-        private readonly IMessageSink _sink;
-        public WAF(IMessageSink sink) => _sink = sink;
-
         public JsonSerializerOptions JsonSerializerOptions =>
             Server.Services.GetRequiredService<IOptions<JsonOptions>>().Value.JsonSerializerOptions;
 
@@ -39,7 +36,7 @@ namespace FabronService.FunctionalTests
                 });
             builder.ConfigureLogging(logging =>
             {
-                logging.AddXUnit(_sink);
+                logging.AddXUnit(sink);
             });
             return base.CreateHost(builder);
         }

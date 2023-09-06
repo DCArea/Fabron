@@ -1,10 +1,8 @@
 ﻿namespace Fabron.Dispatching;
 
-internal sealed class FireDispatcher : IFireDispatcher
+internal sealed class FireDispatcher(IEnumerable<IFireRouter> routers) : IFireDispatcher
 {
-    public FireDispatcher(IEnumerable<IFireRouter> routers) => Routers = routers.ToList();
-
-    public List<IFireRouter> Routers { get; }
+    public List<IFireRouter> Routers { get; } = routers.ToList();
 
     public Task DispatchAsync(FireEnvelop envelop)
     {

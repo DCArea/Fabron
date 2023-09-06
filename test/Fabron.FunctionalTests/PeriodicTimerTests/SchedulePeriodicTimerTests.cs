@@ -4,11 +4,8 @@ using Xunit.Abstractions;
 namespace Fabron.FunctionalTests.PeriodicTimerTests;
 
 public record TimerData(string Foo);
-public class SchedulePeriodicTimerTests : TestBase
+public class SchedulePeriodicTimerTests(DefaultClusterFixture fixture, ITestOutputHelper output) : TestBase(fixture, output)
 {
-    public SchedulePeriodicTimerTests(DefaultClusterFixture fixture, ITestOutputHelper output) : base(fixture, output)
-    { }
-
     [Fact]
     public async Task ScheduleAndGet()
     {

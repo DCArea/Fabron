@@ -1,11 +1,7 @@
-﻿using System.Collections.Concurrent;
-using Fabron.Dispatching;
-using Fabron.Schedulers;
+﻿using Fabron.Dispatching;
 using Fabron.Stores;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Moq;
-using Orleans.Runtime;
 using Orleans.TestingHost;
 using Orleans.Timers;
 using Xunit;
@@ -45,8 +41,6 @@ public class TestBase : IClassFixture<DefaultClusterFixture>
         .Cast<InProcessSiloHandle>()
         .Select(s => s.SiloHost.Services.GetRequiredService<IPeriodicTimerStore>())
         .Cast<InMemoryPeriodicTimerStore>();
-
-    internal Mock<ISystemClock> SystemClockMock => Mock.Get(_fixture.Client.ServiceProvider.GetRequiredService<ISystemClock>());
 
     public IEnumerable<FireEnvelop> Fires =>
         FireDispatcher.SelectMany(i => i.Fires);
