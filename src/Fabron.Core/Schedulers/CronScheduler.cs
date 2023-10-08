@@ -121,18 +121,25 @@ internal sealed class CronScheduler(
         }
 
         var from = expectedTickTime;
-        var to = from.AddMinutes(2);
-        if (to > _state.Spec.NotAfter)
-        {
-            to = _state.Spec.NotAfter.Value;
-        }
+        var to = from;
 
         var cron = CronExpression.Parse(_state.Spec.Schedule, _options.CronFormat);
-        var schedules = cron.GetOccurrences(from, to, _options.TimeZone, fromInclusive: true, toInclusive: false);
-        foreach (var schedule in schedules)
+
+        do
         {
-            Dispatch(schedule);
-        }
+            to = from.AddMinutes(2);
+            if (to > _state.Spec.NotAfter)
+            {
+                to = _state.Spec.NotAfter.Value;
+            }
+
+            var schedules = cron.GetOccurrences(from, to, _options.TimeZone, fromInclusive: true, toInclusive: false);
+            foreach (var schedule in schedules)
+            {
+                Dispatch(schedule);
+            }
+            from = to;
+        } while (from < now);
 
         var next = to;
         var nextTick = cron.GetNextOccurrence(next, _options.TimeZone, inclusive: true);

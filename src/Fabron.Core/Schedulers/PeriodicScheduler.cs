@@ -69,7 +69,7 @@ internal sealed class PeriodicScheduler(
         return notBefore switch
         {
             not null when notBefore.Value > utcNow => Tick(notBefore.Value),
-            _ => Tick(default)
+            _ => Tick(utcNow)
         };
     }
 
@@ -104,12 +104,20 @@ internal sealed class PeriodicScheduler(
             return;
         }
 
-        var to = now.AddMinutes(1);
-        if (_state.Spec.NotAfter.HasValue && to > _state.Spec.NotAfter)
+        var from = expectedTickTime;
+        var to = from;
+        DateTimeOffset nextTick;
+        do
         {
-            to = _state.Spec.NotAfter.Value;
-        }
-        var nextTick = Dispatch(now, to);
+            to = from.AddMinutes(1);
+            if (to > _state.Spec.NotAfter)
+            {
+                to = _state.Spec.NotAfter.Value;
+            }
+            nextTick = Dispatch(from, to);
+            from = nextTick;
+        } while (from < now);
+
         if (_state.Spec.NotAfter.HasValue && nextTick > _state.Spec.NotAfter.Value)
         {
             // no more next tick
@@ -119,17 +127,17 @@ internal sealed class PeriodicScheduler(
         await TickAfter(now, nextTick);
     }
 
-    private DateTimeOffset Dispatch(DateTimeOffset now, DateTimeOffset to)
+    private DateTimeOffset Dispatch(DateTimeOffset from, DateTimeOffset to)
     {
         Guard.IsNotNull(_state, nameof(_state));
-        var nextTick = now;
+        var nextTick = from;
         var dueTime = TimeSpan.Zero;
         while (nextTick < to)
         {
             var envelop = _state.ToEnvelop(nextTick);
             FireAfter(envelop, dueTime);
             dueTime = dueTime.Add(_state.Spec.Period);
-            nextTick = now.Add(dueTime);
+            nextTick = from.Add(dueTime);
         }
         return nextTick;
     }

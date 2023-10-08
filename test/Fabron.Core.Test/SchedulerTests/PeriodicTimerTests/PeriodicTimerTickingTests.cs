@@ -139,7 +139,7 @@ public class PeriodicTimerTickingTests
     [Fact]
     public async Task ShouldNotScheduleLaterThanNotAfterTime()
     {
-        var (scheduler, _, reminderRegistry, clock, _, _) = PrepareGrain();
+        var (scheduler, _, reminderRegistry, clock, store, _) = PrepareGrain();
         await (scheduler as IGrainBase).OnActivateAsync(default);
         clock.UtcNow = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero);
         var notAfter = clock.UtcNow.AddDays(30).AddSeconds(15);
@@ -148,11 +148,20 @@ public class PeriodicTimerTickingTests
             new PeriodicTimerSpec(TimeSpan.FromSeconds(10), null, notAfter),
             null,
             null);
-
+        var entry = await store.GetAsync(scheduler.GetPrimaryKeyString());
         clock.UtcNow = clock.UtcNow.AddDays(30);
+        entry!.State.Status.NextTick = clock.UtcNow;
+        await store.SetAsync(entry.State, entry.ETag);
+        clock.UtcNow.AddMilliseconds(50);
 
-        await ((IRemindable)scheduler).ReceiveReminder(Names.TickerReminder, new TickStatus(new DateTimeOffset(2020, 1, 1, 1, 0, 0, TimeSpan.Zero).DateTime, TimeSpan.FromMinutes(2), clock.UtcNow.AddMilliseconds(100).DateTime));
-
+        await scheduler.LoadStateAsync();
+        await ((IRemindable)scheduler).ReceiveReminder(
+            Names.TickerReminder,
+            new TickStatus(
+                DateTime.Parse("2020-01-02T23:59:59.9998105+00:00"),
+                TimeSpan.FromMinutes(2),
+                DateTime.Parse("2020-01-02T23:59:59.9998105+00:00")
+        ));
         reminderRegistry.Reminders.Should().HaveCount(0);
     }
 
@@ -204,6 +213,30 @@ public class PeriodicTimerTickingTests
 
         dispatcher.Envelops.Count.Should().Be(6);
     }
+
+    [Fact]
+    public async Task ShouldNotMissLateFires()
+    {
+        var (scheduler, timerRegistry, reminderRegistry, clock, _, dispatcher) = PrepareGrain();
+        await (scheduler as IGrainBase).OnActivateAsync(default);
+        clock.UtcNow = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero);
+        await scheduler.Schedule(
+            JsonSerializer.Serialize(new { foo = "bar" }),
+            new PeriodicTimerSpec(TimeSpan.FromSeconds(5)),
+            null,
+            null);
+
+        clock.UtcNow = DateTimeOffset.Parse("2020-01-01T00:02:00.0081234+00:00");
+        await ((IRemindable)scheduler).ReceiveReminder(
+            Names.TickerReminder,
+            new TickStatus(
+                DateTime.Parse("2020-01-01T00:01:59.9998105+00:00"),
+                TimeSpan.FromMinutes(2),
+                DateTime.Parse("2020-01-01T00:01:59.9998105+00:00")
+            ));
+        timerRegistry.Timers.Count.Should().Be(3 * 60 / 5);
+    }
+
 }
 
 internal record PeriodicFakes(

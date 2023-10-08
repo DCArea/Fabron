@@ -38,7 +38,7 @@ public static partial class TickerLog
 
     [LoggerMessage(
         Level = LogLevel.Debug,
-        Message = "[{key}]: Dispatching at {now:o}, expeced: {expected:o}")]
+        Message = "[{key}]: Dispatching at {now:o}, expected: {expected:o}")]
     public static partial void Dispatching(ILogger logger, string key, DateTimeOffset now, DateTimeOffset expected);
 
     [LoggerMessage(

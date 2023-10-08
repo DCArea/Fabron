@@ -47,7 +47,7 @@ internal abstract class SchedulerGrain<TState> : IRemindable
     protected string? _eTag = default!;
     private IGrainReminder? _tickReminder;
 
-    protected async Task LoadStateAsync()
+    internal async Task LoadStateAsync()
     {
         //using var _ = Telemetry.ActivitySource.StartActivity("Load State");
         var entry = await _store.GetAsync(_key);
