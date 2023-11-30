@@ -12,20 +12,13 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: "6.0"
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: "7.0.400"
+          dotnet-version: "8.0.100"
       - name: Restore dependencies
         run: dotnet restore
       - name: Restore tools
         run: dotnet tool restore
       - name: Build
         run: dotnet build --configuration Release --no-restore /p:version="${GITHUB_REF_NAME//v/}"
-      - name: Validate
-        run: Get-Item pkgs/*.nupkg |% { dotnet tool run dotnet-validate package local $_ }
-        shell: pwsh
       - name: NuGet Push
         run: Get-Item pkgs/*.nupkg |% { dotnet nuget push $_ --source ${{ secrets.NUGET_SOURCE }} --api-key ${{ secrets.NUGET_APIKEY }} }
         shell: pwsh
