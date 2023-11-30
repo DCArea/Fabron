@@ -62,7 +62,7 @@ public class CronTimerTickingTests : CronTimerTestBase
             JsonSerializer.Serialize(new { data = new { foo = "bar" } }),
             new CronTimerSpec("0 0 0 1 6 *"),
             null,
-            new());
+            []);
 
         var reminder = reminderRegistry.Reminders.Single().Value;
         reminder.DueTime.Should().Be(TimeSpan.FromDays(49));

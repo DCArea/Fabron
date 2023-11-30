@@ -38,7 +38,7 @@ public class CronTimerTestBase
                     CreationTimestamp: DateTimeOffset.UtcNow,
                     DeletionTimestamp: null,
                     Owner: null,
-                    Extensions: new()
+                    Extensions: []
                     ),
                 Data: JsonSerializer.Serialize(new { data = new { foo = "bar" } }),
                 Spec: new CronTimerSpec

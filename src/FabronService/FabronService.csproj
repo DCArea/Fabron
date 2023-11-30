@@ -6,7 +6,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AspNetCore.Authentication.ApiKey" />
     <PackageReference Include="Npgsql" />
     <PackageReference Include="Npgsql.OpenTelemetry" />
     <PackageReference Include="Microsoft.Orleans.Sdk" />

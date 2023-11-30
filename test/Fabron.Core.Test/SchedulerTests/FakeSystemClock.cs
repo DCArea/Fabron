@@ -10,7 +10,7 @@ namespace Fabron.Core.Test.SchedulerTests
 
     public class FakeFireDispatcher : IFireDispatcher
     {
-        public List<FireEnvelop> Envelops { get; } = new List<FireEnvelop>();
+        public List<FireEnvelop> Envelops { get; } = [];
         public Task DispatchAsync(FireEnvelop envelop)
         {
             Envelops.Add(envelop);

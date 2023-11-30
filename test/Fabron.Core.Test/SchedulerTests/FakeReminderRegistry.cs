@@ -5,7 +5,7 @@ namespace Fabron.Core.Test.SchedulerTests
 {
     public class FakeReminderRegistry : IReminderRegistry
     {
-        public Dictionary<string, FakeGrainReminder> Reminders { get; } = new();
+        public Dictionary<string, FakeGrainReminder> Reminders { get; } = [];
 
         public static Task Fire(IRemindable remindable, string reminderName, TickStatus tickerStatus) => remindable.ReceiveReminder(reminderName, tickerStatus);
 

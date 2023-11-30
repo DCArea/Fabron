@@ -7,7 +7,6 @@ using Microsoft.Extensions.Logging;
 
 namespace Fabron.Diagnostics;
 
-#pragma warning disable IDE0052 // Remove unread private members
 internal sealed class Telemetry
 {
     public const string TelemetryName = "Fabron";
@@ -19,7 +18,7 @@ internal sealed class Telemetry
 
     public static HistogramAggregator TimerDispatchTardiness = new(
         new(),
-        new(Buckets: new[] { 0L, 1L, 5L, 50L, 1_000L, 5_000L, 60_000L }));
+        new(Buckets: [0L, 1L, 5L, 50L, 1_000L, 5_000L, 60_000L]));
     private static readonly ObservableCounter<long> timerDispatchTardinessCount
         = s_meter.CreateObservableCounter("fabron-timer-dispatch-tardiness-count", TimerDispatchTardiness.CollectCount);
     private static readonly ObservableCounter<long> timerDispatchTardinessSum
@@ -33,7 +32,7 @@ internal sealed class Telemetry
 
     public static HistogramAggregator FabronTimerDispatchDuration = new(
         new(),
-        new(Buckets: new[] { 0L, 1L, 5L, 50L, 1_000L, 5_000L, 10_000L }));
+        new(Buckets: [0L, 1L, 5L, 50L, 1_000L, 5_000L, 10_000L]));
     private static readonly ObservableCounter<long> timerDispatchDurationCount
         = s_meter.CreateObservableCounter("fabron-timer-dispatch-duration-count", FabronTimerDispatchDuration.CollectCount);
     private static readonly ObservableCounter<long> timerDispatchDurationSum

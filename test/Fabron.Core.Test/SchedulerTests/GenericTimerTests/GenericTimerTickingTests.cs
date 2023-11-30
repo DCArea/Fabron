@@ -38,7 +38,7 @@ public class GenericTimerTickingTests
                     CreationTimestamp: DateTimeOffset.UtcNow,
                     DeletionTimestamp: null,
                     Owner: null,
-                    Extensions: new()
+                    Extensions: []
                     ),
                 Data: JsonSerializer.Serialize(new { data = new { foo = "bar" } }),
                 Spec: new GenericTimerSpec
@@ -72,7 +72,7 @@ public class GenericTimerTickingTests
             JsonSerializer.Serialize(new { data = new { foo = "bar" } }),
             new GenericTimerSpec(tickTime),
             null,
-            new());
+            []);
 
         var reminder = reminderRegistry.Reminders.Single().Value;
         reminder.DueTime.Should().Be(tickTime - clock.UtcNow);
@@ -92,7 +92,7 @@ public class GenericTimerTickingTests
             JsonSerializer.Serialize(new { data = new { foo = "bar" } }),
             new GenericTimerSpec(tickTime),
             null,
-            new());
+            []);
 
         reminderRegistry.Reminders.Single().Value.DueTime.Should().Be(tickTime - clock.UtcNow);
         var state = await scheduler.GetState();
@@ -111,7 +111,7 @@ public class GenericTimerTickingTests
             JsonSerializer.Serialize(new { data = new { foo = "bar" } }),
             new GenericTimerSpec(tickTime),
             null,
-            new());
+            []);
 
         var reminder = reminderRegistry.Reminders.Single().Value;
         reminder.DueTime.Should().Be(TimeSpan.FromDays(49));
@@ -130,7 +130,7 @@ public class GenericTimerTickingTests
             JsonSerializer.Serialize(new { data = new { foo = "bar" } }),
             new GenericTimerSpec(tickTime),
             null,
-            new());
+            []);
 
         var reminderDueTime = clock.UtcNow.Add(reminderRegistry.Reminders.Single().Value.DueTime);
         clock.UtcNow = reminderDueTime.AddMilliseconds(100);
@@ -152,7 +152,7 @@ public class GenericTimerTickingTests
             JsonSerializer.Serialize(new { data = new { foo = "bar" } }),
             new GenericTimerSpec(tickTime),
             null,
-            new());
+            []);
         var reminderDueTime = clock.UtcNow.Add(reminderRegistry.Reminders.Single().Value.DueTime);
         clock.UtcNow = reminderDueTime.AddMilliseconds(100);
         await FakeReminderRegistry.Fire(scheduler, Names.TickerReminder, new TickStatus(reminderDueTime.UtcDateTime, Timeout.InfiniteTimeSpan, clock.UtcNow.UtcDateTime));

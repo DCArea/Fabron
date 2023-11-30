@@ -14,7 +14,7 @@ public class InMemoryPeriodicTimerStore : InMemoryStateStore<PeriodicTimer>, IPe
 public abstract class InMemoryStateStore<TState> : IStateStore<TState>
     where TState : IDistributedTimer
 {
-    private readonly Dictionary<string, StateEntry<TState>> _states = new();
+    private readonly Dictionary<string, StateEntry<TState>> _states = [];
 
     public Task<StateEntry<TState>?> GetAsync(string key)
     {

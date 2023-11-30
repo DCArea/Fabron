@@ -38,7 +38,7 @@ public class PeriodicTimerTickingTests
                     CreationTimestamp: DateTimeOffset.UtcNow,
                     DeletionTimestamp: null,
                     Owner: null,
-                    Extensions: new()
+                    Extensions: []
                     ),
                 Data: JsonSerializer.Serialize(new { data = new { foo = "bar" } }),
                 Spec: new PeriodicTimerSpec
@@ -72,7 +72,7 @@ public class PeriodicTimerTickingTests
             JsonSerializer.Serialize(new { data = new { foo = "bar" } }),
             new(TimeSpan.FromSeconds(10)),
             null,
-            new());
+            []);
 
         timerRegistry.Timers.Count.Should().Be(6);
         timerRegistry.Timers[0].DueTime.Should().Be(TimeSpan.Zero);
@@ -101,7 +101,7 @@ public class PeriodicTimerTickingTests
             JsonSerializer.Serialize(new { data = new { foo = "bar" } }),
             new(TimeSpan.FromMinutes(1)),
             null,
-            new());
+            []);
 
         timerRegistry.Timers.Count.Should().Be(1);
         timerRegistry.Timers[0].DueTime.Should().Be(TimeSpan.Zero);

@@ -8,17 +8,6 @@ namespace FabronService.FunctionalTests
 {
     public static class WAFExtensions
     {
-        public static WebApplicationFactory<Program> WithTestUser(this WebApplicationFactory<Program> waf)
-            => waf.WithWebHostBuilder(builder =>
-            {
-                builder.ConfigureTestServices(services =>
-                {
-                    services.AddAuthentication("Test")
-                        .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(
-                            "Test", options => { });
-                });
-            });
-
         public static TestCluster GetSiloCluster(this WebApplicationFactory<Program> waf)
             => waf.Services.GetRequiredService<TestCluster>();
 

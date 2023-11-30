@@ -51,7 +51,7 @@ internal sealed class CronScheduler(
                 CreationTimestamp: utcNow,
                 DeletionTimestamp: null,
                 Owner: owner,
-                Extensions: extensions ?? new()),
+                Extensions: extensions ?? []),
             Data: data,
             Spec: spec
         );

@@ -2,5 +2,5 @@
 
 public class SimpleFireRouterOptions
 {
-    public List<SimpleFireRouter.Route> Routes { get; init; } = new();
+    public List<SimpleFireRouter.Route> Routes { get; init; } = [];
 }

@@ -41,7 +41,7 @@ public class TestSiloConfigurator : ISiloConfigurator
 
 public class TestFireDispatcher : IFireDispatcher
 {
-    public ConcurrentBag<FireEnvelop> Fires { get; } = new();
+    public ConcurrentBag<FireEnvelop> Fires { get; } = [];
     public Task DispatchAsync(FireEnvelop envelop)
     {
         Fires.Add(envelop);

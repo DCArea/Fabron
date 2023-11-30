@@ -1,12 +1,11 @@
 ﻿using Fabron.Schedulers;
 using FluentAssertions;
-using Microsoft.Extensions.DependencyInjection;
-using Orleans.Timers;
 using Xunit;
 using Xunit.Abstractions;
 
 namespace Fabron.FunctionalTests.PeriodicTimerTests;
 
+#pragma warning disable xUnit1031 // Do not use blocking task operations in test method
 public class PeriodicStopTests(DefaultClusterFixture fixture, ITestOutputHelper output) : TestBase(fixture, output)
 {
     [Fact]
