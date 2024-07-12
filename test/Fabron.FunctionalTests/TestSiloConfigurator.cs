@@ -25,8 +25,7 @@ public class TestSiloConfigurator : ISiloConfigurator
             options.ResponseTimeout = TimeSpan.FromSeconds(5);
         });
 
-        siloBuilder.UseLocalhostClustering()
-            .UseInMemoryReminderService();
+        siloBuilder.UseInMemoryReminderService();
         siloBuilder.ConfigureServices(services =>
         {
             services.AddSingleton<IGenericTimerStore, InMemoryGenericTimerStore>();

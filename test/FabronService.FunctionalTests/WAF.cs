@@ -25,14 +25,14 @@ namespace FabronService.FunctionalTests
                 {
                     services.RemoveAll<IFabronClient>();
                     services.AddSingleton(A.Fake<IFabronClient>());
-                    var orleansServices = services
-                        .Where(svc => svc.ServiceType.Assembly.FullName!.StartsWith("Orleans.")
-                            || (svc.ImplementationType is not null && svc.ImplementationType.Assembly.FullName!.StartsWith("Orleans.")))
-                        .ToList();
-                    foreach (var orleansService in orleansServices)
-                    {
-                        services.Remove(orleansService);
-                    }
+                    // var orleansServices = services
+                    //     .Where(svc => svc.ServiceType.Assembly.FullName!.StartsWith("Orleans.")
+                    //         || (svc.ImplementationType is not null && svc.ImplementationType.Assembly.FullName!.StartsWith("Orleans.")))
+                    //     .ToList();
+                    // foreach (var orleansService in orleansServices)
+                    // {
+                    //     services.Remove(orleansService);
+                    // }
                 });
             builder.ConfigureLogging(logging =>
             {

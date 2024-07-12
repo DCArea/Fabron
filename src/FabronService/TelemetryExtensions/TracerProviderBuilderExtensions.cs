@@ -7,9 +7,9 @@ public static class TracerProviderBuilderExtensions
 {
     public static TracerProviderBuilder AddEncrichedAspNetCoreInstrumentation(
         this TracerProviderBuilder builder,
-        Action<AspNetCoreInstrumentationOptions>? userOptions = null)
+        Action<AspNetCoreTraceInstrumentationOptions>? userOptions = null)
     {
-        void finalOptions(AspNetCoreInstrumentationOptions options)
+        void finalOptions(AspNetCoreTraceInstrumentationOptions options)
         {
             var requestEnrich = options.EnrichWithHttpRequest;
             options.EnrichWithHttpRequest = (activity, request) =>
@@ -29,7 +29,7 @@ public static class TracerProviderBuilderExtensions
 
         builder.ConfigureServices(services =>
         {
-            services.Configure<AspNetCoreInstrumentationOptions>(finalOptions);
+            services.Configure<AspNetCoreTraceInstrumentationOptions>(finalOptions);
         });
 
         return builder.AddAspNetCoreInstrumentation();

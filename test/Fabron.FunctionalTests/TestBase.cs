@@ -29,11 +29,9 @@ public class TestBase : IClassFixture<DefaultClusterFixture>
     {
         var grain = _fixture.Client.GetGrain<TScheduler>(key);
         var grainId = grain.GetGrainId();
-        var t = _fixture.HostedCluster.Silos
-            .Cast<InProcessSiloHandle>()
-            .Select(s => s.SiloHost.Services.GetRequiredService<IReminderTable>().ReadRow(grainId, Names.TickerReminder));
-        var rows = await Task.WhenAll(t);
-        return rows.SingleOrDefault(r => r != null);
+        var table = _fixture.ClusterServices.GetRequiredService<IReminderTable>();
+        var row = await table.ReadRow(grainId, Names.TickerReminder);
+        return row;
     }
 
     public IEnumerable<InMemoryPeriodicTimerStore> PeriodicTimerStore
