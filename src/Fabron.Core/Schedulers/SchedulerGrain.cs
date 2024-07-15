@@ -175,12 +175,11 @@ internal abstract class SchedulerGrain<TState> : IRemindable
 
     protected void FireAfter(FireEnvelop envelop, TimeSpan dueTime)
     {
-        _runtime.TimerRegistry.RegisterTimer(
+        _runtime.TimerRegistry.RegisterGrainTimer(
             GrainContext,
-            obj => DispatchNew((FireEnvelop)obj),
+            (obj, ct) => DispatchNew(obj),
             envelop,
-            dueTime,
-            Timeout.InfiniteTimeSpan);
+            new GrainTimerCreationOptions { DueTime = dueTime, Period = Timeout.InfiniteTimeSpan });
         TickerLog.TimerSet(_logger, _key, dueTime, envelop.Time);
     }
 

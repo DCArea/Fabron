@@ -5,22 +5,29 @@ namespace Fabron.Core.Test.SchedulerTests
 {
     public class FakeTimerRegistry : ITimerRegistry
     {
-        public List<FakeTimer> Timers { get; } = [];
-        public IDisposable RegisterTimer(IGrainContext grainContext, Func<object, Task> asyncCallback, object state, TimeSpan dueTime, TimeSpan period)
+        public List<FakeGrainTimer> Timers { get; } = [];
+
+        public IGrainTimer RegisterGrainTimer<TState>(IGrainContext grainContext, Func<TState, CancellationToken, Task> callback, TState state, GrainTimerCreationOptions options)
         {
-            var timer = new FakeTimer(asyncCallback, state, dueTime, period);
+            var timer = new FakeGrainTimer((obj, ct) => callback(state, ct), state, options);
             Timers.Add(timer);
             return timer;
         }
+
+        public IDisposable RegisterTimer(IGrainContext grainContext, Func<object?, Task> asyncCallback, object? state, TimeSpan dueTime, TimeSpan period) => throw new NotImplementedException();
     }
 
-    public record FakeTimer(
-        Func<object, Task> AsyncCallback,
-        object State,
-        TimeSpan DueTime,
-        TimeSpan Period) : IDisposable
+    public class FakeGrainTimer(
+        Func<object?, CancellationToken, Task> AsyncCallback,
+        object? State,
+        GrainTimerCreationOptions Options) : IGrainTimer
     {
-        public Task Trigger() => AsyncCallback(State);
+        public TimeSpan DueTime => Options.DueTime;
+
+        public TimeSpan Period => Options.Period;
+
+        public Task Trigger() => AsyncCallback(State, default);
         public void Dispose() { }
+        public void Change(TimeSpan dueTime, TimeSpan period) => throw new NotImplementedException();
     }
 }
