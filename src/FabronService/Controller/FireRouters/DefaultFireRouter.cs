@@ -1,7 +1,7 @@
 ﻿using CommunityToolkit.Diagnostics;
 using Fabron.Dispatching;
 
-namespace FabronService.FireRouters;
+namespace FabronService.Controller.FireRouters;
 
 public class DefaultFireRouter(IHttpDestinationHandler http) : IFireRouter
 {

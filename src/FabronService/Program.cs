@@ -1,7 +1,7 @@
 ﻿using FabronService.Hosting;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.ConfigureFabron();
+builder.ConfigureFabronServer();
 builder.ConfigureOpenTelemetry();
 builder.ConfigureSwagger();
 builder.Services.AddHealthChecks();

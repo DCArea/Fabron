@@ -5,6 +5,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- fix vulnerability -->
+    <PackageReference Include="System.Text.RegularExpressions" />
+    <!-- fix vulnerability -->
+
     <PackageReference Include="FakeItEasy" />
     <PackageReference Include="MartinCostello.Logging.XUnit" />
     <PackageReference Include="FluentAssertions" />

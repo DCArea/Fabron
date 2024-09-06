@@ -3,7 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Fabron.Dispatching;
 
-namespace FabronService.FireRouters;
+namespace FabronService.Controller.FireRouters;
 
 public interface IHttpDestinationHandler
 {

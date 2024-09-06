@@ -12,6 +12,7 @@
     <PackageReference Include="Microsoft.Orleans.Reminders" />
     <PackageReference Include="InstrumentAggregators" />
     <PackageReference Include="Microsoft.Orleans.Sdk" />
+    <PackageReference Include="System.Text.Json" />
   </ItemGroup>
 
   <ItemGroup>

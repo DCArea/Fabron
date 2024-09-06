@@ -17,7 +17,6 @@ public static class OpenTelemetryConfigureExtensions
             .AddOpenTelemetry()
             .WithTracing(options => options
                 .AddEncrichedAspNetCoreInstrumentation()
-                // .AddNpgsql()
                 .AddSource("Microsoft.Orleans")
                 .AddSource("Fabron")
                 .AddHttpClientInstrumentation()
@@ -25,9 +24,7 @@ public static class OpenTelemetryConfigureExtensions
                 .SetSampler<MySampler>()
                 .AddOtlpExporter())
             .WithMetrics((builder) => builder
-                //.AddRuntimeMetrics()
                 .AddMeter("Fabron")
-                //.AddMeter("Microsoft.Orleans")
                 .AddPrometheusExporter());
 
         return builder;

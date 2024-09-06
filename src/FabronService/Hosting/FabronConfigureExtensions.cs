@@ -1,14 +1,13 @@
 ﻿using Fabron;
-using Fabron.Dispatching;
 using Fabron.Providers.PostgreSQL;
 using Fabron.Server;
-using FabronService.FireRouters;
+using FabronService.Controller.FireRouters;
 
 namespace FabronService.Hosting;
 
 public static class FabronConfigureExtensions
 {
-    public static WebApplicationBuilder ConfigureFabron(this WebApplicationBuilder builder)
+    public static WebApplicationBuilder ConfigureFabronServer(this WebApplicationBuilder builder)
     {
         builder.Services.AddHttpClient();
         builder.Services.Configure<SchedulerOptions>(options => options.CronFormat = Cronos.CronFormat.IncludeSeconds);
